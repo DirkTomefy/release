@@ -14,7 +14,7 @@ public class CaisseService {
 
     // function to save caisse 
     public Caisse save(Caisse caisse) throws Exception {
-        return caisseRepository.save(caisse).orElseThrow();
+        return caisseRepository.save(caisse);
     }
 
     // function to find caisse by id

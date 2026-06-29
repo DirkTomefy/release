@@ -17,14 +17,14 @@ public class BovinService {
 
     // function to buy bovin
     @Transactional
-    public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite) {
+    public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite) throws Exception {
         // vérify if quantite
         if (quantite <= 0) {
             throw new Exception("la quantite ne doit pas être inférieure ou égal à 0");
         }
 
         // prix total
-        prix_total = 0;
+        Double prix_total = 0.0;
 
         // rectify caisse and verify if enough
         for (int i = 0; i < caisses.size(); i++) {
@@ -44,7 +44,7 @@ public class BovinService {
         }
 
         // calculate prix unitaire
-        prix_unitaire = prix_total / quantite;
+        Double prix_unitaire = prix_total / quantite;
         
         // insert bovin in base
         bovin.setPrix_achat(prix_unitaire);
