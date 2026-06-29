@@ -43,7 +43,11 @@ public class BovinService {
                 // rectify temp_caisse
                 temp_caisse.setMontant_actuelle(temp_caisse.getMontant_actuelle() - caisses.get(i).getMontant_actuelle());
                 // save in base
-                caisseService.save(temp_caisse);
+                temp_caisse = caisseService.save(temp_caisse);
+
+                if (temp_caisse.getMontant_actuelle() < 0) {
+                    throw new Exception("le montant de la caisse est insuffisant");
+                }
                 
                 prix_total = prix_total + caisses.get(i).getMontant_actuelle();
             }

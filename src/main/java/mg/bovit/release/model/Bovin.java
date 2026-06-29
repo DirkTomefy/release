@@ -37,6 +37,33 @@ public class Bovin {
     )
     private Double prix_vente;
 
+    @Column(
+        name = "poids_achat",
+        nullable = false
+    )
+    private Double poids_achat;
+
+    @Column(
+        name = "poids_vente"    
+    )
+    private Double poids_vente;
+
+    public Double getPoids_achat() {
+        return poids_achat;
+    }
+
+    public void setPoids_achat(Double poids_achat) {
+        this.poids_achat = poids_achat;
+    }
+
+    public Double getPoids_vente() {
+        return poids_vente;
+    }
+
+    public void setPoids_vente(Double poids_vente) {
+        this.poids_vente = poids_vente;
+    }
+
     public Long getId() {
         return id;
     }
