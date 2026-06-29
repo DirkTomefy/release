@@ -13,14 +13,29 @@ public class Bovin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-        name = "nom",
-        nullable = false
-    )
-    private String nom;
+    @ManyToOne
+    @JoinColumn(name="id_race")
+    private Race race;
 
     @Column(
-        name = "descriptions"    
+        name = "date_achat",
+        nullable = false
     )
-    private String descriptions;
+    private Date date_achat;
+
+    @Column(
+        name = "date_vente"    
+    )
+    private Date date_vente;
+
+    @Column(
+        name = "prix_achat",
+        nullable = false
+    )
+    private Double prix_achat;
+
+    @Column(
+        name = "prix_vente"    
+    )
+    private Double prix_vente;
 }
