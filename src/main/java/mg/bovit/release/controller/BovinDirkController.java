@@ -22,32 +22,6 @@ public class BovinDirkController {
     @Autowired
     private BovinService bovinService;
 
-    @Autowired
-    private RaceService raceService;
+   
 
-       @GetMapping
-    public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
-                             Model model) throws Exception {
-        if (criteria == null) {
-            criteria = new MultiCriteriaFormBovinList();
-        }
-        // Validation de la taille
-        if (criteria.getSize() <= 0) {
-            criteria.setSize(10);
-        }
-        // Limite optionnelle pour éviter des charges excessives
-        if (criteria.getSize() > 1000) {
-            criteria.setSize(1000);
-        }
-
-        Page<Bovin> bovinPage = bovinService.searchBovins(criteria);
-        List<Race> races = raceService.findAll();
-
-        model.addAttribute("bovinPage", bovinPage);
-        model.addAttribute("races", races);
-        model.addAttribute("criteria", criteria);
-
-        return "bovin/list";
-    }
-    
 }
