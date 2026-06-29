@@ -53,6 +53,7 @@ public class BovinService {
         }
     }
 
+    
     public List<Bovin> findAll() {
         return bovinRepository.findAll();
     }

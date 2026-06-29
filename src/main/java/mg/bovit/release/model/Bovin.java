@@ -1,7 +1,5 @@
 package mg.bovit.release.model;
 
-import java.lang.annotation.Inherited;
-
 import jakarta.persistence.*;
 
 import java.sql.Date;
