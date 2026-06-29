@@ -20,8 +20,21 @@ CREATE TABLE bovin(
     date_vente DATE,
     prix_achat DOUBLE PRECISION NOT NULL,
     prix_vente DOUBLE PRECISION,
+    poids_achat DOUBLE PRECISION NOT NULL,
+    poids_vente DOUBLE PRECISION,
 
     CONSTRAINT fk_bovin_race
         FOREIGN KEY (id_race)
         REFERENCES race(id)
+);
+
+CREATE TABLE pese_bovin(
+    id SERIAL PRIMARY KEY,
+    id_bovin INTEGER NOT NULL,
+    date_pese DATE NOT NULL,
+    poids_apres DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT fk_bovin_poids
+        FOREIGN KEY (id_bovin)
+        REFERENCES bovin(id)
 );
