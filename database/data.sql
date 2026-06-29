@@ -1,5 +1,5 @@
-CREATE DATABASE bovin;
-\c bovin;
+CREATE DATABASE bovin_db;
+\c bovin_db;
 
 CREATE TABLE caisse (
     id SERIAL PRIMARY KEY,
