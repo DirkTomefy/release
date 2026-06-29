@@ -12,6 +12,8 @@ import mg.bovit.release.model.*;
 public class BovinService {
     @Autowired
     private BovinRepository bovinRepository;
+    @Autowired
+    private CaisseService caisseService;
 
     // function to buy bovin
     @Transactional
@@ -21,9 +23,33 @@ public class BovinService {
             throw new Exception("la quantite ne doit pas être inférieure ou égal à 0");
         }
 
+        // prix total
+        prix_total = 0;
+
         // rectify caisse and verify if enough
         for (int i = 0; i < caisses.size(); i++) {
-            if (caisses.get(i))
+            if (caisses.get(i).getMontant_actuelle() <= 0) {
+                throw new Exception("le prix total ne doit pas être inférieure ou égal à 0");
+            }
+            else {
+                // find caisse 
+                Caisse temp_caisse = caisseService.findById(caisses.get(i).getId());
+                // rectify temp_caisse
+                temp_caisse.setMontant_actuelle(temp_caisse.getMontant_actuelle() - caisses.get(i).getMontant_actuelle());
+                // save in base
+                caisseService.save(temp_caisse);
+                
+                prix_total = prix_total + caisses.get(i).getMontant_actuelle();
+            }
+        }
+
+        // calculate prix unitaire
+        prix_unitaire = prix_total / quantite;
+        
+        // insert bovin in base
+        bovin.setPrix_achat(prix_unitaire);
+        for (int i = 0; i < quantite; i++) {
+            bovinRepository.save(bovin);
         }
     }
 
