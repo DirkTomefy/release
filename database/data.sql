@@ -24,4 +24,4 @@ CREATE TABLE bovin(
     CONSTRAINT fk_bovin_race
         FOREIGN KEY (id_race)
         REFERENCES race(id)
-)
+);
