@@ -59,8 +59,9 @@ public class BovinService {
         }
     }
 
+   // Nouvelle méthode de recherche paginée et filtrée
     public Page<Bovin> searchBovins(MultiCriteriaFormBovinList form) {
-        // Construire le Pageable
+        // Construction du tri
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
         if (form.getSort() != null && !form.getSort().isEmpty()) {
@@ -78,9 +79,9 @@ public class BovinService {
                 Sort.by(direction, sortField)
         );
 
-        // Appeler le repository avec la spécification
         return bovinRepository.findAll(BovinSpecification.fromForm(form), pageable);
     }
+    
 
     public List<Bovin> findAll() {
         return bovinRepository.findAll();

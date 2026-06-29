@@ -25,25 +25,29 @@ public class BovinDirkController {
     @Autowired
     private RaceService raceService;
 
-    @GetMapping
+       @GetMapping
     public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
                              Model model) throws Exception {
-        // Si le DTO est null, on en crée un (cas première arrivée)
         if (criteria == null) {
             criteria = new MultiCriteriaFormBovinList();
         }
+        // Validation de la taille
+        if (criteria.getSize() <= 0) {
+            criteria.setSize(10);
+        }
+        // Limite optionnelle pour éviter des charges excessives
+        if (criteria.getSize() > 1000) {
+            criteria.setSize(1000);
+        }
 
-        // Récupération paginée
         Page<Bovin> bovinPage = bovinService.searchBovins(criteria);
-
-        // Liste des races pour le filtre déroulant
         List<Race> races = raceService.findAll();
 
-        // Ajout au modèle
         model.addAttribute("bovinPage", bovinPage);
         model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
 
-        return "bovin/list";   // nom de la vue Thymeleaf
+        return "bovin/list";
     }
+    
 }
