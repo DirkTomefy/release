@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · Gestion du troupeau</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f9f7f4;
+            color: #3e3e3b;
+        }
+        .navbar { background-color: #fff; border-bottom: 1px solid #e2ddd6; }
+        .navbar-brand { font-weight: 600; color: #5b4b3a !important; }
+        .nav-link { color: #6b5e53 !important; font-weight: 500; }
+        .nav-link.active { color: #4a6b3a !important; border-bottom: 2px solid #7a9e5a; }
+        .card { border: 1px solid #e7e0d8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .table thead th { background-color: #faf8f5; font-weight: 500; color: #6b5e53; border-bottom: 2px solid #e2ddd6; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.04em; }
+        .table tbody td { vertical-align: middle; border-bottom: 1px solid #f0ede8; padding-top: 0.85rem; padding-bottom: 0.85rem; }
+        .badge-actif { background-color: #e2f0da; color: #3d5a2e; border-radius: 20px; padding: 0.35em 0.8em; font-weight: 500; }
+        .badge-vendu { background-color: #f0e6d3; color: #6b4f2e; }
+        .badge-decede { background-color: #fde8e8; color: #813838; }
+        .btn-soft-primary { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; font-weight: 500; }
+        .btn-soft-primary:hover { background-color: #dde8d1; color: #3a562c; }
+        .btn-soft-danger { background-color: #fef1f1; color: #b34040; border: 1px solid #f5d2d2; font-weight: 500; }
+        .btn-soft-warning { background-color: #fdf6e8; color: #8a6d2e; border: 1px solid #eddea4; font-weight: 500; }
+        .form-control, .form-select { border-color: #e0d8cf; border-radius: 8px; padding: 0.6rem 1rem; }
+        .form-control:focus, .form-select:focus { border-color: #b6a88e; box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15); }
+        .page-link { color: #5b4b3a; border: none; border-radius: 8px; margin: 0 2px; }
+        .page-item.active .page-link { background-color: #7a9e5a; border-color: #7a9e5a; color: #fff; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active" href="#">Tableau de bord</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Animaux</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Troupeaux</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Santé</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Contenu principal -->
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+            <i class="bi bi-egg-fill me-2" style="color:#c4a35a;"></i>Registre des animaux
+        </h1>
+        <a href="#" class="btn btn-soft-primary">
+            <i class="bi bi-plus-circle me-1"></i> Nouvel animal
+        </a>
+    </div>
+
+    <!-- Formulaire de recherche / filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/bovins}" method="get" class="row g-3 align-items-end">
+                <!-- On conserve les paramètres de pagination dans le formulaire (page et size seront réinitialisés) -->
+                <input type="hidden" name="page" value="0" />
+                <input type="hidden" name="size" th:value="${criteria.size}" />
+
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Recherche</label>
+                    <input type="text" name="search" class="form-control" placeholder="ID ou race..." th:value="${criteria.search}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Race</label>
+                    <select name="raceId" class="form-select">
+                        <option value="">Toutes</option>
+                        <option th:each="r : ${races}" th:value="${r.id}" th:text="${r.nom}"
+                                th:selected="${criteria.raceId != null && criteria.raceId == r.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="tous" th:selected="${criteria.statut == null || criteria.statut == 'tous'}">Tous</option>
+                        <option value="non_vendu" th:selected="${criteria.statut == 'non_vendu'}">Non vendu</option>
+                        <option value="vendu" th:selected="${criteria.statut == 'vendu'}">Vendu</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Prix achat min</label>
+                    <input type="number" step="0.01" name="prixAchatMin" class="form-control" th:value="${criteria.prixAchatMin}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Prix achat max</label>
+                    <input type="number" step="0.01" name="prixAchatMax" class="form-control" th:value="${criteria.prixAchatMax}">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-soft-primary w-100">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des bovins -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+                <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Identification</th>
+                    <th>Race</th>
+                    <th>Date achat</th>
+                    <th>Prix achat</th>
+                    <th>Date vente</th>
+                    <th>Statut</th>
+                    <th class="text-end" style="width: 120px;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="bovin : ${bovinPage.content}">
+                    <td class="text-muted" th:text="${bovin.id}">1</td>
+                    <td>
+                        <span class="fw-medium">Bovin #<span th:text="${bovin.id}"></span></span><br>
+                        <small class="text-muted" th:text="'Race : ' + ${bovin.race.nom}"></small>
+                    </td>
+                    <td th:text="${bovin.race.nom}">Holstein</td>
+                    <td th:text="${#dates.format(bovin.date_achat, 'dd/MM/yyyy')}">12/03/2020</td>
+                    <td th:text="${#numbers.formatDecimal(bovin.prix_achat, 0, 2)}">1500.00</td>
+                    <td th:text="${bovin.date_vente != null ? #dates.format(bovin.date_vente, 'dd/MM/yyyy') : '-'}">-</td>
+                    <td>
+                        <span th:if="${bovin.date_vente == null}" class="badge badge-actif">Actif</span>
+                        <span th:if="${bovin.date_vente != null}" class="badge badge-vendu">Vendu</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="#" class="btn btn-soft-danger btn-sm" title="Supprimer">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${bovinPage.content.isEmpty()}">
+                    <td colspan="8" class="text-center text-muted py-4">Aucun bovin trouvé</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mt-4" aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+            <!-- Lien Précédent -->
+            <li class="page-item" th:classappend="${bovinPage.first} ? 'disabled'">
+                <a class="page-link px-3" th:href="@{/bovins(page=${bovinPage.number - 1}, size=${criteria.size}, search=${criteria.search}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}">
+                    Précédent
+                </a>
+            </li>
+
+            <!-- Numéros de pages -->
+            <li th:each="i : ${#numbers.sequence(0, bovinPage.totalPages - 1)}"
+                class="page-item" th:classappend="${i == bovinPage.number} ? 'active'">
+                <a class="page-link" th:href="@{/bovins(page=${i}, size=${criteria.size}, search=${criteria.search}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}"
+                   th:text="${i + 1}">1</a>
+            </li>
+
+            <!-- Lien Suivant -->
+            <li class="page-item" th:classappend="${bovinPage.last} ? 'disabled'">
+                <a class="page-link px-3" th:href="@{/bovins(page=${bovinPage.number + 1}, size=${criteria.size}, search=${criteria.search}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}">
+                    Suivant
+                </a>
+            </li>
+        </ul>
+        <div class="text-center text-muted small">
+            Page <span th:text="${bovinPage.number + 1}">1</span> sur <span th:text="${bovinPage.totalPages}">1</span>,
+            total <span th:text="${bovinPage.totalElements}">0</span> enregistrements
+            <span class="ms-3">
+                Taille :
+                <select onchange="window.location.href = this.value" class="form-select form-select-sm d-inline-block w-auto">
+                    <option th:each="s : {5, 10, 20, 50}"
+                            th:value="@{/bovins(page=0, size=${s}, search=${criteria.search}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}"
+                            th:selected="${s == criteria.size}"
+                            th:text="${s}">10</option>
+                </select>
+            </span>
+        </div>
+    </nav>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,12 +1,18 @@
 package mg.bovit.release.service;
 
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-
+import org.springframework.data.domain.Sort;
+import mg.bovit.release.specification.BovinSpecification;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
+import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+
 
 @Service
 public class BovinService {
@@ -53,7 +59,29 @@ public class BovinService {
         }
     }
 
-    
+    public Page<Bovin> searchBovins(MultiCriteriaFormBovinList form) {
+        // Construire le Pageable
+        String sortField = "id";
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (form.getSort() != null && !form.getSort().isEmpty()) {
+            String[] parts = form.getSort().split(",");
+            if (parts.length >= 1) {
+                sortField = parts[0];
+            }
+            if (parts.length >= 2) {
+                direction = Sort.Direction.fromString(parts[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(
+                form.getPage(),
+                form.getSize(),
+                Sort.by(direction, sortField)
+        );
+
+        // Appeler le repository avec la spécification
+        return bovinRepository.findAll(BovinSpecification.fromForm(form), pageable);
+    }
+
     public List<Bovin> findAll() {
         return bovinRepository.findAll();
     }
