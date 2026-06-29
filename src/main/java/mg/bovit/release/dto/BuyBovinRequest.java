@@ -6,6 +6,7 @@ public class BuyBovinRequest {
     private Long raceId;
     private String dateAchat;
     private Integer quantite;
+    private Double poidsAchat;
     private List<CaissePaymentDTO> payments;
 
     // Getters et Setters
@@ -21,6 +22,9 @@ public class BuyBovinRequest {
     public List<CaissePaymentDTO> getPayments() { return payments; }
     public void setPayments(List<CaissePaymentDTO> payments) { this.payments = payments; }
 
+    public Double getPoidsAchat() { return poidsAchat; }
+    public void setPoidsAchat(Double poidsAchat) { this.poidsAchat = poidsAchat; }
+    
     public static class CaissePaymentDTO {
         private Long caisseId; // ou le nom/type converti en ID de caisse
         private Double montant;

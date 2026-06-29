@@ -34,7 +34,9 @@
         backdrop-filter: blur(12px);
         border-radius: 48px;
         padding: 2.8rem 3rem;
-        box-shadow: 0 30px 60px -15px rgba(0, 20, 30, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+        box-shadow:
+          0 30px 60px -15px rgba(0, 20, 30, 0.3),
+          inset 0 1px 2px rgba(255, 255, 255, 0.8);
         border: 1px solid rgba(255, 255, 255, 0.6);
       }
 
@@ -448,8 +450,14 @@
       }
 
       @keyframes fadeIn {
-        0% { opacity: 0.5; transform: translateY(-6px); }
-        100% { opacity: 1; transform: translateY(0); }
+        0% {
+          opacity: 0.5;
+          transform: translateY(-6px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       .pay-count-badge {
@@ -468,7 +476,7 @@
         background: white;
         padding: 1rem 2rem;
         border-radius: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         font-weight: 600;
         z-index: 9999;
         display: none;
@@ -487,7 +495,6 @@
     </style>
   </head>
   <body>
-
     <div class="card-modern">
       <!-- En-tête -->
       <div class="header-section">
@@ -517,26 +524,70 @@
 
           <!-- Date d'achat -->
           <div class="field-group">
-            <label for="dateAchat"><i class="fas fa-calendar-day"></i> Date d'achat</label>
+            <label for="dateAchat"
+              ><i class="fas fa-calendar-day"></i> Date d'achat</label
+            >
             <input type="date" id="dateAchat" name="dateAchat" required />
           </div>
 
           <!-- Quantité -->
           <div class="field-group">
-            <label for="quantite"><i class="fas fa-hashtag"></i> Quantité</label>
-            <input type="number" id="quantite" name="quantite" placeholder="ex: 5" min="1" value="3" />
+            <label for="quantite"
+              ><i class="fas fa-hashtag"></i> Quantité</label
+            >
+            <input
+              type="number"
+              id="quantite"
+              name="quantite"
+              placeholder="ex: 5"
+              min="1"
+              value="3"
+            />
           </div>
 
           <!-- Prix unitaire (affichage uniquement, non envoyé) -->
           <div class="field-group">
-            <label for="pu"><i class="fas fa-dollar-sign"></i> P.U estimé (€)</label>
-            <input type="number" id="pu" placeholder="ex: 1250" step="0.01" min="0" value="1200" />
+            <label for="pu"
+              ><i class="fas fa-dollar-sign"></i> P.U estimé (€)</label
+            >
+            <input
+              type="number"
+              id="pu"
+              placeholder="ex: 1250"
+              step="0.01"
+              min="0"
+              value="1200"
+            />
+          </div>
+
+          <!-- POIDS INITIALS A L'ACHAT -->
+          <div class="field-group">
+            <label for="poidsAchat"
+              ><i class="fas fa-weight-hanging"></i> Poids à l'achat (kg)</label
+            >
+            <input
+              type="number"
+              id="poidsAchat"
+              name="poidsAchat"
+              placeholder="ex: 350.5"
+              step="0.01"
+              min="1"
+              required
+            />
           </div>
 
           <!-- Total bovin (calculé, affichage) -->
           <div class="field-group">
-            <label for="total"><i class="fas fa-calculator"></i> Total bovin (est.)</label>
-            <input type="text" id="total" readonly value="3600.00" style="background:#f2f8fc; font-weight:600; color:#0f5430;" />
+            <label for="total"
+              ><i class="fas fa-calculator"></i> Total bovin (est.)</label
+            >
+            <input
+              type="text"
+              id="total"
+              readonly
+              value="3600.00"
+              style="background: #f2f8fc; font-weight: 600; color: #0f5430"
+            />
           </div>
 
           <!-- SECTION PAIEMENT -->
@@ -563,22 +614,47 @@
                   </select>
                 </div>
                 <div class="pay-montant">
-                  <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="1200" />
+                  <input
+                    type="number"
+                    class="pay-amount"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value="1200"
+                  />
                 </div>
                 <button type="button" class="btn-remove-pay" disabled>
                   <i class="fas fa-trash-alt"></i>
                 </button>
               </div>
             </div>
-            <div style="margin-top:0.6rem; font-size:0.8rem; color:#1f6d47; display:flex; gap:1rem; flex-wrap:wrap;">
-              <span><i class="fas fa-info-circle"></i> Chaque ligne = un mode de paiement</span>
-              <span><i class="fas fa-arrow-right"></i> Total = somme des montants</span>
+            <div
+              style="
+                margin-top: 0.6rem;
+                font-size: 0.8rem;
+                color: #1f6d47;
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+              "
+            >
+              <span
+                ><i class="fas fa-info-circle"></i> Chaque ligne = un mode de
+                paiement</span
+              >
+              <span
+                ><i class="fas fa-arrow-right"></i> Total = somme des
+                montants</span
+              >
             </div>
           </div>
 
           <!-- Total paiements (affichage) -->
           <div class="total-highlight">
-            <span><i class="fas fa-coins" style="color:#1f8a4a;"></i> Total paiements enregistrés</span>
+            <span
+              ><i class="fas fa-coins" style="color: #1f8a4a"></i> Total
+              paiements enregistrés</span
+            >
             <span class="total-value" id="totalDisplay">1 200,00 €</span>
           </div>
         </div>
@@ -586,14 +662,26 @@
         <!-- Actions -->
         <div class="actions-row">
           <div class="btn-group">
-            <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
+            <button
+              type="button"
+              class="btn btn-primary btn-lg"
+              id="validerBtn"
+            >
               <i class="fas fa-check-circle"></i> Valider l'achat
             </button>
             <button type="reset" class="btn btn-outline">
               <i class="fas fa-undo-alt"></i> Réinitialiser
             </button>
           </div>
-          <span style="font-size:0.85rem; color:#2b5f77; background:#e3f0f8; padding:0.3rem 1.4rem; border-radius:40px;">
+          <span
+            style="
+              font-size: 0.85rem;
+              color: #2b5f77;
+              background: #e3f0f8;
+              padding: 0.3rem 1.4rem;
+              border-radius: 40px;
+            "
+          >
             <i class="far fa-clock"></i> Prêt
           </span>
         </div>
@@ -604,34 +692,35 @@
     <div id="toast" class="toast-message"></div>
 
     <script>
-      (function() {
+      (function () {
         // Éléments
-        const paymentList = document.getElementById('paymentList');
-        const addPaymentBtn = document.getElementById('addPaymentBtn');
-        const payCountBadge = document.getElementById('payCountBadge');
-        const totalDisplay = document.getElementById('totalDisplay');
-        const totalInput = document.getElementById('total');
-        const puInput = document.getElementById('pu');
-        const qteInput = document.getElementById('quantite');
-        const dateInput = document.getElementById('dateAchat');
-        const validerBtn = document.getElementById('validerBtn');
-        const toast = document.getElementById('toast');
+        const paymentList = document.getElementById("paymentList");
+        const addPaymentBtn = document.getElementById("addPaymentBtn");
+        const payCountBadge = document.getElementById("payCountBadge");
+        const totalDisplay = document.getElementById("totalDisplay");
+        const totalInput = document.getElementById("total");
+        const puInput = document.getElementById("pu");
+        const qteInput = document.getElementById("quantite");
+        const dateInput = document.getElementById("dateAchat");
+        const validerBtn = document.getElementById("validerBtn");
+        const toast = document.getElementById("toast");
+        const poidsInput = document.getElementById("poidsAchat");
         let rowCounter = 1;
 
         // Initialiser la date par défaut
         if (!dateInput.value) {
-          dateInput.value = new Date().toISOString().split('T')[0];
+          dateInput.value = new Date().toISOString().split("T")[0];
         }
 
         // Fonctions de calcul
         function getPaymentRows() {
-          return paymentList.querySelectorAll('.payment-row');
+          return paymentList.querySelectorAll(".payment-row");
         }
 
         function getPaymentTotal() {
           let sum = 0;
-          getPaymentRows().forEach(row => {
-            const amt = parseFloat(row.querySelector('.pay-amount').value) || 0;
+          getPaymentRows().forEach((row) => {
+            const amt = parseFloat(row.querySelector(".pay-amount").value) || 0;
             sum += amt;
           });
           return sum;
@@ -647,25 +736,26 @@
 
         function updateGlobalDisplay() {
           const sum = getPaymentTotal();
-          totalDisplay.textContent = sum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
+          totalDisplay.textContent =
+            sum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " €";
           // Vérification cohérence avec total bovin (affichage)
           const bovinTotal = parseFloat(totalInput.value) || 0;
           if (Math.abs(sum - bovinTotal) < 0.01 && bovinTotal > 0) {
-            totalDisplay.style.color = '#0f6e38';
-            totalDisplay.style.background = '#e5f3ec';
+            totalDisplay.style.color = "#0f6e38";
+            totalDisplay.style.background = "#e5f3ec";
           } else {
-            totalDisplay.style.color = '#b34a3a';
-            totalDisplay.style.background = '#fde8e3';
+            totalDisplay.style.color = "#b34a3a";
+            totalDisplay.style.background = "#fde8e3";
           }
           // Mise à jour du badge
           const count = getPaymentRows().length;
-          payCountBadge.textContent = count + ' ligne' + (count > 1 ? 's' : '');
+          payCountBadge.textContent = count + " ligne" + (count > 1 ? "s" : "");
         }
 
         // Gestion des lignes de paiement
         function createPaymentRow(rowId) {
-          const row = document.createElement('div');
-          row.className = 'payment-row';
+          const row = document.createElement("div");
+          row.className = "payment-row";
           row.dataset.rowId = rowId;
           row.innerHTML = `
             <div class="pay-select">
@@ -686,13 +776,13 @@
         }
 
         function attachRowEvents(row) {
-          const amountInput = row.querySelector('.pay-amount');
-          amountInput.addEventListener('input', updateGlobalDisplay);
+          const amountInput = row.querySelector(".pay-amount");
+          amountInput.addEventListener("input", updateGlobalDisplay);
 
-          const removeBtn = row.querySelector('.btn-remove-pay');
-          removeBtn.addEventListener('click', function() {
+          const removeBtn = row.querySelector(".btn-remove-pay");
+          removeBtn.addEventListener("click", function () {
             if (getPaymentRows().length <= 1) {
-              alert('Il doit rester au moins une ligne de paiement.');
+              alert("Il doit rester au moins une ligne de paiement.");
               return;
             }
             row.remove();
@@ -704,13 +794,13 @@
         function updateRemoveButtons() {
           const rows = getPaymentRows();
           rows.forEach((row, index) => {
-            const btn = row.querySelector('.btn-remove-pay');
-            btn.disabled = (rows.length <= 1);
+            const btn = row.querySelector(".btn-remove-pay");
+            btn.disabled = rows.length <= 1;
           });
         }
 
         // Ajouter une ligne
-        addPaymentBtn.addEventListener('click', function() {
+        addPaymentBtn.addEventListener("click", function () {
           rowCounter++;
           const newRow = createPaymentRow(rowCounter);
           paymentList.appendChild(newRow);
@@ -718,32 +808,41 @@
           updateGlobalDisplay();
           updateRemoveButtons();
           // animation
-          newRow.style.animation = 'none';
-          setTimeout(() => { newRow.style.animation = 'fadeIn 0.25s ease'; }, 10);
+          newRow.style.animation = "none";
+          setTimeout(() => {
+            newRow.style.animation = "fadeIn 0.25s ease";
+          }, 10);
         });
 
         // Initialisation des lignes existantes
         function initExistingRows() {
-          getPaymentRows().forEach(row => attachRowEvents(row));
+          getPaymentRows().forEach((row) => attachRowEvents(row));
           updateRemoveButtons();
           updateGlobalDisplay();
         }
 
         // Événements sur les champs de calcul (PU, quantité)
-        puInput.addEventListener('input', updateBovinTotal);
-        qteInput.addEventListener('input', updateBovinTotal);
+        puInput.addEventListener("input", updateBovinTotal);
+        qteInput.addEventListener("input", updateBovinTotal);
 
         // Validation et envoi
-        validerBtn.addEventListener('click', function() {
-          const raceId = parseInt(document.getElementById('raceId').value);
+        validerBtn.addEventListener("click", function () {
+          const raceId = parseInt(document.getElementById("raceId").value);
           const dateAchat = dateInput.value;
-          const quantite = parseInt(qteInput.value) || 0;
+          const quantite = parseInt(qteInput.value) || 0;          
+          const poidsAchat = parseFloat(poidsInput.value) || 0;
+
+          if (poidsAchat <= 0) {
+            alert("Le poids à l'achat doit être supérieur à 0.");
+            return;
+          }
 
           // Récupération des paiements
           const payments = [];
-          getPaymentRows().forEach(row => {
-            const caisseId = parseInt(row.querySelector('.pay-type').value);
-            const montant = parseFloat(row.querySelector('.pay-amount').value) || 0;
+          getPaymentRows().forEach((row) => {
+            const caisseId = parseInt(row.querySelector(".pay-type").value);
+            const montant =
+              parseFloat(row.querySelector(".pay-amount").value) || 0;
             if (montant > 0) {
               payments.push({ caisseId, montant });
             }
@@ -751,60 +850,63 @@
 
           // Validations
           if (!dateAchat) {
-            alert('Veuillez saisir une date d\'achat.');
+            alert("Veuillez saisir une date d'achat.");
             return;
           }
           if (!raceId || raceId < 1) {
-            alert('Veuillez sélectionner une race valide.');
+            alert("Veuillez sélectionner une race valide.");
             return;
           }
           if (quantite <= 0) {
-            alert('La quantité doit être supérieure à 0.');
+            alert("La quantité doit être supérieure à 0.");
             return;
           }
           if (payments.length === 0) {
-            alert('Ajoutez au moins un paiement avec un montant > 0.');
+            alert("Ajoutez au moins un paiement avec un montant > 0.");
             return;
           }
+          
 
           // Construction du payload
           const payload = {
             dateAchat: dateAchat,
             raceId: raceId,
             quantite: quantite,
-            payments: payments
+            payments: payments,
+            poidsAchat: poidsAchat,
           };
 
           // Envoi vers le serveur
-          fetch('/bovins/achat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+          fetch("/bovins/achat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
           })
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'success') {
-              showToast(data.message, 'success');
-              // Réinitialisation partielle ou redirection
-              setTimeout(() => {
-                window.location.href = '/bovins';
-              }, 1500);
-            } else {
-              showToast('Erreur : ' + data.message, 'error');
-            }
-          })
-          .catch(error => {
-            console.error('Erreur réseau:', error);
-            showToast('Erreur de communication avec le serveur.', 'error');
-          });
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.status === "success") {
+                showToast(data.message, "success");
+                // Réinitialisation partielle ou redirection
+                setTimeout(() => {
+                  window.location.href = "/bovins";
+                }, 1500);
+              } else {
+                showToast("Erreur : " + data.message, "error");
+              }
+            })
+            .catch((error) => {
+              console.error("Erreur réseau:", error);
+              showToast("Erreur de communication avec le serveur.", "error");
+            });
         });
 
         // Affichage toast
         function showToast(message, type) {
           toast.textContent = message;
-          toast.className = 'toast-message show' + (type === 'error' ? ' error' : '');
+          toast.className =
+            "toast-message show" + (type === "error" ? " error" : "");
           setTimeout(() => {
-            toast.classList.remove('show');
+            toast.classList.remove("show");
           }, 4000);
         }
 

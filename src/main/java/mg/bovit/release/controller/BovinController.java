@@ -12,7 +12,7 @@ import mg.bovit.release.service.RaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;   // ← remplacer RestController par Controller
+import org.springframework.stereotype.Controller; // ← remplacer RestController par Controller
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Controller  // ← important
+@Controller // ← important
 @RequestMapping("/bovins")
 public class BovinController {
 
@@ -35,7 +35,7 @@ public class BovinController {
     // Méthode pour la liste – retourne une vue
     @GetMapping
     public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
-                             Model model) throws Exception {
+            Model model) throws Exception {
         if (criteria == null) {
             criteria = new MultiCriteriaFormBovinList();
         }
@@ -53,7 +53,7 @@ public class BovinController {
         model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
 
-        return "bovin/list";   // Vue Thymeleaf
+        return "bovin/list"; // Vue Thymeleaf
     }
 
     // Méthode pour afficher le formulaire d'achat – retourne une vue
@@ -64,16 +64,17 @@ public class BovinController {
         model.addAttribute("races", races);
         model.addAttribute("caisses", caisses);
         model.addAttribute("buyRequest", new BuyBovinRequest());
-        return "bovin/form";   // Vue Thymeleaf
+        return "bovin/form"; // Vue Thymeleaf
     }
 
     // Méthode pour l'achat – réponse JSON
     @PostMapping("/achat")
-    @ResponseBody   // ← indispensable pour retourner du JSON
+    @ResponseBody
     public ResponseEntity<?> buyBovin(@RequestBody BuyBovinRequest request) {
         try {
             Bovin bovin = new Bovin();
             bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
+            bovin.setPoids_achat(request.getPoidsAchat()); // <-- Ajout de la liaison ici
 
             Race race = new Race();
             race.setId(request.getRaceId());
