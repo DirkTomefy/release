@@ -23,4 +23,28 @@ public class Race {
         name = "descriptions"    
     )
     private String descriptions;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public String getDescriptions() {
+        return descriptions;
+    }
+
+    public void setDescriptions(String descriptions) {
+        this.descriptions = descriptions;
+    }
 }

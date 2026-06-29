@@ -24,4 +24,28 @@ public class Caisse {
         nullable = false
     )
     private Double montant_actuelle;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public Double getMontant_actuelle() {
+        return montant_actuelle;
+    }
+
+    public void setMontant_actuelle(Double montant_actuelle) {
+        this.montant_actuelle = montant_actuelle;
+    }
 }
