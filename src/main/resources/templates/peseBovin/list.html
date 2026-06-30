@@ -269,12 +269,12 @@
                     <td th:text="${#dates.format(peseBovin.date_pese, 'dd/MM/yyyy')}">-</td>
                     <td th:text="${#numbers.formatDecimal(peseBovin.poids_apres, 0, 2)}">-</td>
                     <td class="text-end">
-                        <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
+                        <a th:attr="href=${'/peseBovin/form/' + peseBovin.id}" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <a href="#" class="btn btn-soft-danger btn-sm" title="Supprimer">
+                        <!-- <a href="#" class="btn btn-soft-danger btn-sm" title="Supprimer">
                             <i class="bi bi-trash"></i>
-                        </a>
+                        </a> -->
                     </td>
                 </tr>
                 <tr th:if="${pesesBovin.isEmpty()}">
