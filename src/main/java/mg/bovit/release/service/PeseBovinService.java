@@ -14,12 +14,19 @@ import mg.bovit.release.model.*;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 
 @Service
-public class PesePoidsService {
+public class PeseBovinService {
     @Autowired 
-    PesePoidsRepository pesePoidsRepository;
+    PeseBovinRepository peseBovinRepository;
+
+    // function to get bovin
+
+    // function to save pese_bovin
+    public PeseBovin save(PeseBovin peseBovin) {
+        return peseBovinRepository.save(peseBovin);
+    }
     
-    // function to findAll pesePoids
-    public List<PesePoids> findAll() {
-        return pesePoidsRepository.findAll();
+    // function to findAll pese_bovin
+    public List<PeseBovin> findAll() {
+        return peseBovinRepository.findAll();
     }
 }

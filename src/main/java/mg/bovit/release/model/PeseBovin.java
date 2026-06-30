@@ -6,7 +6,7 @@ import java.sql.Date;
 
 @Entity
 @Table(name="pese_bovin")
-public class PesePoids {
+public class PeseBovin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

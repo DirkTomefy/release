@@ -2,6 +2,7 @@ package mg.bovit.release.controller;
 
 import mg.bovit.release.dto.BuyBovinRequest;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+import mg.bovit.release.dto.ControllerMessage;
 import mg.bovit.release.model.*;
 import mg.bovit.release.service.*;
 
@@ -18,36 +19,42 @@ import java.util.List;
 import java.util.Map;
 
 @Controller // ← important
-@RequestMapping("/pesePoids")
-public class PesePoidsController {
+@RequestMapping("/peseBovin")
+public class PeseBovinController {
     @Autowired
-    PesePoidsService pesePoidsService;
+    PeseBovinService peseBovinService;
     @Autowired
     BovinService bovinService;
 
     // function to shwo list of pese poids of bovin
     @GetMapping
-    public String listPesePoids(Model model) {
-        List<PesePoids> pesesPoids = pesePoidsService.findAll();
+    public String listPeseBovin(Model model) {
+        List<PeseBovin> pesesBovin = peseBovinService.findAll();
 
-        model.addAttribute("pesesPoids", pesesPoids);
+        model.addAttribute("pesesBovin", pesesBovin);
 
-        return "pesePoids/list";
+        return "peseBovin/list";
     }
     
     // function to show forms to create pese poids
     @GetMapping("/form")
-    public String formePesePoids(Model model) {
+    public String formPeseBovin(Model model) {
         // find all bovin for select option
         List<Bovin> bovins = bovinService.findAll();
 
         model.addAttribute("bovins", bovins);
 
-        return "pesePoids/form";
+        return "peseBovin/form";
     }
 
     // function post to create new pese_bovin
     @PostMapping("/form")
     @ResponseBody
-    public 
+    public ControllerMessage createPeseBovin(@ModelAttribute PeseBovin peseBovin) {
+        ControllerMessage response = new ControllerMessage();
+
+        
+
+        return response;
+    }
 }
