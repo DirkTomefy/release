@@ -45,4 +45,9 @@ public class PesePoidsController {
 
         return "pesePoids/form";
     }
+
+    // function post to create new pese_bovin
+    @PostMapping("/form")
+    @ResponseBody
+    public 
 }
