@@ -53,7 +53,14 @@ public class PeseBovinController {
     public ControllerMessage createPeseBovin(@ModelAttribute PeseBovin peseBovin) {
         ControllerMessage response = new ControllerMessage();
 
-        
+        // get latest pese by bovin
+        PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(peseBovin.getBovin().getId());
+
+        // verify if date comming is after date of latest pese
+        if (latestPese != null && latestPese.getDate_pese().before(peseBovin.getDate_pese())) {
+            response.setStatus("error");
+            response.setMessage("la date de pesée doit être après la date de la dernière pesée");
+        }
 
         return response;
     }

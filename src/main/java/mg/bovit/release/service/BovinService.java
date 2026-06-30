@@ -20,6 +20,11 @@ public class BovinService {
     @Autowired
     private CaisseService caisseService;
 
+    // function to find bovin by id
+    public Bovin findById(Long id_bovin) throws Exception {
+        return bovinRepository.findById(id_bovin).orElseThrow();
+    }
+
     // function to buy bovin
     @Transactional
     public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite) throws Exception {

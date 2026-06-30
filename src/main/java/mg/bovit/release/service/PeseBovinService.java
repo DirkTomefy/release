@@ -18,7 +18,10 @@ public class PeseBovinService {
     @Autowired 
     PeseBovinRepository peseBovinRepository;
 
-    // function to get bovin
+    // function to get latest pese by bovin
+    public PeseBovin getLatestPeseByBovin(Long id_bovin) {
+        return peseBovinRepository.getLatestPeseByBovin(id_bovin);
+    }
 
     // function to save pese_bovin
     public PeseBovin save(PeseBovin peseBovin) {
