@@ -18,6 +18,11 @@ public class PeseBovinService {
     @Autowired 
     PeseBovinRepository peseBovinRepository;
 
+    // function to find peseBovin by id
+    public PeseBovin findById(Long id_peseBovin) {
+        return peseBovinRepository.findById(id_peseBovin).orElse(null);
+    }
+
     // function to get latest pese by bovin
     public PeseBovin getLatestPeseByBovin(Long id_bovin) {
         return peseBovinRepository.getLatestPeseByBovin(id_bovin);

@@ -38,10 +38,21 @@ public class PeseBovinController {
     }
     
     // function to show forms to create pese poids
-    @GetMapping("/form")
-    public String formPeseBovin(Model model) {
+    @GetMapping({"/form", "/form/{id}"})
+    public String formPeseBovin(
+        @PathVariable(name="id", required = false) Long id,
+        Model model
+    ) {
         // find all bovin for select option
         List<Bovin> bovins = bovinService.findAll();
+
+        // find peseBovin if id is not null
+        if (id != null) {
+            PeseBovin peseBovin = peseBovinService.findById(id);
+            if (peseBovin != null) {
+                model.addAttribute("peseBovin", peseBovin);
+            }
+        }
 
         model.addAttribute("bovins", bovins);
 
