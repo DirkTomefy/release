@@ -511,13 +511,14 @@
               <option value="">-- Sélectionner un bovin --</option>
               <option th:each="bovin : ${bovins}" 
                       th:value="${bovin.id}" 
-                      th:text="'Bovin #: ' + ${bovin.id}"></option>
+                      th:text="'Bovin #: ' + ${bovin.id}"
+                      th:attr="selected=${peseBovin != null && peseBovin.bovin.id == bovin.id}"></option>
             </select>
           </div>
 
           <div class="field-group">
             <label for="datePese"><i class="fas fa-calendar-day"></i> Date de la pesée</label>
-            <input type="date" id="datePese" name="datePese" required />
+            <input type="date" id="datePese" name="datePese" th:value="${peseBovin != null ? peseBovin.date_pese : ''}" required />
           </div>
 
           <div class="field-group">
@@ -529,6 +530,7 @@
               placeholder="ex: 420.5"
               step="0.01"
               min="1"
+              th:value="${peseBovin != null ? peseBovin.poids_apres : ''}"
               required
             />
           </div>
