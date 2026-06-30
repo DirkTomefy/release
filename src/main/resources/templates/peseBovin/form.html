@@ -516,8 +516,8 @@
           </div>
 
           <div class="field-group">
-            <label for="datePesee"><i class="fas fa-calendar-day"></i> Date de la pesée</label>
-            <input type="date" id="datePesee" name="datePesee" required />
+            <label for="datePese"><i class="fas fa-calendar-day"></i> Date de la pesée</label>
+            <input type="date" id="datePese" name="datePese" required />
           </div>
 
           <div class="field-group">
@@ -569,7 +569,7 @@
       (function () {
         // Éléments
         const bovinSelect = document.getElementById("bovinId");
-        const dateInput = document.getElementById("datePesee");
+        const dateInput = document.getElementById("datePese");
         const poidsInput = document.getElementById("poids");
         const validerBtn = document.getElementById("validerBtn");
         const toast = document.getElementById("toast");
@@ -600,7 +600,7 @@
         // Validation et envoi vers le contrôleur
         validerBtn.addEventListener("click", function () {
           const bovinId = parseInt(bovinSelect.value);
-          const datePesee = dateInput.value;
+          const datePese = dateInput.value;
           const poids = parseFloat(poidsInput.value) || 0;
 
           // Validations de base
@@ -608,7 +608,7 @@
             alert("Veuillez sélectionner un bovin.");
             return;
           }
-          if (!datePesee) {
+          if (!datePese) {
             alert("Veuillez choisir une date de pesée.");
             return;
           }
@@ -620,22 +620,23 @@
           // Construction du payload JSON
           const payload = {
             bovinId: bovinId,
-            date_pese: datePesee,
-            poids_apres: poids
+            datePese: datePese,
+            poids: poids
           };
 
           // Envoi vers l'URL de traitement de votre choix (ex: /pesePoids/save)
-          fetch("/pesePoids", {
+          fetch("/peseBovin/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           })
             .then((response) => response.json())
             .then((data) => {
+              console.log(data)
               if (data.status === "success") {
                 showToast(data.message, "success");
                 setTimeout(() => {
-                  window.location.href = "/pesePoids";
+                  window.location.href = "/peseBovin";
                 }, 1500);
               } else {
                 showToast("Erreur : " + data.message, "error");

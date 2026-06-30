@@ -3,6 +3,7 @@ package mg.bovit.release.controller;
 import mg.bovit.release.dto.BuyBovinRequest;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.dto.ControllerMessage;
+import mg.bovit.release.dto.PeseBovinRequest;
 import mg.bovit.release.model.*;
 import mg.bovit.release.service.*;
 
@@ -48,33 +49,34 @@ public class PeseBovinController {
     }
 
     // function post to create new pese_bovin
-    @PostMapping("/form")
+    @PostMapping("/create")
     @ResponseBody
-    public ControllerMessage createPeseBovin(
-        @RequestParam(name="bovinId") Long id_bovin,
-        @ModelAttribute PeseBovin peseBovin
-    ) {
+    public ControllerMessage createPeseBovin(@RequestBody PeseBovinRequest peseBovinRequest) {
         ControllerMessage response = new ControllerMessage();
 
         try {
             // verufy if bovin existe or not
-            Bovin temp_bovin = bovinService.findById(id_bovin);
+            Bovin temp_bovin = bovinService.findById(peseBovinRequest.getBovinId());
     
             // get latest pese by bovin
             PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(temp_bovin.getId());
     
             // verify if date comming is after date of latest pese
-            if (latestPese != null && latestPese.getDate_pese().before(peseBovin.getDate_pese())) {
+            if (latestPese != null && latestPese.getDate_pese().before(peseBovinRequest.getDatePese())) {
                 throw new Exception("la date de pesée doit être après la date de la dernière pesée");
             }
 
             // verify poids_apres
-            if (peseBovin.getPoids_apres() <= 0) {
+            if (peseBovinRequest.getPoids() <= 0) {
                 throw new Exception("Le nouveau poids du bovin ne doit pas être négatif ou null");
             }
 
             // insertion du nouveau pesé dans la base
-            peseBovinService.save(peseBovin);
+            PeseBovin newPeseBovin = new PeseBovin();
+            newPeseBovin.setBovin(temp_bovin);
+            newPeseBovin.setDate_pese(peseBovinRequest.getDatePese());
+            newPeseBovin.setPoids_apres(peseBovinRequest.getPoids());
+            peseBovinService.save(newPeseBovin);
 
             response.setStatus("success");
             response.setMessage("pesé faites avec succès.");
