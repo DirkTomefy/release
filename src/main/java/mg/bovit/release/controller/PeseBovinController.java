@@ -75,7 +75,7 @@ public class PeseBovinController {
             PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(temp_bovin.getId());
     
             // verify if date comming is after date of latest pese
-            if (latestPese != null && latestPese.getDate_pese().before(peseBovinRequest.getDatePese())) {
+            if (latestPese != null && latestPese.getDate_pese().after(peseBovinRequest.getDatePese())) {
                 throw new Exception("la date de pesée doit être après la date de la dernière pesée");
             }
 

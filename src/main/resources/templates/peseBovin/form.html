@@ -608,9 +608,10 @@
           const bovinId = parseInt(bovinSelect.value);
           const datePese = dateInput.value;
           const poids = parseFloat(poidsInput.value) || 0;
+          let idPeseBovin = null;
 
           if (peseBovinSelect != null) {
-            const idPeseBovin = parseInt(peseBovinSelect.value);
+            idPeseBovin = parseInt(peseBovinSelect.value);
           }
 
           // Validations de base

@@ -12,6 +12,6 @@ import mg.bovit.release.model.*;
 public interface PeseBovinRepository extends JpaRepository<PeseBovin, Long> {
 
     // function to get latest bovin pese by id
-    @Query(value = "SELECT * FROM pese_bovin pb WHERE pb.id_bovin = :id_bovin ORDER BY pb.date_pese DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM pese_bovin pb WHERE pb.id_bovin = :id_bovin ORDER BY pb.date_pese DESC, pb.id DESC LIMIT 1", nativeQuery = true)
     PeseBovin getLatestPeseByBovin(@Param("id_bovin") Long id_bovin);
 }
