@@ -6,7 +6,14 @@ public class PeseBovinRequest {
     private Long bovinId;
     private Date datePese;
     private Double poids;
-    
+    private Long idPeseBovin;
+
+    public Long getIdPeseBovin() {
+        return idPeseBovin;
+    }
+    public void setIdPeseBovin(Long idPeseBovin) {
+        this.idPeseBovin = idPeseBovin;
+    }
     public Long getBovinId() {
         return bovinId;
     }

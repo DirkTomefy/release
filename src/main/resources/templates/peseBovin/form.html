@@ -504,6 +504,9 @@
 
       <form id="pesePoidsForm" onsubmit="return false;">
         <div class="form-grid">
+
+          <!-- input hidden for id peseBovin -->
+          <input th:if="${peseBovin != null}" type="hidden" name="id_peseBovin" id="id_peseBovin", th:value="${peseBovin.id}">
           
           <div class="field-group">
             <label for="bovinId"><i class="fas fa-tag"></i> Choisir le Bovin</label>
@@ -573,6 +576,7 @@
         const bovinSelect = document.getElementById("bovinId");
         const dateInput = document.getElementById("datePese");
         const poidsInput = document.getElementById("poids");
+        const idPeseBovin = document.getElementById("id_peseBovin");
         const validerBtn = document.getElementById("validerBtn");
         const toast = document.getElementById("toast");
 
@@ -623,7 +627,8 @@
           const payload = {
             bovinId: bovinId,
             datePese: datePese,
-            poids: poids
+            poids: poids,
+            idPeseBovin: idPeseBovin
           };
 
           // Envoi vers l'URL de traitement de votre choix (ex: /pesePoids/save)
