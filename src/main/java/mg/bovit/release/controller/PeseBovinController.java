@@ -62,7 +62,9 @@ public class PeseBovinController {
     // function post to create new pese_bovin
     @PostMapping("/create")
     @ResponseBody
-    public ControllerMessage createPeseBovin(@RequestBody PeseBovinRequest peseBovinRequest) {
+    public ControllerMessage createPeseBovin(
+        @RequestBody PeseBovinRequest peseBovinRequest
+    ) {
         ControllerMessage response = new ControllerMessage();
 
         try {
@@ -84,9 +86,25 @@ public class PeseBovinController {
 
             // insertion du nouveau pesé dans la base
             PeseBovin newPeseBovin = new PeseBovin();
-            newPeseBovin.setBovin(temp_bovin);
-            newPeseBovin.setDate_pese(peseBovinRequest.getDatePese());
-            newPeseBovin.setPoids_apres(peseBovinRequest.getPoids());
+
+            // verify if update or create
+            if (peseBovinRequest.getIdPeseBovin() != null) {
+                PeseBovin temp_peseBovin = peseBovinService.findById(peseBovinRequest.getIdPeseBovin());
+                if (temp_peseBovin == null) {
+                    throw new Exception("Pese du bovin introuvable");
+                }
+
+                newPeseBovin.setId(peseBovinRequest.getIdPeseBovin());
+                newPeseBovin.setBovin(temp_bovin);
+                newPeseBovin.setDate_pese(peseBovinRequest.getDatePese());
+                newPeseBovin.setPoids_apres(peseBovinRequest.getPoids());
+            }
+            else {
+                newPeseBovin.setBovin(temp_bovin);
+                newPeseBovin.setDate_pese(peseBovinRequest.getDatePese());
+                newPeseBovin.setPoids_apres(peseBovinRequest.getPoids());
+            }
+
             peseBovinService.save(newPeseBovin);
 
             response.setStatus("success");
