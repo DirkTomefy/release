@@ -22,8 +22,10 @@ import java.util.Map;
 public class PesePoidsController {
     @Autowired
     PesePoidsService pesePoidsService;
+    @Autowired
+    BovinService bovinService;
 
-
+    // function to shwo list of pese poids of bovin
     @GetMapping
     public String listPesePoids(Model model) {
         List<PesePoids> pesesPoids = pesePoidsService.findAll();
@@ -31,5 +33,16 @@ public class PesePoidsController {
         model.addAttribute("pesesPoids", pesesPoids);
 
         return "pesePoids/list";
-    } 
+    }
+    
+    // function to show forms to create pese poids
+    @GetMapping("/form")
+    public String formePesePoids(Model model) {
+        // find all bovin for select option
+        List<Bovin> bovins = bovinService.findAll();
+
+        model.addAttribute("bovins", bovins);
+
+        return "pesePoids/form";
+    }
 }
