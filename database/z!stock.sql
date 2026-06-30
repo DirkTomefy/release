@@ -28,6 +28,7 @@ CREATE TABLE mvt_stock (
     type_mouvement VARCHAR(10) NOT NULL CHECK (type_mouvement IN ('ENTREE', 'SORTIE')),
     prix_unitaire DOUBLE PRECISION NOT NULL,
     qte DOUBLE PRECISION NOT NULL,
+    qte_en_stock DOUBLE PRECISION NOT NULL,
     date_mouvement DATE DEFAULT CURRENT_DATE,
     
     CONSTRAINT fk_mvt_stock_materiel
