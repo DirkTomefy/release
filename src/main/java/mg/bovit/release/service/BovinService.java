@@ -13,7 +13,6 @@ import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 
-
 @Service
 public class BovinService {
     @Autowired
