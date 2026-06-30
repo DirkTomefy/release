@@ -50,15 +50,18 @@ public class PeseBovinController {
     // function post to create new pese_bovin
     @PostMapping("/form")
     @ResponseBody
-    public ControllerMessage createPeseBovin(@ModelAttribute PeseBovin peseBovin) {
+    public ControllerMessage createPeseBovin(
+        @RequestParam(name="bovinId") Long id_bovin,
+        @ModelAttribute PeseBovin peseBovin
+    ) {
         ControllerMessage response = new ControllerMessage();
 
         try {
             // verufy if bovin existe or not
-            Bovin temp_bovin = bovinService.findById(peseBovin.getBovin().getId());
+            Bovin temp_bovin = bovinService.findById(id_bovin);
     
             // get latest pese by bovin
-            PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(peseBovin.getBovin().getId());
+            PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(temp_bovin.getId());
     
             // verify if date comming is after date of latest pese
             if (latestPese != null && latestPese.getDate_pese().before(peseBovin.getDate_pese())) {
