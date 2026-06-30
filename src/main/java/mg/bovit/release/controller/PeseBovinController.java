@@ -53,13 +53,32 @@ public class PeseBovinController {
     public ControllerMessage createPeseBovin(@ModelAttribute PeseBovin peseBovin) {
         ControllerMessage response = new ControllerMessage();
 
-        // get latest pese by bovin
-        PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(peseBovin.getBovin().getId());
+        try {
+            // verufy if bovin existe or not
+            Bovin temp_bovin = bovinService.findById(peseBovin.getBovin().getId());
+    
+            // get latest pese by bovin
+            PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(peseBovin.getBovin().getId());
+    
+            // verify if date comming is after date of latest pese
+            if (latestPese != null && latestPese.getDate_pese().before(peseBovin.getDate_pese())) {
+                throw new Exception("la date de pesée doit être après la date de la dernière pesée");
+            }
 
-        // verify if date comming is after date of latest pese
-        if (latestPese != null && latestPese.getDate_pese().before(peseBovin.getDate_pese())) {
+            // verify poids_apres
+            if (peseBovin.getPoids_apres() <= 0) {
+                throw new Exception("Le nouveau poids du bovin ne doit pas être négatif ou null");
+            }
+
+            // insertion du nouveau pesé dans la base
+            peseBovinService.save(peseBovin);
+
+            response.setStatus("success");
+            response.setMessage("pesé faites avec succès.");
+
+        } catch (Exception e) {
             response.setStatus("error");
-            response.setMessage("la date de pesée doit être après la date de la dernière pesée");
+            response.setMessage(e.getMessage());
         }
 
         return response;
