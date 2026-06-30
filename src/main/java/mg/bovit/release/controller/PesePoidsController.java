@@ -26,9 +26,9 @@ public class PesePoidsController {
 
     @GetMapping
     public String listPesePoids(Model model) {
-        List<PesePoids> pesePoids = pesePoidsService.findAll();
+        List<PesePoids> pesesPoids = pesePoidsService.findAll();
 
-        model.addAttribute("pesePoids", pesePoids);
+        model.addAttribute("pesesPoids", pesesPoids);
 
         return "pesePoids/list";
     } 
