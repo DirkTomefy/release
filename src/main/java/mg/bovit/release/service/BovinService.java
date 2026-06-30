@@ -53,13 +53,20 @@ public class BovinService {
             }
         }
 
-        // calculate prix unitaire
-        Double prix_unitaire = prix_total / quantite;
-        
         // insert bovin in base
-        bovin.setPrix_achat(prix_unitaire);
+        Double prix_unitaire = prix_total / quantite;
+
         for (int i = 0; i < quantite; i++) {
-            bovinRepository.save(bovin);
+            Bovin newBovin = new Bovin();
+
+            newBovin.setRace(bovin.getRace());
+            newBovin.setPoids_achat(bovin.getPoids_achat());
+            newBovin.setPoids_vente(bovin.getPoids_vente());
+            newBovin.setDate_achat(bovin.getDate_achat());
+            newBovin.setDate_vente(bovin.getDate_vente());
+            newBovin.setPrix_achat(prix_unitaire);
+
+            bovinRepository.save(newBovin);
         }
     }
 
