@@ -506,12 +506,12 @@
         <div class="form-grid">
           
           <div class="field-group">
-            <label for="bovinId"><i class="fas fa-cow"></i> Choisir le Bovin</label>
+            <label for="bovinId"><i class="fas fa-tag"></i> Choisir le Bovin</label>
             <select id="bovinId" name="bovinId" required>
               <option value="">-- Sélectionner un bovin --</option>
               <option th:each="bovin : ${bovins}" 
                       th:value="${bovin.id}" 
-                      th:text="'ID: ' + ${bovin.id} + ' - ' + ${bovin.nom}"></option>
+                      th:text="'Bovin #: ' + ${bovin.id}"></option>
             </select>
           </div>
 
