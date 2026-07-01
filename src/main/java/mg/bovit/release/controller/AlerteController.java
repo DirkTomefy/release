@@ -12,7 +12,7 @@ public class AlerteController {
     @Autowired
     private PayementEmployeeService payementEmployeeService;
 
-    @GetMapping("/employees/alertes")
+    @GetMapping("/employee/alertes")
     public String listNonPayes(Model model) {
         model.addAttribute("alertes", payementEmployeeService.getAlertesNonPayes());
         return "employee/non_payee"; // Renvoie vers ton non_payee.html
