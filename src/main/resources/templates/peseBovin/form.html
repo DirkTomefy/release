@@ -511,9 +511,9 @@
           <div class="field-group">
             <label for="bovinId"><i class="fas fa-tag"></i> Choisir le Bovin</label>
             <input
-              type="text"
+              type="number"
               id="bovinId"
-              readonly
+              th:attr="readonly=${peseBovin != null}"
               th:value="${peseBovin != null ? peseBovin.id : ''}"
               style="background: #f2f8fc; font-weight: 600; color: #0f5430"
               required
