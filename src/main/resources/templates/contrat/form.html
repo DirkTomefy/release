@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
@@ -256,47 +256,36 @@
 
             </div>
 
-            <form action="/contrat/save" method="post">
+        <form th:action="@{/contrat/save}" th:object="${contrat}" method="post">
 
-                <!-- ================= Employé ================= -->
+            <div class="card mb-4">
 
-                <div class="card mb-4">
+                <div class="card-body">
 
-                    <div class="card-body">
+                    <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;">
+                        <i class="bi bi-person-fill me-2"></i>
+                        Employé
+                    </h5>
 
-                        <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;">
-                            <i class="bi bi-person-fill me-2"></i>
-                            Employé
-                        </h5>
+                    <div class="row g-3">
 
-                        <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                Employé
+                            </label>
 
-                            <div class="col-md-12">
-                                <label class="form-label">
-                                    Employé
-                                </label>
+                            <select class="form-select" name="employeeId" required>
 
-                                <select class="form-select" name="id_employee" required>
+                                <option value="">
+                                    Sélectionner un employé...
+                                </option>
 
-                                    <option value="">
-                                        Sélectionner un employé...
-                                    </option>
+                                <option th:each="emp : ${employees}" 
+                                        th:value="${emp.id}" 
+                                        th:text="${emp.nom + ' ' + emp.prenom}">
+                                </option>
 
-                                    <option value="1">
-                                        Rakoto Jean
-                                    </option>
-
-                                    <option value="2">
-                                        Rabe Marie
-                                    </option>
-
-                                    <option value="3">
-                                        Razafindrakoto Paul
-                                    </option>
-
-                                </select>
-
-                            </div>
+                            </select>
 
                         </div>
 
@@ -304,49 +293,47 @@
 
                 </div>
 
-                <!-- ================= Contrat ================= -->
+            </div>
 
-                <div class="card">
+            <div class="card">
 
-                    <div class="card-body">
+                <div class="card-body">
 
-                        <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;">
-                            <i class="bi bi-file-earmark-text-fill me-2"></i>
-                            Informations du contrat
-                        </h5>
+                    <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;">
+                        <i class="bi bi-file-earmark-text-fill me-2"></i>
+                        Informations du contrat
+                    </h5>
 
-                        <div class="row g-3">
+                    <div class="row g-3">
 
-                            <div class="col-md-6">
+                        <div class="col-md-6">
 
-                                <label class="form-label">
-                                    Date de début
-                                </label>
+                            <label class="form-label">
+                                Date de début
+                            </label>
 
-                                <input type="date" name="date_debut" class="form-control" required>
+                            <input type="date" th:field="*{dateDebut}" class="form-control" required>
 
-                            </div>
+                        </div>
 
-                            <div class="col-md-6">
+                        <div class="col-md-6">
 
-                                <label class="form-label">
-                                    Date de fin
-                                </label>
+                            <label class="form-label">
+                                Date de fin
+                            </label>
 
-                                <input type="date" name="date_fin" class="form-control">
+                            <input type="date" th:field="*{dateFin}" class="form-control">
 
-                            </div>
+                        </div>
 
-                            <div class="col-md-6">
+                        <div class="col-md-6">
 
-                                <label class="form-label">
-                                    Salaire mensuel (Ar)
-                                </label>
+                            <label class="form-label">
+                                Salaire mensuel (Ar)
+                            </label>
 
-                                <input type="number" name="salaire" class="form-control" placeholder="Ex : 800000"
-                                    min="0" required>
-
-                            </div>
+                            <input type="number" th:field="*{salaire}" class="form-control" placeholder="Ex : 800000"
+                                min="0" required>
 
                         </div>
 
@@ -354,22 +341,22 @@
 
                 </div>
 
-                <!-- ================= Boutons ================= -->
+            </div>
 
-                <div class="text-end mt-4">
+            <div class="text-end mt-4">
 
-                    <a href="#listContratPage" class="btn btn-light me-2">
-                        Annuler
-                    </a>
+                <a href="#listContratPage" class="btn btn-light me-2">
+                    Annuler
+                </a>
 
-                    <button type="submit" class="btn btn-soft-primary">
-                        <i class="bi bi-check-circle me-1"></i>
-                        Enregistrer
-                    </button>
+                <button type="submit" class="btn btn-soft-primary">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Enregistrer
+                </button>
 
-                </div>
+            </div>
 
-            </form>
+        </form>
 
         </div>
 
