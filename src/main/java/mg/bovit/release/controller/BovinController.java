@@ -69,35 +69,43 @@ public class BovinController {
         return "bovin/form"; // Vue Thymeleaf
     }
 
-    // Méthode pour l'achat – réponse JSON
-    @PostMapping("/achat")
-    @ResponseBody
-    public ResponseEntity<?> buyBovin(@RequestBody BuyBovinRequest request) {
-        try {
-            Bovin bovin = new Bovin();
-            bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
-            bovin.setPoids_achat(request.getPoidsAchat()); // <-- Ajout de la liaison ici
+   @PostMapping("/achat")
+@ResponseBody
+public ResponseEntity<?> buyBovin(@RequestBody BuyBovinRequest request) {
+    try {
+        Bovin bovin = new Bovin();
+        bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
+        bovin.setPoids_achat(request.getPoidsAchat());
 
-            Race race = new Race();
-            race.setId(request.getRaceId());
-            bovin.setRace(race);
+        Race race = new Race();
+        race.setId(request.getRaceId());
+        bovin.setRace(race);
 
-            List<Caisse> caisses = new ArrayList<>();
-            if (request.getPayments() != null) {
-                for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
-                    Caisse caisse = new Caisse();
-                    caisse.setId(pDto.getCaisseId());
-                    caisse.setMontant_actuelle(pDto.getMontant());
-                    caisses.add(caisse);
-                }
-            }
-
-            bovinService.buyBovin(bovin, caisses, request.getQuantite());
-
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Achat enregistré avec succès !"));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
+        // Récupérer le prix unitaire du formulaire
+        Double prixUnitaire = request.getPrixUnitaire();
+        if (prixUnitaire == null || prixUnitaire <= 0) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "error", "message", "Le prix unitaire est obligatoire et doit être > 0")
+            );
         }
+
+        List<Caisse> caisses = new ArrayList<>();
+        if (request.getPayments() != null) {
+            for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
+                Caisse caisse = new Caisse();
+                caisse.setId(pDto.getCaisseId());
+                caisse.setMontant_actuelle(pDto.getMontant());
+                caisses.add(caisse);
+            }
+        }
+
+        // Passer le prix unitaire au service
+        bovinService.buyBovin(bovin, caisses, request.getQuantite(), prixUnitaire);
+
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Achat enregistré avec succès !"));
+
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
     }
+}
 }
