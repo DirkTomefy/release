@@ -15,6 +15,7 @@ CREATE TABLE materiel (
     id SERIAL PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL,
     id_type_materiel INTEGER NOT NULL,
+    type_gestion VARCHAR(20) NOT NULL CHECK (type_gestion IN ('FIFO', 'LIFO')), -- c'est plus logique
     
     CONSTRAINT fk_materiel_type
         FOREIGN KEY (id_type_materiel)
@@ -28,10 +29,11 @@ CREATE TABLE mvt_stock (
     type_mouvement VARCHAR(10) NOT NULL CHECK (type_mouvement IN ('ENTREE', 'SORTIE')),
     prix_unitaire DOUBLE PRECISION NOT NULL,
     qte DOUBLE PRECISION NOT NULL,
-    qte_en_stock DOUBLE PRECISION NOT NULL,
+    qte_restant DOUBLE PRECISION NOT NULL,
     date_mouvement DATE DEFAULT CURRENT_DATE,
     
     CONSTRAINT fk_mvt_stock_materiel
         FOREIGN KEY (id_materiel)
         REFERENCES materiel(id)
 );
+

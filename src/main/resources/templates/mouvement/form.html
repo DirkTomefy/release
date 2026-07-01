@@ -515,11 +515,21 @@
             </option>
           </select>
         </div>
+
         <!-- materiel (ID) -->
         <div class="field-group">
           <label for="materielId"><i class="fas fa-box"></i> Matériel</label>
           <select id="materielId" name="materielId">
             <option th:each="materiel : ${materiels}" th:value="${materiel.id}" th:text="${materiel.libelle}">
+            </option>
+          </select>
+        </div>
+
+        <!-- type mouvement -->
+        <div class="field-group">
+          <label for="typeMouvement"><i class="fas fa-exchange-alt"></i> Type de mouvement</label>
+          <select id="typeMouvement" name="typeMouvement" required>
+            <option th:each="typeMouvement : ${typeMouvements}" th:value="${typeMouvement}" th:text="${typeMouvement}">
             </option>
           </select>
         </div>
@@ -538,14 +548,14 @@
 
         <!-- Prix unitaire (affichage uniquement, non envoyé) -->
         <div class="field-group">
-          <label for="pu"><i class="fas fa-dollar-sign"></i> P.U estimé (€)</label>
-          <input type="number" id="pu" placeholder="ex: 1250" step="0.01" min="0" value="1200" />
+          <label for="pu"><i class="fas fa-dollar-sign"></i> P.U estimé (Ar)</label>
+          <input type="number" id="pu" placeholder="ex: 1250" step="0.01" min="0" value="" />
         </div>
 
         <!-- Total bovin (calculé, affichage) -->
         <div class="field-group">
           <label for="total"><i class="fas fa-calculator"></i> Total bovin (est.)</label>
-          <input type="text" id="total" readonly value="3600.00"
+          <input type="text" id="total" readonly value=""
             style="background:#f2f8fc; font-weight:600; color:#0f5430;" />
         </div>
 
@@ -589,7 +599,7 @@
         <!-- Total paiements (affichage) -->
         <div class="total-highlight">
           <span><i class="fas fa-coins" style="color:#1f8a4a;"></i> Total paiements enregistrés</span>
-          <span class="total-value" id="totalDisplay">1 200,00 €</span>
+          <span class="total-value" id="totalDisplay">1 200,00 Ar</span>
         </div>
       </div>
 
@@ -615,8 +625,8 @@
 
   <script>
     // comment detecter le changement de type de materiel ? -> il faut que je mette un id sur le select du type de materiel et que je fasse un addEventListener dessus pour detecter le changement et ensuite faire un fetch pour recuperer les materiels correspondants au type selectionné
-    document.getElementById('materielTypeId').addEventListener('change', function() {
-      console.log(this.value);
+    document.getElementById('materielTypeId').addEventListener('change', function () {
+      // console.log(this.value);
       const typeId = this.value;
       // on change le select des materiels en fonction du type selectionné
       // il faut forcement un rest controller ? oui ou non ? -> 
@@ -634,6 +644,18 @@
         })
         .catch(error => console.error('Erreur lors de la récupération des matériels :', error));
     });
+    document.getElementById('typeMouvement').addEventListener('change', function () {
+      const type = this.value;
+      if (type === 'ENTREE') {
+        document.getElementById('pu').parentElement.style.display = 'block';
+        document.getElementById('total').parentElement.style.display = 'block';
+        document.querySelector('.payment-section').style.display = 'block';
+      } else if (type === 'SORTIE') {
+        document.getElementById('pu').parentElement.style.display = 'none';
+        document.getElementById('total').parentElement.style.display = 'none';
+        document.querySelector('.payment-section').style.display = 'none';
+      }
+    });
     (function () {
       // Éléments
       const paymentList = document.getElementById('paymentList');
@@ -643,7 +665,7 @@
       const totalInput = document.getElementById('total');
       const puInput = document.getElementById('pu');
       const qteInput = document.getElementById('quantite');
-      const dateInput = document.getElementById('dateAchat');
+      const dateInput = document.getElementById('dateMouvement');
       const validerBtn = document.getElementById('validerBtn');
       const toast = document.getElementById('toast');
       let rowCounter = 1;

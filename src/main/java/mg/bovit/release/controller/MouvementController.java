@@ -37,7 +37,7 @@ public class MouvementController {
         List<String> typeMouvement = List.of("ENTREE", "SORTIE");
         model.addAttribute("materielTypes", materielTypes);
         model.addAttribute("materiels", materiels);
-        model.addAttribute("typeMouvement", typeMouvement);
+        model.addAttribute("typeMouvements", typeMouvement);
 
         return "mouvement/form";
     }
