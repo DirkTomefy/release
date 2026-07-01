@@ -14,27 +14,48 @@ import mg.bovit.release.repository.PayementEmployeeRepository;
 public class PayementEmployeeService {
     @Autowired
     private PayementEmployeeRepository payementEmployeeRepository;
-    
-    public List<YearMonth> getMoisImpayes(Employee employee) {
-    YearMonth debut = YearMonth.from(employee.getDateEntree().toLocalDate());
-    YearMonth moisActuel = YearMonth.now();
 
-    // Rien à vérifier si l'employé est entré ce mois-ci ou après
-    if (!debut.isBefore(moisActuel)) {
-        return List.of();
+    /**
+     * Retourne les mois pour lesquels un employé aurait dû être payé,
+     * depuis son mois d'entrée jusqu'au mois précédent (mois en cours exclu).
+     */
+    public List<YearMonth> getUnpaidMonths(Employee employee) {
+        YearMonth premierMoisDu = getExpectedMonth(employee);
+        YearMonth dernierMoisDu = getExpectedEndMonth(); // borne exclusive
+
+        List<YearMonth> moisAttendus = generateMonthsBetween(premierMoisDu, dernierMoisDu);
+        Set<YearMonth> moisPayes = getPaidMonths(employee);
+
+        return moisAttendus.stream()
+                .filter(mois -> !moisPayes.contains(mois))
+                .toList();
     }
 
-    Set<YearMonth> moisPayes = payementEmployeeRepository.findByEmployee(employee)
-            .stream()
-            .map(p -> YearMonth.from(p.getDatePayement().toLocalDateTime()))
-            .collect(Collectors.toSet());
+    /** Premier mois où l'employé doit être payé : son mois d'entrée. */
+    private YearMonth getExpectedMonth(Employee employee) {
+        return YearMonth.from(employee.getDateEntree().toLocalDate());
+    }
 
-    List<YearMonth> moisImpayes = new ArrayList<>();
-    for (YearMonth mois = debut; mois.isBefore(moisActuel); mois = mois.plusMonths(1)) {
-        if (!moisPayes.contains(mois)) {
-            moisImpayes.add(mois);
+    /** Borne exclusive : on ne réclame jamais le mois en cours. */
+    private YearMonth getExpectedEndMonth() {
+        return YearMonth.now();
+    }
+
+    /** Liste tous les mois entre deux bornes (fin exclue). */
+    private List<YearMonth> generateMonthsBetween(YearMonth debut, YearMonth finExclusive) {
+        List<YearMonth> mois = new ArrayList<>();
+        YearMonth courant = debut;
+        while (courant.isBefore(finExclusive)) {
+            mois.add(courant);
+            courant = courant.plusMonths(1);
         }
+        return mois;
     }
-    return moisImpayes;
-}
+
+    /** Règle "payé" : au moins un paiement enregistré pour ce mois. */
+    private Set<YearMonth> getPaidMonths(Employee employee) {
+        return payementEmployeeRepository.findByEmployee(employee).stream()
+                .map(p -> YearMonth.from(p.getDatePayement().toLocalDateTime()))
+                .collect(Collectors.toSet());
+    }
 }
