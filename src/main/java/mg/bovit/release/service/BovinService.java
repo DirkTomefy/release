@@ -26,7 +26,7 @@ public class BovinService {
     }
 
     // function to buy bovin
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite) throws Exception {
         // vérify if quantite
         if (quantite <= 0) {
@@ -96,7 +96,7 @@ public class BovinService {
 
         return bovinRepository.findAll(BovinSpecification.fromForm(form), pageable);
     }
-    
+
 
     public List<Bovin> findAll() {
         return bovinRepository.findAll();

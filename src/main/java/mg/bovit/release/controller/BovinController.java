@@ -33,7 +33,7 @@ public class BovinController {
     private CaisseService caisseService;
 
     // Méthode pour la liste – retourne une vue
-    @GetMapping
+    @GetMapping("/list")
     public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
             Model model) throws Exception {
         if (criteria == null) {

@@ -1,7 +1,6 @@
 package mg.bovit.release.controller;
 
-import mg.bovit.release.dto.BuyBovinRequest;
-import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 import mg.bovit.release.dto.ControllerMessage;
 import mg.bovit.release.dto.PeseBovinRequest;
 import mg.bovit.release.model.*;
@@ -10,7 +9,7 @@ import mg.bovit.release.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller; // ← remplacer RestController par Controller
+import org.springframework.stereotype.Controller; 
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Controller // ← important
+@Controller 
 @RequestMapping("/peseBovin")
 public class PeseBovinController {
     @Autowired
@@ -27,9 +26,8 @@ public class PeseBovinController {
     @Autowired
     BovinService bovinService;
 
-    // function to shwo list of pese poids of bovin
     @GetMapping("/list")
-    public String listPeseBovin(Model model) {
+    public String listPeseBovin(@ModelAttribute("criteria") MulticriteriaListPeseBovin criteria,Model model) {
         List<PeseBovin> pesesBovin = peseBovinService.findAll();
 
         model.addAttribute("pesesBovin", pesesBovin);
@@ -37,7 +35,6 @@ public class PeseBovinController {
         return "peseBovin/list";
     }
     
-    // function to show forms to create pese poids
     @GetMapping({"/form", "/form/{id}"})
     public String formPeseBovin(
         @PathVariable(name="id", required = false) Long id,
