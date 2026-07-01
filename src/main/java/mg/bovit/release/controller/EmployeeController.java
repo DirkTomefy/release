@@ -19,7 +19,7 @@ public class EmployeeController {
     @GetMapping("/employee/new")
     public String showCreationForm(Model model) {
         model.addAttribute("employeeForm", new EmployeeContratDTO());
-        return "form"; // Correspond au nom de votre fichier d'affichage form.html sans l'extension
+        return "employee/form";
     }
 
     // Route de capture de soumission du formulaire POST
@@ -27,6 +27,6 @@ public class EmployeeController {
     public String saveEmployee(@ModelAttribute("employeeForm") EmployeeContratDTO formDto) {
         employeeService.saveEmployeeWithContrat(formDto);
         // Redirection vers la liste après enregistrement réussi
-        return "redirect:/employee/list#listEmployeePage";
+        return "redirect:/employee/new";
     }
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 
 <head>
   <meta charset="UTF-8">
@@ -196,112 +196,112 @@
                 </h2>
             </div>
 
-            <form action="/employee/save" method="post">
+    <form action="/employee/save" method="POST" th:object="${employeeForm}">
 
-                <div class="card mb-4">
+        <div class="card mb-4">
 
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-person"></i>
-                            Informations de l'employé
-                        </h5>
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person"></i>
+                    Informations de l'employé
+                </h5>
+            </div>
+
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" th:field="*{nom}" class="form-control" required>
                     </div>
 
-                    <div class="card-body">
+                    <div class="col-md-6">
+                        <label class="form-label">Prénom *</label>
+                        <input type="text" th:field="*{prenom}" class="form-control" required>
+                    </div>
 
-                        <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Date de naissance
+                        </label>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Nom *</label>
-                                <input type="text" name="nom" class="form-control" required>
-                            </div>
+                        <input type="date" th:field="*{dateNaissance}" class="form-control">
+                    </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Prénom *</label>
-                                <input type="text" name="prenom" class="form-control" required>
-                            </div>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Date d'entrée *
+                        </label>
 
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    Date de naissance
-                                </label>
-
-                                <input type="date" name="date_naissance" class="form-control">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    Date d'entrée *
-                                </label>
-
-                                <input type="date" name="date_entree" class="form-control" required>
-                            </div>
-
-                        </div>
-
+                        <input type="date" th:field="*{dateEntree}" class="form-control" required>
                     </div>
 
                 </div>
 
+            </div>
 
-                <div class="card">
+        </div>
 
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-file-earmark-text"></i>
-                            Premier contrat
-                        </h5>
+
+        <div class="card">
+
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Premier contrat
+                </h5>
+            </div>
+
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Date de début *
+                        </label>
+
+                        <input type="date" th:field="*{dateDebut}" class="form-control" required>
                     </div>
 
-                    <div class="card-body">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Date de fin
+                        </label>
 
-                        <div class="row g-3">
+                        <input type="date" th:field="*{dateFin}" class="form-control">
+                    </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    Date de début *
-                                </label>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Salaire mensuel (Ar) *
+                        </label>
 
-                                <input type="date" name="date_debut" class="form-control" required>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    Date de fin
-                                </label>
-
-                                <input type="date" name="date_fin" class="form-control">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    Salaire mensuel (Ar) *
-                                </label>
-
-                                <input type="number" name="salaire" min="0" step="1000" class="form-control"
-                                    placeholder="0" required>
-                            </div>
-
-                        </div>
-
+                        <input type="number" th:field="*{salaire}" min="0" step="1000" class="form-control"
+                            placeholder="0" required>
                     </div>
 
                 </div>
 
-                <div class="text-end mt-4">
+            </div>
 
-                    <a href="#listEmployeePage" class="btn btn-light me-2">
-                        Annuler
-                    </a>
+        </div>
 
-                    <button type="submit" class="btn btn-soft-primary">
-                        <i class="bi bi-check-circle me-1"></i>
-                        Enregistrer
-                    </button>
+        <div class="text-end mt-4">
 
-                </div>
+            <a href="#listEmployeePage" class="btn btn-light me-2">
+                Annuler
+            </a>
 
-            </form>
+            <button type="submit" class="btn btn-soft-primary">
+                <i class="bi bi-check-circle me-1"></i>
+                Enregistrer
+            </button>
+
+        </div>
+
+    </form>
 
         </div>
     </div>

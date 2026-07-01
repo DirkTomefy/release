@@ -1,7 +1,6 @@
 package mg.bovit.release.model;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -37,9 +36,12 @@ public class Contrat {
     )
     private BigDecimal salaire;
 
-    @ManyToOne
+    // Ajout et correction de la relation ManyToOne avec l'employé
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_employee", nullable = false)
     private Employee employee;
+
+    // ================= Getters et Setters =================
 
     public Long getId() {
         return id;
@@ -80,7 +82,7 @@ public class Contrat {
     public void setSalaire(BigDecimal salaire) {
         this.salaire = salaire;
     }
-    
+
     public Employee getEmployee() {
         return employee;
     }
