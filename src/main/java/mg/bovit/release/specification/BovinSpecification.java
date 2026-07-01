@@ -5,7 +5,6 @@ import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.*;
 
-
 public class BovinSpecification {
 
     public static Specification<Bovin> fromForm(MultiCriteriaFormBovinList form) {
@@ -48,13 +47,13 @@ public class BovinSpecification {
                 // "tous" => pas de filtre
             }
 
-            // Recherche textuelle : on recherche dans l'ID (converti en string) et éventuellement dans race.nom
+            // Recherche textuelle : on recherche dans l'ID (converti en string) et
+            // éventuellement dans race.nom
             if (form.getSearch() != null && !form.getSearch().isEmpty()) {
                 String searchPattern = "%" + form.getSearch().toLowerCase() + "%";
                 Predicate searchPredicate = cb.or(
                         cb.like(cb.lower(root.get("id").as(String.class)), searchPattern),
-                        cb.like(cb.lower(root.get("race").get("nom")), searchPattern)
-                );
+                        cb.like(cb.lower(root.get("race").get("nom")), searchPattern));
                 predicate = cb.and(predicate, searchPredicate);
             }
 

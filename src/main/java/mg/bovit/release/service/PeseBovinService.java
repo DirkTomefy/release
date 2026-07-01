@@ -9,9 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
 import mg.bovit.release.specification.BovinSpecification;
+import mg.bovit.release.specification.PeseSpecification;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 
 @Service
 public class PeseBovinService {
@@ -36,5 +38,27 @@ public class PeseBovinService {
     // function to findAll pese_bovin
     public List<PeseBovin> findAll() {
         return peseBovinRepository.findAll();
+    }
+
+     public Page<PeseBovin> searchPeseBovins(MulticriteriaListPeseBovin form) {
+        // Construction du tri
+        String sortField = "id";
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (form.getSort() != null && !form.getSort().isEmpty()) {
+            String[] parts = form.getSort().split(",");
+            if (parts.length >= 1) {
+                sortField = parts[0];
+            }
+            if (parts.length >= 2) {
+                direction = Sort.Direction.fromString(parts[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(
+                form.getPage(),
+                form.getSize(),
+                Sort.by(direction, sortField)
+        );
+
+        return peseBovinRepository.findAll(PeseSpecification.fromForm(form), pageable);
     }
 }
