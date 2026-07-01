@@ -74,22 +74,24 @@ public class BovinService {
 
         // insert bovin in base
         Double prix_unitaire = prix_total / quantite;
-
         for (int i = 0; i < quantite; i++) {
             Bovin newBovin = new Bovin();
             PeseBovin newPeseBovin = new PeseBovin();
 
+            
             newBovin.setRace(bovin.getRace());
             newBovin.setPoids_achat(bovin.getPoids_achat());
             newBovin.setPoids_vente(bovin.getPoids_vente());
             newBovin.setDate_achat(bovin.getDate_achat());
             newBovin.setDate_vente(bovin.getDate_vente());
             newBovin.setPrix_achat(prix_unitaire);
-            newPeseBovin.setBovin(bovin);
+            
+            bovinRepository.save(newBovin);
+
+            newPeseBovin.setBovin(newBovin);
             newPeseBovin.setDate_pese(bovin.getDate_achat());
             newPeseBovin.setPoids_apres(bovin.getPoids_achat());
 
-            bovinRepository.save(newBovin);
             peseRepository.save(newPeseBovin);
         }
     }
