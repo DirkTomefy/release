@@ -196,116 +196,99 @@
                 </h2>
             </div>
 
-    <form action="/employee/save" method="POST" th:object="${employeeForm}">
-
-        <div class="card mb-4">
-
-            <div class="card-header bg-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-person"></i>
-                    Informations de l'employé
-                </h5>
-            </div>
-
-            <div class="card-body">
-
-                <div class="row g-3">
-
-                    <div class="col-md-6">
-                        <label class="form-label">Nom *</label>
-                        <input type="text" th:field="*{nom}" class="form-control" required>
+              <form action="/employee/save" method="POST" th:object="${employeeForm}" id="employeeForm">
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-person"></i> Informations de l'employé</h5>
                     </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Prénom *</label>
-                        <input type="text" th:field="*{prenom}" class="form-control" required>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom *</label>
+                                <input type="text" th:field="*{nom}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prénom *</label>
+                                <input type="text" th:field="*{prenom}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de naissance</label>
+                                <input type="date" id="dateNaissance" th:field="*{dateNaissance}" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date d'entrée *</label>
+                                <input type="date" id="dateEntree" th:field="*{dateEntree}" class="form-control" required>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Date de naissance
-                        </label>
-
-                        <input type="date" th:field="*{dateNaissance}" class="form-control">
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Date d'entrée *
-                        </label>
-
-                        <input type="date" th:field="*{dateEntree}" class="form-control" required>
-                    </div>
-
                 </div>
 
-            </div>
-
-        </div>
-
-
-        <div class="card">
-
-            <div class="card-header bg-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-file-earmark-text"></i>
-                    Premier contrat
-                </h5>
-            </div>
-
-            <div class="card-body">
-
-                <div class="row g-3">
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Date de début *
-                        </label>
-
-                        <input type="date" th:field="*{dateDebut}" class="form-control" required>
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Premier contrat</h5>
                     </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Date de fin
-                        </label>
-
-                        <input type="date" th:field="*{dateFin}" class="form-control">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Date de début *</label>
+                                <input type="date" id="dateDebut" th:field="*{dateDebut}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de fin</label>
+                                <input type="date" id="dateFin" th:field="*{dateFin}" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Salaire mensuel (Ar) *</label>
+                                <input type="number" th:field="*{salaire}" min="0" step="1000" class="form-control" placeholder="0" required>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Salaire mensuel (Ar) *
-                        </label>
-
-                        <input type="number" th:field="*{salaire}" min="0" step="1000" class="form-control"
-                            placeholder="0" required>
-                    </div>
-
                 </div>
 
-            </div>
-
-        </div>
-
-        <div class="text-end mt-4">
-
-            <a href="#listEmployeePage" class="btn btn-light me-2">
-                Annuler
-            </a>
-
-            <button type="submit" class="btn btn-soft-primary">
-                <i class="bi bi-check-circle me-1"></i>
-                Enregistrer
-            </button>
-
-        </div>
-
-    </form>
+                <div class="text-end mt-4">
+                    <a href="#listEmployeePage" class="btn btn-light me-2">Annuler</a>
+                    <button type="submit" class="btn btn-soft-primary">
+                        <i class="bi bi-check-circle me-1"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
 
         </div>
     </div>
+<script>
+        const dateNaissance = document.getElementById('dateNaissance');
+        const dateEntree = document.getElementById('dateEntree');
+        const dateDebut = document.getElementById('dateDebut');
+        const dateFin = document.getElementById('dateFin');
 
+        // 1. La date d'entrée dépend de la date de naissance
+        dateNaissance.addEventListener('change', function() {
+            if (this.value) {
+                dateEntree.min = this.value;
+            }
+        });
+
+        // 2. Le contrat ne peut pas commencer avant la date d'entrée de l'employé
+        dateEntree.addEventListener('change', function() {
+            if (this.value) {
+                dateDebut.min = this.value;
+                // Si la date de naissance n'a pas défini la limite basse
+                if(!dateNaissance.value) {
+                    dateNaissance.max = this.value;
+                }
+            }
+        });
+
+        // 3. La date de fin du contrat dépend de la date de début
+        dateDebut.addEventListener('change', function() {
+            if (this.value) {
+                dateFin.min = this.value;
+                // Ajuste dynamiquement la date d'entrée max si nécessaire
+                dateEntree.max = this.value;
+            }
+        });
+    </script>
 </body>
 
 </html>
