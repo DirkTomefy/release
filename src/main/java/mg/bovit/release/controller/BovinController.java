@@ -5,6 +5,7 @@ import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Race;
+import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.service.BovinService;
 import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.RaceService;
@@ -33,7 +34,7 @@ public class BovinController {
     private CaisseService caisseService;
 
     // Méthode pour la liste – retourne une vue
-    @GetMapping
+     @GetMapping
     public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
             Model model) throws Exception {
         if (criteria == null) {
@@ -46,14 +47,15 @@ public class BovinController {
             criteria.setSize(1000);
         }
 
-        Page<Bovin> bovinPage = bovinService.searchBovins(criteria);
+        // Utilisation de la nouvelle méthode qui utilise la vue
+        Page<BovinWithPoids> bovinPage = bovinService.searchBovinsWithPoids(criteria);
         List<Race> races = raceService.findAll();
 
         model.addAttribute("bovinPage", bovinPage);
         model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
 
-        return "bovin/list"; // Vue Thymeleaf
+        return "bovin/list";
     }
 
     // Méthode pour afficher le formulaire d'achat – retourne une vue

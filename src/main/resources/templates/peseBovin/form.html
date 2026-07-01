@@ -598,7 +598,7 @@
             fetch("/bovin/api/"+bovinId)
               .then(res => res.json())
               .then(bovin => {
-                 bovinInfo.innerText = "Race:"+bovin.race.nom
+                 bovinInfo.innerText = "Race:"+bovin.raceNom+", Poids Actuel:"+bovin.poidsActuel+"kg, Date pesée:"+bovin.dateDernierPese;
             });
           }
         });

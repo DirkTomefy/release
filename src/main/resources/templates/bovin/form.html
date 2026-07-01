@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="fr">
-  <head>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🐄 Achat de bovins</title>
@@ -507,18 +507,11 @@
       <!-- Formulaire -->
       <form id="bovinForm" onsubmit="return false;">
         <div class="form-grid">
-          <!-- Race (ID) -->
+          <!-- Race (DYNAMIQUE depuis la BDD) -->
           <div class="field-group">
             <label for="raceId"><i class="fas fa-tag"></i> Race</label>
-            <select id="raceId" name="raceId">
-              <option value="1">Blonde d'Aquitaine</option>
-              <option value="2" selected>Limousine</option>
-              <option value="3">Charolaise</option>
-              <option value="4">Salers</option>
-              <option value="5">Aubrac</option>
-              <option value="6">Prim'Holstein</option>
-              <option value="7">Angus</option>
-              <option value="8">Hereford</option>
+            <select id="raceId" name="raceId" th:field="${buyRequest.raceId}">
+              <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
             </select>
           </div>
 
@@ -527,7 +520,7 @@
             <label for="dateAchat"
               ><i class="fas fa-calendar-day"></i> Date d'achat</label
             >
-            <input type="date" id="dateAchat" name="dateAchat" required />
+            <input type="date" id="dateAchat" name="dateAchat" th:field="${buyRequest.dateAchat}" required />
           </div>
 
           <!-- Quantité -->
@@ -541,7 +534,7 @@
               name="quantite"
               placeholder="ex: 5"
               min="1"
-              value="3"
+              th:field="${buyRequest.quantite}"
             />
           </div>
 
@@ -572,6 +565,7 @@
               placeholder="ex: 350.5"
               step="0.01"
               min="1"
+              th:field="${buyRequest.poidsAchat}"
               required
             />
           </div>
@@ -604,13 +598,11 @@
             </div>
 
             <div class="payment-list" id="paymentList">
-              <!-- Ligne initiale -->
+              <!-- Ligne initiale avec caisses dynamiques -->
               <div class="payment-row" data-row-id="1">
                 <div class="pay-select">
                   <select class="pay-type">
-                    <option value="1">Mvola</option>
-                    <option value="2" selected>Espèce</option>
-                    <option value="3">Carte bancaire</option>
+                    <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
                   </select>
                 </div>
                 <div class="pay-montant">
@@ -620,7 +612,7 @@
                     placeholder="0.00"
                     step="0.01"
                     min="0"
-                    value="1200"
+                    value="0"
                   />
                 </div>
                 <button type="button" class="btn-remove-pay" disabled>
@@ -655,7 +647,7 @@
               ><i class="fas fa-coins" style="color: #1f8a4a"></i> Total
               paiements enregistrés</span
             >
-            <span class="total-value" id="totalDisplay">1 200,00 €</span>
+            <span class="total-value" id="totalDisplay">0,00 €</span>
           </div>
         </div>
 
@@ -757,12 +749,15 @@
           const row = document.createElement("div");
           row.className = "payment-row";
           row.dataset.rowId = rowId;
+          
+          // Récupérer les options de caisse depuis la première ligne
+          const firstSelect = document.querySelector(".pay-type");
+          const optionsHtml = firstSelect ? firstSelect.innerHTML : '<option value="1">Mvola</option><option value="2">Espèce</option>';
+          
           row.innerHTML = `
             <div class="pay-select">
               <select class="pay-type">
-                <option value="1">Mvola</option>
-                <option value="2" selected>Espèce</option>
-                <option value="3">Carte bancaire</option>
+                ${optionsHtml}
               </select>
             </div>
             <div class="pay-montant">
@@ -888,7 +883,7 @@
                 showToast(data.message, "success");
                 // Réinitialisation partielle ou redirection
                 setTimeout(() => {
-                  window.location.href = "/bovins";
+                  window.location.href = "/bovins/list";
                 }, 1500);
               } else {
                 showToast("Erreur : " + data.message, "error");
