@@ -102,63 +102,24 @@
           </tr>
         </thead>
 
-        <tbody>
-
-          <!-- EMPLOYÉ 1 -->
-          <tr>
-            <td>
-              <span class="fw-medium">Rakoto Jean</span><br>
-              <small class="text-muted">EMP-001</small>
-            </td>
-            <td>Mai 2026</td>
-            <td>10/01/2025</td>
-            <td>
-              <span class="badge-danger-soft">Non payé</span>
-            </td>
-            <td>
-              <a href="#payPage" class="btn btn-sm btn-soft-primary">
-                <i class="bi bi-cash"></i> Payer
-              </a>
-            </td>
-          </tr>
-
-          <!-- EMPLOYÉ 2 -->
-          <tr>
-            <td>
-              <span class="fw-medium">Rabe Marie</span><br>
-              <small class="text-muted">EMP-002</small>
-            </td>
-            <td>Avril 2026</td>
-            <td>15/03/2024</td>
-            <td>
-              <span class="badge-danger-soft">Non payé</span>
-            </td>
-            <td>
-              <a href="#payPage" class="btn btn-sm btn-soft-primary">
-                <i class="bi bi-cash"></i> Payer
-              </a>
-            </td>
-          </tr>
-
-          <!-- EMPLOYÉ 3 (cas piège : récent donc OK même si mois ancien) -->
-          <tr>
-            <td>
-              <span class="fw-medium">Andry Paul</span><br>
-              <small class="text-muted">EMP-003</small>
-            </td>
-            <td>Février 2026</td>
-            <td>01/02/2026</td>
-            <td>
-              <span class="badge-warning-soft">Ignoré (non actif avant)</span>
-            </td>
-            <td>
-              <button class="btn btn-sm btn-light" disabled>
-                Non concerné
-              </button>
-            </td>
-          </tr>
-
-        </tbody>
+      <tbody>
+        <tr th:each="alerte : ${alertes}">
+          <td>
+            <span class="fw-medium" th:text="${alerte.employee.nom + ' ' + alerte.employee.prenom}">Nom Employé</span><br>
+            <small class="text-muted" th:text="'ID: ' + ${alerte.employee.id}">EMP-XXX</small>
+          </td>
+          <td th:text="${alerte.moisManquant}">Mai 2026</td>
+          <td th:text="${#dates.format(alerte.employee.dateEntree, 'dd/MM/yyyy')}">01/01/2026</td>
+          <td>
+            <span class="badge bg-danger text-white">Non payé</span>
+          </td>
+          <td>
+            <a th:href="@{/employees/payer(id=${alerte.employee.id})}" class="btn btn-sm btn-primary">
+              <i class="bi bi-cash"></i> Payer
+            </a>
+          </td>
+        </tr>
+      </tbody>
       </table>
     </div>
   </div>

@@ -547,189 +547,140 @@
       </div>
 
       <!-- Formulaire -->
-      <form id="payeForm" onsubmit="return false;">
-        <div class="form-grid">
-          <!-- Employé -->
-          <div class="field-group">
-            <label for="employeeId"><i class="fas fa-user"></i> Employé</label>
-            <!-- NOTE : cette liste doit être générée côté serveur (SELECT id, nom, prenom FROM employee) -->
-            <select id="employeeId" name="employeeId">
-              <option value="">-- Sélectionner un employé --</option>
+<form id="payeForm" onsubmit="return false;">
+  <div class="form-grid">
+    <div class="field-group">
+      <label for="employeeSelect"><i class="fas fa-user"></i> Employé</label>
+      <select id="employeeSelect" class="form-control" name="employeeId" required>
+        <option value="">-- Sélectionner un employé --</option>
+        <option th:each="emp : ${employees}" 
+                th:value="${emp.id}" 
+                th:text="${emp.nom + ' ' + emp.prenom}">
+        </option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="moisPaye"><i class="fas fa-calendar-day"></i> Mois à payer</label>
+      <input type="month" id="moisPaye" name="moisPaye" required />
+    </div>
+
+<div class="field-group">
+  <label for="typePayementId"><i class="fas fa-tag"></i> Type de paiement</label>
+  <select id="typePayementId" name="typePayementId" required>
+    <option value="">-- Sélectionner un type --</option>
+    <option th:each="type : ${typesPayement}" 
+            th:value="${type.id}" 
+            th:text="${type.libelle}">
+    </option>
+  </select>
+</div>
+
+    <div class="field-group">
+  <label for="salaireContrat"><i class="fas fa-file-contract"></i> Salaire contrat (Ar)</label>
+  <input type="text" id="salaireContrat" readonly value="0,00" data-raw-value="0" />
+</div>
+
+<div class="field-group">
+  <label for="resteDu"><i class="fas fa-hourglass-half"></i> Reste dû ce mois (Ar)</label>
+  <input type="text" id="resteDu" readonly value="0,00" data-raw-value="0" />
+</div>
+
+    <div class="field-group">
+      <label for="montantAVerser"><i class="fas fa-hand-holding-dollar"></i> Montant à verser (Ar)</label>
+      <input
+        type="number"
+        id="montantAVerser"
+        name="montantAVerser"
+        placeholder="ex: 300000"
+        step="0.01"
+        min="0"
+        value="0"
+        required
+      />
+    </div>
+
+    <div class="info-box box-danger" id="moisPayeBox">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Le salaire de ce mois a déjà été réglé pour cet employé. Ce paiement sera ignoré (skip).</span>
+    </div>
+
+    <div class="info-box box-warning" id="avanceBox">
+      <i class="fas fa-triangle-exclamation"></i>
+      <span>Avance(s) déjà enregistrée(s) ce mois : affichée à titre indicatif uniquement — elle n'est <u>pas</u> déduite automatiquement du reste dû.</span>
+    </div>
+
+    <div class="info-box box-neutral" id="sanctionBox">
+      <i class="fas fa-info-circle"></i>
+      <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
+    </div>
+
+    <div class="payment-section">
+      <div class="payment-header">
+        <div class="payment-title">
+          <i class="fas fa-hand-holding-dollar"></i>
+          Caisses utilisées
+          <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
+        </div>
+        <button type="button" class="btn-add-payment" id="addPaymentBtn">
+          <i class="fas fa-plus-circle"></i> Ajouter ligne
+        </button>
+      </div>
+
+      <div class="payment-list" id="paymentList">
+        <div class="payment-row" data-row-id="1">
+          <div class="pay-select">
+            <select class="pay-type" required>
+              <option value="">-- Caisse --</option>
+              <option th:each="caisse : ${caisses}" 
+                      th:value="${caisse.id}" 
+                      th:text="${caisse.libelle}">
+              </option>
             </select>
           </div>
-
-          <!-- Mois à payer -->
-          <div class="field-group">
-            <label for="moisPaye"
-              ><i class="fas fa-calendar-day"></i> Mois à payer</label
-            >
-            <input type="month" id="moisPaye" name="moisPaye" required />
-          </div>
-
-          <!-- Type de paiement -->
-          <div class="field-group">
-            <label for="typePayementId"
-              ><i class="fas fa-tag"></i> Type de paiement</label
-            >
-            <!-- NOTE : correspond à la table type_payement_employee -->
-            <select id="typePayementId" name="typePayementId">
-              <option value="1">Salaire</option>
-              <option value="2">Avance</option>
-              <option value="3">Sanction</option>
-            </select>
-          </div>
-
-          <!-- Salaire contractuel (affichage, non envoyé) -->
-          <div class="field-group">
-            <label for="salaireContrat"
-              ><i class="fas fa-file-contract"></i> Salaire contrat (Ar)</label
-            >
-            <input type="text" id="salaireContrat" readonly value="0,00" />
-          </div>
-
-          <!-- Reste dû avant ce paiement (affichage) -->
-          <div class="field-group">
-            <label for="resteDu"
-              ><i class="fas fa-hourglass-half"></i> Reste dû ce mois (Ar)</label
-            >
-            <input type="text" id="resteDu" readonly value="0,00" />
-          </div>
-
-          <!-- Montant à verser -->
-          <div class="field-group">
-            <label for="montantAVerser"
-              ><i class="fas fa-hand-holding-dollar"></i> Montant à verser
-              (Ar)</label
-            >
+          <div class="pay-montant">
             <input
               type="number"
-              id="montantAVerser"
-              name="montantAVerser"
-              placeholder="ex: 300000"
+              class="pay-amount"
+              placeholder="0.00"
               step="0.01"
               min="0"
               value="0"
+              required
             />
           </div>
-
-          <!-- Alerte : mois déjà payé -->
-          <div class="info-box box-danger" id="moisPayeBox">
-            <i class="fas fa-circle-exclamation"></i>
-            <span
-              >Le salaire de ce mois a déjà été réglé pour cet employé. Ce
-              paiement sera ignoré (skip).</span
-            >
-          </div>
-
-          <!-- Info : avances déjà versées ce mois -->
-          <div class="info-box box-warning" id="avanceBox">
-            <i class="fas fa-triangle-exclamation"></i>
-            <span
-              >Avance(s) déjà enregistrée(s) ce mois : affichée à titre
-              indicatif uniquement — elle n'est <u>pas</u> déduite
-              automatiquement du reste dû.</span
-            >
-          </div>
-
-          <!-- Info : sanctions du mois -->
-          <div class="info-box box-neutral" id="sanctionBox">
-            <i class="fas fa-info-circle"></i>
-            <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
-          </div>
-
-          <!-- SECTION PAIEMENT (caisses multiples, identique au formulaire bovin) -->
-          <div class="payment-section">
-            <div class="payment-header">
-              <div class="payment-title">
-                <i class="fas fa-hand-holding-dollar"></i>
-                Caisses utilisées
-                <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
-              </div>
-              <button type="button" class="btn-add-payment" id="addPaymentBtn">
-                <i class="fas fa-plus-circle"></i> Ajouter ligne
-              </button>
-            </div>
-
-            <div class="payment-list" id="paymentList">
-              <!-- Ligne initiale -->
-              <div class="payment-row" data-row-id="1">
-                <div class="pay-select">
-                  <!-- NOTE : correspond à la table caisse -->
-                  <select class="pay-type">
-                    <option value="1">Mvola</option>
-                    <option value="2" selected>Espèce</option>
-                    <option value="3">Carte bancaire</option>
-                  </select>
-                </div>
-                <div class="pay-montant">
-                  <input
-                    type="number"
-                    class="pay-amount"
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    value="0"
-                  />
-                </div>
-                <button type="button" class="btn-remove-pay" disabled>
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-              </div>
-            </div>
-            <div
-              style="
-                margin-top: 0.6rem;
-                font-size: 0.8rem;
-                color: #1f6d47;
-                display: flex;
-                gap: 1rem;
-                flex-wrap: wrap;
-              "
-            >
-              <span
-                ><i class="fas fa-info-circle"></i> Chaque ligne = une
-                caisse</span
-              >
-              <span
-                ><i class="fas fa-arrow-right"></i> Le total doit correspondre
-                au montant à verser</span
-              >
-            </div>
-          </div>
-
-          <!-- Total paiements (affichage) -->
-          <div class="total-highlight">
-            <span
-              ><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti
-              sur les caisses</span
-            >
-            <span class="total-value" id="totalDisplay">0,00 Ar</span>
-          </div>
+          <button type="button" class="btn-remove-pay" disabled>
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </div>
+      </div>
+      
+      <div style="margin-top: 0.6rem; font-size: 0.8rem; color: #1f6d47; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <span><i class="fas fa-info-circle"></i> Chaque ligne = une caisse</span>
+        <span><i class="fas fa-arrow-right"></i> Le total doit correspondre au montant à verser</span>
+      </div>
+    </div>
 
-        <!-- Actions -->
-        <div class="actions-row">
-          <div class="btn-group">
-            <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
-              <i class="fas fa-check-circle"></i> Valider le paiement
-            </button>
-            <button type="reset" class="btn btn-outline" id="resetBtn">
-              <i class="fas fa-undo-alt"></i> Réinitialiser
-            </button>
-          </div>
-          <span
-            style="
-              font-size: 0.85rem;
-              color: #2b5f77;
-              background: #e3f0f8;
-              padding: 0.3rem 1.4rem;
-              border-radius: 40px;
-            "
-          >
-            <i class="far fa-clock"></i> Prêt
-          </span>
-        </div>
-      </form>
+    <div class="total-highlight">
+      <span><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti sur les caisses</span>
+      <span class="total-value" id="totalDisplay">0,00 Ar</span>
+    </div>
+  </div>
+
+  <div class="actions-row">
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
+        <i class="fas fa-check-circle"></i> Valider le paiement
+      </button>
+      <button type="reset" class="btn btn-outline" id="resetBtn">
+        <i class="fas fa-undo-alt"></i> Réinitialiser
+      </button>
+    </div>
+    <span style="font-size: 0.85rem; color: #2b5f77; background: #e3f0f8; padding: 0.3rem 1.4rem; border-radius: 40px;">
+      <i class="far fa-clock"></i> Prêt
+    </span>
+  </div>
+</form>
     </div>
 
     <!-- Toast de notification -->
@@ -1090,6 +1041,49 @@
         loadEmployees();
         initExistingRows();
       })();
+      // Tout en bas de paiement.html, dans la fonction fetch :
+      fetch("/employee/paiement", { // <-- Vérifie qu'il n'y a pas de "s" à employees
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+      })
+
+
+      const employeeSelect = document.getElementById('employeeSelect');
+const moisPayeInput = document.getElementById('moisPaye');
+const salaireContratInput = document.getElementById('salaireContrat');
+const resteDuInput = document.getElementById('resteDu');
+
+function chargerDetailsSalaire() {
+    const employeeId = employeeSelect.value;
+    const mois = moisPayeInput.value; // Format: YYYY-MM
+
+    if (!employeeId || !mois) {
+        salaireContratInput.value = "0,00";
+        resteDuInput.value = "0,00";
+        return;
+    }
+
+    // Appel vers ton API Spring Boot
+    fetch(`/api/employees/${employeeId}/salaire-details?mois=${mois}`)
+        .then(response => response.json())
+        .then(data => {
+            // Formatage en Ariary (Ex: 800000 -> 800 000,00 Ar)
+            const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 });
+            
+            salaireContratInput.value = formatter.format(data.salaireContrat);
+            resteDuInput.value = formatter.format(data.resteDu);
+            
+            // Stockage de la valeur brute pour tes calculs JS internes
+            salaireContratInput.setAttribute('data-raw-value', data.salaireContrat);
+            resteDuInput.setAttribute('data-raw-value', data.resteDu);
+        })
+        .catch(err => console.error("Erreur lors de la récupération des montants :", err));
+}
+
+// Déclenche l'affichage dès qu'un élément change
+employeeSelect.addEventListener('change', chargerDetailsSalaire);
+moisPayeInput.addEventListener('change', chargerDetailsSalaire);
     </script>
   </body>
 </html>
