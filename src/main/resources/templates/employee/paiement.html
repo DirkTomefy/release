@@ -1,140 +1,1095 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paiement employé · Élevage</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💵 Paiement employé</title>
+    <!-- Font Awesome 6 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      /* ----- RESET & BASE (repris du template achat de bovins) ----- */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+      }
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+      body {
+        background: linear-gradient(145deg, #f0f6fa 0%, #dce8f0 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.5rem;
+      }
 
-  <style>
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background-color: #f9f7f4;
-      color: #3e3e3b;
-    }
+      .card-modern {
+        max-width: 1100px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(12px);
+        border-radius: 48px;
+        padding: 2.8rem 3rem;
+        box-shadow:
+          0 30px 60px -15px rgba(0, 20, 30, 0.3),
+          inset 0 1px 2px rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
 
-    .card {
-      border: 1px solid #e7e0d8;
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
+      @media (max-width: 768px) {
+        .card-modern {
+          padding: 1.8rem 1.2rem;
+          border-radius: 32px;
+        }
+      }
 
-    .form-control, .form-select {
-      border-color: #e0d8cf;
-      border-radius: 8px;
-      padding: 0.6rem 1rem;
-    }
+      .header-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+      }
 
-    .form-control:focus, .form-select:focus {
-      border-color: #b6a88e;
-      box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
-    }
+      .header-section h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #0d2a3b;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
 
-    .btn-soft-primary {
-      background-color: #eef3ea;
-      color: #4a6b3a;
-      border: 1px solid #d2ddc4;
-      font-weight: 500;
-    }
+      .header-section h1 i {
+        color: #1f8a4a;
+        font-size: 2.2rem;
+      }
 
-    .btn-soft-primary:hover {
-      background-color: #dde8d1;
-    }
+      .badge-engrais {
+        background: rgba(31, 138, 74, 0.12);
+        padding: 0.5rem 1.6rem;
+        border-radius: 100px;
+        border: 1px solid rgba(31, 138, 74, 0.25);
+        color: #0f5430;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    .btn-soft-danger {
-      background-color: #fef1f1;
-      color: #b34040;
-      border: 1px solid #f5d2d2;
-    }
-  </style>
-</head>
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.8rem 2.2rem;
+        margin-bottom: 1.5rem;
+      }
 
-<body>
+      @media (max-width: 700px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+          gap: 1.2rem;
+        }
+      }
 
-<div class="container py-4">
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
-  <!-- HEADER -->
-  <div class="d-flex align-items-center mb-4">
-    <a href="#listPage" class="btn btn-soft-primary me-3">
-      <i class="bi bi-arrow-left"></i> Retour
-    </a>
-    <h1 class="h4 fw-semibold mb-0">
-      <i class="bi bi-cash-coin me-2" style="color:#7a9e5a;"></i>
-      Paiement employé
-    </h1>
-  </div>
+      .field-group label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #1a3b4f;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-  <!-- FORM -->
-  <div class="card">
-    <div class="card-body">
+      .field-group label i {
+        color: #1f8a4a;
+        font-size: 0.9rem;
+        width: 20px;
+      }
 
-      <form method="post" action="#">
+      .field-group input,
+      .field-group select {
+        background: white;
+        border: 1.5px solid #dce8f0;
+        border-radius: 24px;
+        padding: 0.9rem 1.4rem;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #0d2a3b;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+      }
 
-        <!-- EMPLOYÉ -->
-        <div class="mb-3">
-          <label class="form-label">Employé</label>
-          <select class="form-select" name="employee" required>
-            <option value="">Sélectionner un employé...</option>
-            <option value="1">Rakoto - Jean</option>
-            <option value="2">Rabe - Marie</option>
-            <option value="3">Andry - Paul</option>
-          </select>
+      .field-group input:focus,
+      .field-group select:focus {
+        outline: none;
+        border-color: #1f8a4a;
+        box-shadow: 0 0 0 5px rgba(31, 138, 74, 0.12);
+        background: #ffffff;
+      }
+
+      .field-group select {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%231f8a4a" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 1.4rem center;
+        background-size: 1.2rem;
+        cursor: pointer;
+      }
+
+      .field-group input[readonly] {
+        background: #f2f8fc;
+        font-weight: 600;
+        color: #0f5430;
+      }
+
+      .payment-section {
+        grid-column: span 2;
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(4px);
+        border-radius: 32px;
+        padding: 1.8rem 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        margin-top: 0.2rem;
+      }
+
+      @media (max-width: 700px) {
+        .payment-section {
+          grid-column: span 1;
+          padding: 1.2rem;
+        }
+      }
+
+      .payment-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.8rem 1.2rem;
+        margin-bottom: 1.2rem;
+      }
+
+      .payment-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        color: #0d2a3b;
+        font-size: 1rem;
+      }
+
+      .payment-title i {
+        color: #1f8a4a;
+        font-size: 1.2rem;
+      }
+
+      .btn-add-payment {
+        background: #1f8a4a;
+        border: none;
+        color: white;
+        padding: 0.5rem 1.4rem;
+        border-radius: 60px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: 0.15s;
+        box-shadow: 0 4px 12px -4px #1f8a4a60;
+        border: 1px solid #1f8a4a;
+      }
+
+      .btn-add-payment:hover {
+        background: #14703a;
+        transform: scale(1.02);
+        box-shadow: 0 6px 18px -4px #14703a80;
+      }
+
+      .payment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .payment-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        background: white;
+        border-radius: 24px;
+        padding: 0.6rem 1.2rem 0.6rem 1.5rem;
+        border: 1.5px solid #e4eef5;
+        transition: all 0.15s;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        animation: fadeIn 0.25s ease;
+      }
+
+      .payment-row:hover {
+        border-color: #b8d5e6;
+        background: #fafffe;
+      }
+
+      @media (max-width: 600px) {
+        .payment-row {
+          grid-template-columns: 1fr;
+          gap: 0.6rem;
+          padding: 1rem;
+        }
+      }
+
+      .payment-row .pay-select select {
+        width: 100%;
+        border: 1.5px solid #dce8f0;
+        border-radius: 20px;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        background: #fafdff;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%231f8a4a" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+
+      .payment-row .pay-select select:focus {
+        outline: none;
+        border-color: #1f8a4a;
+        box-shadow: 0 0 0 4px rgba(31, 138, 74, 0.08);
+      }
+
+      .payment-row .pay-montant input {
+        width: 100%;
+        border: 1.5px solid #dce8f0;
+        border-radius: 20px;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        background: #fafdff;
+        transition: 0.15s;
+      }
+
+      .payment-row .pay-montant input:focus {
+        outline: none;
+        border-color: #1f8a4a;
+        box-shadow: 0 0 0 4px rgba(31, 138, 74, 0.08);
+      }
+
+      .payment-row .btn-remove-pay {
+        background: transparent;
+        border: 1.5px solid #f0d4d4;
+        color: #b34a3a;
+        width: 38px;
+        height: 38px;
+        border-radius: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.15s;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+      }
+
+      .payment-row .btn-remove-pay:hover:not(:disabled) {
+        background: #fee9e7;
+        border-color: #b34a3a;
+        transform: scale(1.05);
+      }
+
+      .payment-row .btn-remove-pay:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .total-highlight {
+        background: #e5f3ec;
+        border-radius: 30px;
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #b3d9c6;
+        grid-column: span 2;
+      }
+
+      @media (max-width: 700px) {
+        .total-highlight {
+          grid-column: span 1;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+          padding: 1.2rem;
+        }
+        .total-highlight .total-value {
+          text-align: center;
+        }
+      }
+
+      .total-highlight span {
+        font-weight: 700;
+        color: #0d3323;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .total-highlight .total-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0f6e38;
+        background: white;
+        padding: 0.1rem 2rem;
+        border-radius: 60px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        letter-spacing: 0.5px;
+        transition: 0.2s;
+      }
+
+      /* ----- Boîtes d'info spécifiques au paiement employé ----- */
+      .info-box {
+        grid-column: span 2;
+        border-radius: 30px;
+        padding: 1rem 1.6rem;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid transparent;
+      }
+
+      @media (max-width: 700px) {
+        .info-box {
+          grid-column: span 1;
+        }
+      }
+
+      .info-box.show {
+        display: flex;
+        animation: fadeIn 0.25s ease;
+      }
+
+      .info-box i {
+        font-size: 1.1rem;
+      }
+
+      .info-box.box-danger {
+        background: #fde8e3;
+        border-color: #f0c8c8;
+        color: #b34a3a;
+      }
+
+      .info-box.box-warning {
+        background: #fff6e0;
+        border-color: #f2dfa3;
+        color: #8a6d1a;
+      }
+
+      .info-box.box-neutral {
+        background: #e3f0f8;
+        border-color: #c4dcea;
+        color: #2b5f77;
+      }
+
+      .actions-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem 1.5rem;
+        margin-top: 1.5rem;
+        border-top: 1px solid #d2e2eb;
+        padding-top: 2rem;
+      }
+
+      .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+      }
+
+      .btn {
+        border: none;
+        background: white;
+        padding: 0.8rem 2rem;
+        border-radius: 60px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        transition: 0.15s ease;
+        border: 1px solid #d0dee8;
+        color: #1a3b4f;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(4px);
+      }
+
+      .btn i {
+        font-size: 1rem;
+      }
+
+      .btn-primary {
+        background: #1f8a4a;
+        border: 1px solid #1f8a4a;
+        color: white;
+        box-shadow: 0 8px 20px -6px #1f8a4a60;
+      }
+
+      .btn-primary:hover {
+        background: #14703a;
+        border-color: #14703a;
+        transform: scale(1.02);
+        box-shadow: 0 12px 28px -8px #14703a80;
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 1px solid #b6cfdd;
+        color: #1f4057;
+      }
+
+      .btn-outline:hover {
+        background: #e6f0f6;
+        border-color: #7fa5bb;
+      }
+
+      .btn-lg {
+        padding: 0.9rem 2.8rem;
+        font-size: 1.05rem;
+      }
+
+      @keyframes fadeIn {
+        0% {
+          opacity: 0.5;
+          transform: translateY(-6px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .pay-count-badge {
+        background: rgba(31, 138, 74, 0.12);
+        padding: 0.15rem 0.8rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #0f5430;
+      }
+
+      .toast-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem 2rem;
+        border-radius: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        font-weight: 600;
+        z-index: 9999;
+        display: none;
+        border-left: 6px solid #1f8a4a;
+      }
+
+      .toast-message.error {
+        border-left-color: #dc3545;
+        color: #b02a37;
+      }
+
+      .toast-message.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card-modern">
+      <!-- En-tête -->
+      <div class="header-section">
+        <h1><i class="fas fa-money-check-dollar"></i> Paiement employé</h1>
+        <div class="badge-engrais">
+          <i class="fas fa-calendar-plus"></i> Nouveau paiement
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <form id="payeForm" onsubmit="return false;">
+        <div class="form-grid">
+          <!-- Employé -->
+          <div class="field-group">
+            <label for="employeeId"><i class="fas fa-user"></i> Employé</label>
+            <!-- NOTE : cette liste doit être générée côté serveur (SELECT id, nom, prenom FROM employee) -->
+            <select id="employeeId" name="employeeId">
+              <option value="">-- Sélectionner un employé --</option>
+            </select>
+          </div>
+
+          <!-- Mois à payer -->
+          <div class="field-group">
+            <label for="moisPaye"
+              ><i class="fas fa-calendar-day"></i> Mois à payer</label
+            >
+            <input type="month" id="moisPaye" name="moisPaye" required />
+          </div>
+
+          <!-- Type de paiement -->
+          <div class="field-group">
+            <label for="typePayementId"
+              ><i class="fas fa-tag"></i> Type de paiement</label
+            >
+            <!-- NOTE : correspond à la table type_payement_employee -->
+            <select id="typePayementId" name="typePayementId">
+              <option value="1">Salaire</option>
+              <option value="2">Avance</option>
+              <option value="3">Sanction</option>
+            </select>
+          </div>
+
+          <!-- Salaire contractuel (affichage, non envoyé) -->
+          <div class="field-group">
+            <label for="salaireContrat"
+              ><i class="fas fa-file-contract"></i> Salaire contrat (Ar)</label
+            >
+            <input type="text" id="salaireContrat" readonly value="0,00" />
+          </div>
+
+          <!-- Reste dû avant ce paiement (affichage) -->
+          <div class="field-group">
+            <label for="resteDu"
+              ><i class="fas fa-hourglass-half"></i> Reste dû ce mois (Ar)</label
+            >
+            <input type="text" id="resteDu" readonly value="0,00" />
+          </div>
+
+          <!-- Montant à verser -->
+          <div class="field-group">
+            <label for="montantAVerser"
+              ><i class="fas fa-hand-holding-dollar"></i> Montant à verser
+              (Ar)</label
+            >
+            <input
+              type="number"
+              id="montantAVerser"
+              name="montantAVerser"
+              placeholder="ex: 300000"
+              step="0.01"
+              min="0"
+              value="0"
+            />
+          </div>
+
+          <!-- Alerte : mois déjà payé -->
+          <div class="info-box box-danger" id="moisPayeBox">
+            <i class="fas fa-circle-exclamation"></i>
+            <span
+              >Le salaire de ce mois a déjà été réglé pour cet employé. Ce
+              paiement sera ignoré (skip).</span
+            >
+          </div>
+
+          <!-- Info : avances déjà versées ce mois -->
+          <div class="info-box box-warning" id="avanceBox">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span
+              >Avance(s) déjà enregistrée(s) ce mois : affichée à titre
+              indicatif uniquement — elle n'est <u>pas</u> déduite
+              automatiquement du reste dû.</span
+            >
+          </div>
+
+          <!-- Info : sanctions du mois -->
+          <div class="info-box box-neutral" id="sanctionBox">
+            <i class="fas fa-info-circle"></i>
+            <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
+          </div>
+
+          <!-- SECTION PAIEMENT (caisses multiples, identique au formulaire bovin) -->
+          <div class="payment-section">
+            <div class="payment-header">
+              <div class="payment-title">
+                <i class="fas fa-hand-holding-dollar"></i>
+                Caisses utilisées
+                <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
+              </div>
+              <button type="button" class="btn-add-payment" id="addPaymentBtn">
+                <i class="fas fa-plus-circle"></i> Ajouter ligne
+              </button>
+            </div>
+
+            <div class="payment-list" id="paymentList">
+              <!-- Ligne initiale -->
+              <div class="payment-row" data-row-id="1">
+                <div class="pay-select">
+                  <!-- NOTE : correspond à la table caisse -->
+                  <select class="pay-type">
+                    <option value="1">Mvola</option>
+                    <option value="2" selected>Espèce</option>
+                    <option value="3">Carte bancaire</option>
+                  </select>
+                </div>
+                <div class="pay-montant">
+                  <input
+                    type="number"
+                    class="pay-amount"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value="0"
+                  />
+                </div>
+                <button type="button" class="btn-remove-pay" disabled>
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              style="
+                margin-top: 0.6rem;
+                font-size: 0.8rem;
+                color: #1f6d47;
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+              "
+            >
+              <span
+                ><i class="fas fa-info-circle"></i> Chaque ligne = une
+                caisse</span
+              >
+              <span
+                ><i class="fas fa-arrow-right"></i> Le total doit correspondre
+                au montant à verser</span
+              >
+            </div>
+          </div>
+
+          <!-- Total paiements (affichage) -->
+          <div class="total-highlight">
+            <span
+              ><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti
+              sur les caisses</span
+            >
+            <span class="total-value" id="totalDisplay">0,00 Ar</span>
+          </div>
         </div>
 
-        <!-- TYPE PAIEMENT -->
-        <div class="mb-3">
-          <label class="form-label">Type de paiement</label>
-          <select class="form-select" name="type_paiement" required>
-            <option value="salaire">Salaire</option>
-            <option value="avance">Avance</option>
-            <option value="sanction">Sanction</option>
-          </select>
+        <!-- Actions -->
+        <div class="actions-row">
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
+              <i class="fas fa-check-circle"></i> Valider le paiement
+            </button>
+            <button type="reset" class="btn btn-outline" id="resetBtn">
+              <i class="fas fa-undo-alt"></i> Réinitialiser
+            </button>
+          </div>
+          <span
+            style="
+              font-size: 0.85rem;
+              color: #2b5f77;
+              background: #e3f0f8;
+              padding: 0.3rem 1.4rem;
+              border-radius: 40px;
+            "
+          >
+            <i class="far fa-clock"></i> Prêt
+          </span>
         </div>
-
-        <!-- MOIS -->
-        <div class="mb-3">
-          <label class="form-label">Mois concerné</label>
-          <input type="month" class="form-control" name="mois" required>
-        </div>
-
-        <!-- CAISSE -->
-        <div class="mb-3">
-          <label class="form-label">Caisse</label>
-          <select class="form-select" name="caisse" required>
-            <option value="">Choisir une caisse...</option>
-            <option value="1">Caisse principale - 2 500 000 Ar</option>
-            <option value="2">Caisse secondaire - 800 000 Ar</option>
-            <option value="3">Caisse élevage - 1 200 000 Ar</option>
-          </select>
-        </div>
-
-        <!-- MONTANT -->
-        <div class="mb-4">
-          <label class="form-label">Montant</label>
-          <input type="number" class="form-control" name="montant" placeholder="Ex: 100000" required>
-          <small class="text-muted">
-            (Avance possible même si supérieur au salaire — sera déduit progressivement)
-          </small>
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="text-end">
-          <button type="reset" class="btn btn-light me-2">Annuler</button>
-          <button type="submit" class="btn btn-soft-primary">
-            <i class="bi bi-check-circle me-1"></i> Valider paiement
-          </button>
-        </div>
-
       </form>
-
     </div>
-  </div>
 
-</div>
+    <!-- Toast de notification -->
+    <div id="toast" class="toast-message"></div>
 
-</body>
+    <script>
+      /*
+        HYPOTHÈSES prises pour ce formulaire (schéma actuel ne définit pas
+        de table "sanction" ni d'API précise) :
+
+        1. type_payement_employee contient au minimum 3 lignes seedées :
+           1 = Salaire, 2 = Avance, 3 = Sanction (à adapter aux vrais id).
+        2. Une route GET /employees/:id/statut-paye?mois=YYYY-MM renvoie :
+           {
+             salaire: number,          // salaire du contrat en cours
+             dejaPaye: boolean,        // true si le salaire du mois est déjà réglé
+             resteDu: number,          // salaire - somme des paiements "Salaire" du mois
+             totalAvance: number,      // somme des paiements "Avance" du mois (info only)
+             totalSanction: number     // somme des paiements "Sanction" du mois (info only)
+           }
+           Si cette route n'existe pas encore côté back, il faut la créer :
+           elle doit lire contrat.salaire (contrat actif de l'employé) et
+           SUM(payement_employee) filtré par mois/type.
+        3. Une avance ou une sanction NE remet PAS à jour "resteDu" du salaire :
+           conformément à la consigne ("tsy ampiana ny reste_paye fa affichage
+           fotsiny"), elles sont seulement affichées, jamais soustraites
+           automatiquement du salaire restant.
+        4. Le paiement de type "Salaire" est le seul qui peut marquer le mois
+           comme payé côté back (à vous de décider, ex: reste_paye = 0).
+      */
+      (function () {
+        // Éléments
+        const employeeSelect = document.getElementById("employeeId");
+        const moisInput = document.getElementById("moisPaye");
+        const typeSelect = document.getElementById("typePayementId");
+        const salaireInput = document.getElementById("salaireContrat");
+        const resteDuInput = document.getElementById("resteDu");
+        const montantInput = document.getElementById("montantAVerser");
+
+        const moisPayeBox = document.getElementById("moisPayeBox");
+        const avanceBox = document.getElementById("avanceBox");
+        const sanctionBox = document.getElementById("sanctionBox");
+
+        const paymentList = document.getElementById("paymentList");
+        const addPaymentBtn = document.getElementById("addPaymentBtn");
+        const payCountBadge = document.getElementById("payCountBadge");
+        const totalDisplay = document.getElementById("totalDisplay");
+        const validerBtn = document.getElementById("validerBtn");
+        const toast = document.getElementById("toast");
+
+        let rowCounter = 1;
+        let statutMois = null; // dernière réponse de /statut-paye
+        let moisDejaPaye = false;
+
+        // Mois par défaut = mois courant
+        if (!moisInput.value) {
+          const now = new Date();
+          const y = now.getFullYear();
+          const m = String(now.getMonth() + 1).padStart(2, "0");
+          moisInput.value = `${y}-${m}`;
+        }
+
+        function formatAr(n) {
+          return (
+            (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " Ar"
+          );
+        }
+
+        // ----- Chargement de la liste des employés -----
+        function loadEmployees() {
+          fetch("/employees/list")
+            .then((r) => r.json())
+            .then((data) => {
+              (data.employees || []).forEach((emp) => {
+                const opt = document.createElement("option");
+                opt.value = emp.id;
+                opt.textContent = `${emp.nom} ${emp.prenom}`;
+                employeeSelect.appendChild(opt);
+              });
+            })
+            .catch(() => {
+              // Le back n'est pas encore branché : le select reste vide,
+              // à remplir manuellement en attendant.
+            });
+        }
+
+        // ----- Vérification du statut du mois pour l'employé sélectionné -----
+        function refreshStatutMois() {
+          const empId = employeeSelect.value;
+          const mois = moisInput.value;
+          moisPayeBox.classList.remove("show");
+          avanceBox.classList.remove("show");
+          sanctionBox.classList.remove("show");
+          moisDejaPaye = false;
+          validerBtn.disabled = false;
+
+          if (!empId || !mois) {
+            salaireInput.value = "0,00";
+            resteDuInput.value = "0,00";
+            return;
+          }
+
+          fetch(
+            `/employees/${empId}/statut-paye?mois=${encodeURIComponent(mois)}`
+          )
+            .then((r) => r.json())
+            .then((data) => {
+              statutMois = data;
+              salaireInput.value = formatAr(data.salaire);
+              resteDuInput.value = formatAr(data.resteDu);
+
+              if (data.dejaPaye) {
+                moisDejaPaye = true;
+                moisPayeBox.classList.add("show");
+                validerBtn.disabled = true;
+              } else {
+                // pré-remplit le montant à verser avec le reste dû si le type
+                // sélectionné est "Salaire"
+                if (typeSelect.value === "1") {
+                  montantInput.value = data.resteDu;
+                }
+              }
+
+              if (data.totalAvance > 0) {
+                avanceBox.querySelector("span").textContent =
+                  `Avance(s) déjà enregistrée(s) ce mois : ${formatAr(
+                    data.totalAvance
+                  )} — affichée à titre indicatif uniquement, non déduite du reste dû.`;
+                avanceBox.classList.add("show");
+              }
+
+              if (data.totalSanction > 0) {
+                sanctionBox.querySelector("span").textContent =
+                  `Sanction(s) enregistrée(s) ce mois : ${formatAr(
+                    data.totalSanction
+                  )} (information uniquement).`;
+                sanctionBox.classList.add("show");
+              }
+            })
+            .catch(() => {
+              // Route pas encore disponible côté back : on n'affiche rien,
+              // mais on n'empêche pas la saisie manuelle.
+              salaireInput.value = "0,00";
+              resteDuInput.value = "0,00";
+            });
+        }
+
+        employeeSelect.addEventListener("change", refreshStatutMois);
+        moisInput.addEventListener("change", refreshStatutMois);
+        typeSelect.addEventListener("change", function () {
+          if (typeSelect.value === "1" && statutMois) {
+            montantInput.value = statutMois.resteDu;
+          }
+        });
+
+        // ----- Gestion des lignes de paiement (caisses), identique au bovin form -----
+        function getPaymentRows() {
+          return paymentList.querySelectorAll(".payment-row");
+        }
+
+        function getPaymentTotal() {
+          let sum = 0;
+          getPaymentRows().forEach((row) => {
+            const amt = parseFloat(row.querySelector(".pay-amount").value) || 0;
+            sum += amt;
+          });
+          return sum;
+        }
+
+        function updateGlobalDisplay() {
+          const sum = getPaymentTotal();
+          totalDisplay.textContent = formatAr(sum);
+
+          const montant = parseFloat(montantInput.value) || 0;
+          if (Math.abs(sum - montant) < 0.01 && montant > 0) {
+            totalDisplay.style.color = "#0f6e38";
+            totalDisplay.style.background = "#e5f3ec";
+          } else {
+            totalDisplay.style.color = "#b34a3a";
+            totalDisplay.style.background = "#fde8e3";
+          }
+
+          const count = getPaymentRows().length;
+          payCountBadge.textContent = count + " ligne" + (count > 1 ? "s" : "");
+        }
+
+        function createPaymentRow(rowId) {
+          const row = document.createElement("div");
+          row.className = "payment-row";
+          row.dataset.rowId = rowId;
+          row.innerHTML = `
+            <div class="pay-select">
+              <select class="pay-type">
+                <option value="1">Mvola</option>
+                <option value="2" selected>Espèce</option>
+                <option value="3">Carte bancaire</option>
+              </select>
+            </div>
+            <div class="pay-montant">
+              <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">
+            </div>
+            <button type="button" class="btn-remove-pay">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          `;
+          return row;
+        }
+
+        function attachRowEvents(row) {
+          const amountInput = row.querySelector(".pay-amount");
+          amountInput.addEventListener("input", updateGlobalDisplay);
+
+          const removeBtn = row.querySelector(".btn-remove-pay");
+          removeBtn.addEventListener("click", function () {
+            if (getPaymentRows().length <= 1) {
+              alert("Il doit rester au moins une ligne de caisse.");
+              return;
+            }
+            row.remove();
+            updateGlobalDisplay();
+            updateRemoveButtons();
+          });
+        }
+
+        function updateRemoveButtons() {
+          const rows = getPaymentRows();
+          rows.forEach((row) => {
+            const btn = row.querySelector(".btn-remove-pay");
+            btn.disabled = rows.length <= 1;
+          });
+        }
+
+        addPaymentBtn.addEventListener("click", function () {
+          rowCounter++;
+          const newRow = createPaymentRow(rowCounter);
+          paymentList.appendChild(newRow);
+          attachRowEvents(newRow);
+          updateGlobalDisplay();
+          updateRemoveButtons();
+          newRow.style.animation = "none";
+          setTimeout(() => {
+            newRow.style.animation = "fadeIn 0.25s ease";
+          }, 10);
+        });
+
+        function initExistingRows() {
+          getPaymentRows().forEach((row) => attachRowEvents(row));
+          updateRemoveButtons();
+          updateGlobalDisplay();
+        }
+
+        montantInput.addEventListener("input", updateGlobalDisplay);
+
+        // ----- Validation et envoi -----
+        validerBtn.addEventListener("click", function () {
+          const employeeId = parseInt(employeeSelect.value);
+          const mois = moisInput.value;
+          const typePayementId = parseInt(typeSelect.value);
+          const montantAVerser = parseFloat(montantInput.value) || 0;
+
+          if (!employeeId) {
+            alert("Veuillez sélectionner un employé.");
+            return;
+          }
+          if (!mois) {
+            alert("Veuillez sélectionner le mois à payer.");
+            return;
+          }
+          if (moisDejaPaye && typePayementId === 1) {
+            alert(
+              "Ce mois est déjà payé pour cet employé, ce paiement de type Salaire est ignoré."
+            );
+            return;
+          }
+          if (montantAVerser <= 0) {
+            alert("Le montant à verser doit être supérieur à 0.");
+            return;
+          }
+
+          // Récupération des lignes de caisse
+          const payments = [];
+          getPaymentRows().forEach((row) => {
+            const caisseId = parseInt(row.querySelector(".pay-type").value);
+            const montant =
+              parseFloat(row.querySelector(".pay-amount").value) || 0;
+            if (montant > 0) {
+              payments.push({ caisseId, montant });
+            }
+          });
+
+          if (payments.length === 0) {
+            alert("Ajoutez au moins une caisse avec un montant > 0.");
+            return;
+          }
+
+          const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
+          if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
+            alert(
+              "Le total réparti sur les caisses doit être égal au montant à verser."
+            );
+            return;
+          }
+
+          // reste_paye envoyé : uniquement pertinent pour le type "Salaire".
+          // Pour Avance / Sanction, on envoie 0 car ces montants ne réduisent
+          // pas automatiquement le salaire restant (affichage seulement).
+          const restePaye =
+            typePayementId === 1
+              ? Math.max((statutMois ? statutMois.resteDu : montantAVerser) - montantAVerser, 0)
+              : 0;
+
+          const payload = {
+            idEmployee: employeeId,
+            idTypePayementEmployee: typePayementId,
+            mois: mois,
+            montantAVerser: montantAVerser,
+            restePaye: restePaye,
+            payments: payments,
+          };
+
+          fetch("/employees/payement", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.status === "success") {
+                showToast(data.message || "Paiement enregistré.", "success");
+                setTimeout(() => {
+                  window.location.href = "/employees";
+                }, 1500);
+              } else if (data.status === "skipped") {
+                showToast(
+                  data.message || "Mois déjà payé, paiement ignoré.",
+                  "error"
+                );
+              } else {
+                showToast("Erreur : " + data.message, "error");
+              }
+            })
+            .catch((error) => {
+              console.error("Erreur réseau:", error);
+              showToast("Erreur de communication avec le serveur.", "error");
+            });
+        });
+
+        function showToast(message, type) {
+          toast.textContent = message;
+          toast.className =
+            "toast-message show" + (type === "error" ? " error" : "");
+          setTimeout(() => {
+            toast.classList.remove("show");
+          }, 4000);
+        }
+
+        // Init
+        loadEmployees();
+        initExistingRows();
+      })();
+    </script>
+  </body>
 </html>
