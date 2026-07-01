@@ -510,13 +510,14 @@
           
           <div class="field-group">
             <label for="bovinId"><i class="fas fa-tag"></i> Choisir le Bovin</label>
-            <select id="bovinId" name="bovinId" required>
-              <option value="">-- Sélectionner un bovin --</option>
-              <option th:each="bovin : ${bovins}" 
-                      th:value="${bovin.id}" 
-                      th:text="'Bovin #: ' + ${bovin.id}"
-                      th:attr="selected=${peseBovin != null && peseBovin.bovin.id == bovin.id}"></option>
-            </select>
+            <input
+              type="text"
+              id="bovinId"
+              readonly
+              value="2"
+              style="background: #f2f8fc; font-weight: 600; color: #0f5430"
+              required
+            />
           </div>
 
           <div class="field-group">

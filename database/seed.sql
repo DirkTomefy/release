@@ -18,8 +18,8 @@ INSERT INTO caisse (libelle, montant_actuelle) VALUES ('Fonds d''investissement'
 -- Ajuster les id_race si besoin.
 
 -- Bovin 1 : acheté le 2020-03-12, pas encore vendu, prix 1500
-INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente) 
-VALUES (1, '2020-03-12', NULL, 1500.00, NULL);
+INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente,poids_achat,poids_vente) 
+VALUES (1, '2020-03-12', NULL, 1500.00, NULL,100,NULL);
 
 -- Bovin 2 : acheté le 2019-07-05, vendu le 2021-06-15, prix achat 1800, prix vente 2200
 INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente) 

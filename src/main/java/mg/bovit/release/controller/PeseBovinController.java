@@ -28,7 +28,7 @@ public class PeseBovinController {
     BovinService bovinService;
 
     // function to shwo list of pese poids of bovin
-    @GetMapping
+    @GetMapping("/list")
     public String listPeseBovin(Model model) {
         List<PeseBovin> pesesBovin = peseBovinService.findAll();
 
