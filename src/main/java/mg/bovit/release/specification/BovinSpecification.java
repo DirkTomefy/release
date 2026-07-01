@@ -3,11 +3,7 @@ package mg.bovit.release.specification;
 import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import org.springframework.data.jpa.domain.Specification;
-<<<<<<< HEAD
 import jakarta.persistence.criteria.*;
-=======
-import jakarta.persistence.criteria.Predicate;
->>>>>>> e73ef66ceba853f4b2bc24cc3c41dd5b4dbc833e
 
 public class BovinSpecification {
 
@@ -70,19 +66,6 @@ public class BovinSpecification {
                 // "tous" => pas de filtre
             }
 
-<<<<<<< HEAD
-            // Recherche textuelle : on recherche dans l'ID (converti en string) et
-            // éventuellement dans race.nom
-            if (form.getSearch() != null && !form.getSearch().isEmpty()) {
-                String searchPattern = "%" + form.getSearch().toLowerCase() + "%";
-                Predicate searchPredicate = cb.or(
-                        cb.like(cb.lower(root.get("id").as(String.class)), searchPattern),
-                        cb.like(cb.lower(root.get("race").get("nom")), searchPattern));
-                predicate = cb.and(predicate, searchPredicate);
-            }
-
-=======
->>>>>>> e73ef66ceba853f4b2bc24cc3c41dd5b4dbc833e
             return predicate;
         };
     }
