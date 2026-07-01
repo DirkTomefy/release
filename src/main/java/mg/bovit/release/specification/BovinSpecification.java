@@ -3,7 +3,7 @@ package mg.bovit.release.specification;
 import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import org.springframework.data.jpa.domain.Specification;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.*;
 
 public class BovinSpecification {
 

@@ -8,15 +8,11 @@ import mg.bovit.release.service.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller; 
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Date;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Controller 
 @RequestMapping("/peseBovin")
@@ -24,13 +20,29 @@ public class PeseBovinController {
     @Autowired
     PeseBovinService peseBovinService;
     @Autowired
+    private RaceService raceService;
+    @Autowired
     BovinService bovinService;
 
     @GetMapping("/list")
-    public String listPeseBovin(@ModelAttribute("criteria") MulticriteriaListPeseBovin criteria,Model model) {
-        List<PeseBovin> pesesBovin = peseBovinService.findAll();
+    public String listPeseBovin(@ModelAttribute("criteria") MulticriteriaListPeseBovin criteria, Model model) {
+        // Sécurisation des paramètres par défaut
+        if (criteria == null) {
+            criteria = new MulticriteriaListPeseBovin();
+        }
+        if (criteria.getSize() <= 0) {
+            criteria.setSize(10);
+        }
 
-        model.addAttribute("pesesBovin", pesesBovin);
+        // Appel du service de recherche multicritère paginée
+        Page<PeseBovin> pesePage = peseBovinService.searchPeseBovins(criteria);
+        List<Race> races = raceService.findAll();
+
+        // Ajout des attributs requis par la vue Thymeleaf
+        model.addAttribute("pesePage", pesePage);
+        model.addAttribute("pesesBovin", pesePage.getContent());
+        model.addAttribute("races", races);
+        model.addAttribute("criteria", criteria);
 
         return "peseBovin/list";
     }

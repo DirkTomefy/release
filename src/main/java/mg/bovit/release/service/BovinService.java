@@ -24,13 +24,16 @@ public class BovinService {
     @Autowired
     private CaisseService caisseService;
 
-     @Autowired
+    @Autowired
     private BovinWithPoidsRepository bovinWithPoidsRepository;
-   
 
     @Autowired
     private PeseBovinRepository peseRepository;
 
+    // function to find bovin with status by id bovin
+    public BovinWithPoids findBovinPoidsById(Long id_bovin) throws Exception {
+        return bovinWithPoidsRepository.findById(id_bovin).orElseThrow();
+    }
 
     // function to find bovin by id
     public Bovin findById(Long id_bovin) throws Exception {
@@ -93,7 +96,7 @@ public class BovinService {
         }
     }
 
-        // Nouvelle méthode de recherche paginée et filtrée (utilisant la vue)
+    // Nouvelle méthode de recherche paginée et filtrée (utilisant la vue)
     public Page<BovinWithPoids> searchBovinsWithPoids(MultiCriteriaFormBovinList form) {
         // Construction du tri
         String sortField = "id";
