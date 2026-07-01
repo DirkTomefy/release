@@ -7,10 +7,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.data.domain.Sort;
 import mg.bovit.release.specification.BovinSpecification;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
+import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 
 @Service
@@ -19,6 +23,11 @@ public class BovinService {
     private BovinRepository bovinRepository;
     @Autowired
     private CaisseService caisseService;
+
+     @Autowired
+    private BovinWithPoidsRepository bovinWithPoidsRepository;
+   
+
     @Autowired
     private PeseBovinRepository peseRepository;
 
@@ -82,8 +91,8 @@ public class BovinService {
         }
     }
 
-   // Nouvelle méthode de recherche paginée et filtrée
-    public Page<Bovin> searchBovins(MultiCriteriaFormBovinList form) {
+        // Nouvelle méthode de recherche paginée et filtrée (utilisant la vue)
+    public Page<BovinWithPoids> searchBovinsWithPoids(MultiCriteriaFormBovinList form) {
         // Construction du tri
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
@@ -102,9 +111,8 @@ public class BovinService {
                 Sort.by(direction, sortField)
         );
 
-        return bovinRepository.findAll(BovinSpecification.fromForm(form), pageable);
-    }
-
+        return bovinWithPoidsRepository.findAll(BovinSpecification.fromForm(form), pageable);
+    }            
 
     public List<Bovin> findAll() {
         return bovinRepository.findAll();
