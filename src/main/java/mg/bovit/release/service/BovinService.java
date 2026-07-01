@@ -19,6 +19,9 @@ public class BovinService {
     private BovinRepository bovinRepository;
     @Autowired
     private CaisseService caisseService;
+    @Autowired
+    private PeseBovinRepository peseRepository;
+
 
     // function to find bovin by id
     public Bovin findById(Long id_bovin) throws Exception {
@@ -28,7 +31,7 @@ public class BovinService {
     // function to buy bovin
     @Transactional(rollbackFor = Exception.class)
     public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite) throws Exception {
-        // vérify if quantite
+
         if (quantite <= 0) {
             throw new Exception("la quantite ne doit pas être inférieure ou égal à 0");
         }
@@ -62,6 +65,7 @@ public class BovinService {
 
         for (int i = 0; i < quantite; i++) {
             Bovin newBovin = new Bovin();
+            PeseBovin newPeseBovin = new PeseBovin();
 
             newBovin.setRace(bovin.getRace());
             newBovin.setPoids_achat(bovin.getPoids_achat());
@@ -69,8 +73,12 @@ public class BovinService {
             newBovin.setDate_achat(bovin.getDate_achat());
             newBovin.setDate_vente(bovin.getDate_vente());
             newBovin.setPrix_achat(prix_unitaire);
+            newPeseBovin.setBovin(bovin);
+            newPeseBovin.setDate_pese(bovin.getDate_achat());
+            newPeseBovin.setPoids_apres(bovin.getPoids_achat());
 
             bovinRepository.save(newBovin);
+            peseRepository.save(newPeseBovin);
         }
     }
 
