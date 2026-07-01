@@ -518,6 +518,7 @@
               style="background: #f2f8fc; font-weight: 600; color: #0f5430"
               required
             />
+            <p id="bovinInfo"></p>
           </div>
 
           <div class="field-group">
@@ -575,6 +576,7 @@
       (function () {
         // Éléments
         const bovinSelect = document.getElementById("bovinId");
+        const bovinInfo = document.getElementById("bovinInfo");
         const dateInput = document.getElementById("datePese");
         const poidsInput = document.getElementById("poids");
         const peseBovinSelect = document.getElementById("id_peseBovin");
@@ -586,22 +588,19 @@
           dateInput.value = new Date().toISOString().split("T")[0];
         }
 
-        bovinSelect.addEventListener("change", function() {
+        bovinSelect.addEventListener("blur", function() {
           const bovinId = this.value;
-          if (!bovinId) {
-            return;
+          if (!bovinId || bovinId == "") {
+            bovinInfo.innerText = "Bovin introuvable"
           }
-          
-          /* //  RECUPERATION DES INFOS
-          fetch(`/bovins/api/${bovinId}`)
-            .then(res => res.json())
-            .then(bovin => {
-               document.getElementById("bovinInfoSection").style.display = "block";
-               document.getElementById("infoNom").textContent = bovin.nom;
-               document.getElementById("infoRace").textContent = bovin.race;
-               document.getElementById("infoDernierPoids").textContent = bovin.dernierPoids + " kg";
+          else {
+            //  RECUPERATION DES INFOS
+            fetch("/bovin/api/"+bovinId)
+              .then(res => res.json())
+              .then(bovin => {
+                 bovinInfo.innerText = "Race:"+bovin.race.nom
             });
-          */
+          }
         });
 
         // Validation et envoi vers le contrôleur
@@ -645,7 +644,6 @@
           })
             .then((response) => response.json())
             .then((data) => {
-              console.log(data)
               if (data.status === "success") {
                 showToast(data.message, "success");
                 setTimeout(() => {
