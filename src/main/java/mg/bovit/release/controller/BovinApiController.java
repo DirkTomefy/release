@@ -28,8 +28,9 @@ public class BovinApiController {
 
     // function to get bovin by id
     @GetMapping("bovin/api/{id}")
+    @ResponseBody
     public Bovin findBovinById(
-        @PathVariable(name="id", required = false) Long id
+        @PathVariable(name="id") Long id
     ) {
         Bovin bovin;
 
