@@ -37,6 +37,10 @@ public class Contrat {
     )
     private BigDecimal salaire;
 
+    @ManyToOne
+    @JoinColumn(name = "id_employee", nullable = false)
+    private Employee employee;
+
     public Long getId() {
         return id;
     }
@@ -75,5 +79,13 @@ public class Contrat {
 
     public void setSalaire(BigDecimal salaire) {
         this.salaire = salaire;
+    }
+    
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
     }
 }
