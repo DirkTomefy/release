@@ -6,20 +6,18 @@ public class MouvementCaisseSoldeDto {
     private Caisse caisse;
     private Double solde;
 
-    public Caisse getCaisse() {
-        return caisse;
-    }
+    // Constructeur vide nécessaire
+    public MouvementCaisseSoldeDto() {}
 
-    public void setCaisse(Caisse caisse) {
+    // LE CONSTRUCTEUR POUR LE JPQL
+    public MouvementCaisseSoldeDto(Caisse caisse, Double solde) {
         this.caisse = caisse;
-    }
-
-    public Double getSolde() {
-        return solde;
-    }
-
-    public void setSolde(Double solde) {
         this.solde = solde;
     }
 
+    // Tes getters et setters restent inchangés...
+    public Caisse getCaisse() { return caisse; }
+    public void setCaisse(Caisse caisse) { this.caisse = caisse; }
+    public Double getSolde() { return solde; }
+    public void setSolde(Double solde) { this.solde = solde; }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -60,16 +61,23 @@ public class MouvementController {
 
     @PostMapping("/form/entree")
     public ResponseEntity<Map<String, String>> saveMouvementEntree(@RequestBody MouvementEntreePayload payload) {
-        MouvementStockEntree mouvementStockEntreeSaved = mouvementStockEntreeService.saveFromPayloadAndReturn(payload);
-        mouvementStockEntreePaiementService.saveListPaiementFromPayload(payload, mouvementStockEntreeSaved);
-
-        // On crée un vrai objet JSON { "status": "success", "message": "..." }
         Map<String, String> response = new HashMap<>();
-        response.put("status", "success");
-        response.put("message", "Mouvement enregistré avec succès");
+        try {
+            mouvementStockEntreeService.transactionerEnregistrerMouvementEntreeEtPaiements(payload);
 
-        return ResponseEntity.ok(response);
+            // On crée un vrai objet JSON { "status": "success", "message": "..." }
+            response.put("status", "success");
+            response.put("message", "Mouvement enregistré avec succès");
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage()); // Exemple: "Le montant du paiement dépasse..."
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
     }
 
     // @GetMapping("/list")
 }
+// Erreur : No converter found capable of converting from type [java.util.HashMap<?, ?>] to type [mg.bovit.release.dto.MouvementCaisseSoldeDto]
