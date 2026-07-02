@@ -14,6 +14,10 @@ public class MouvementCaisseService {
     @Autowired
     private MouvementCaisseRepository mouvementCaisseRepository;
 
+    public MouvementCaisse save(MouvementCaisse mouvementCaisse) {
+        return mouvementCaisseRepository.save(mouvementCaisse);
+    }
+
     public List<MouvementCaisse> findAll() {
         return mouvementCaisseRepository.findAll();
     }

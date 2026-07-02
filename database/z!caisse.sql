@@ -13,6 +13,7 @@ CREATE TABLE mvt_caisse(
 
 INSERT INTO mvt_caisse (id_caisse, type_mouvement, montant, date) VALUES 
     (1, 'ENTREE', 5000.00, '2024-01-15'),
+    (2, 'ENTREE', 4000.00, '2024-05-10'),
     (2, 'SORTIE', 2000.00, '2024-02-10'),
     (3, 'ENTREE', 10000.00, '2024-03-05'),
     (1, 'SORTIE', 3000.00, '2024-04-20');

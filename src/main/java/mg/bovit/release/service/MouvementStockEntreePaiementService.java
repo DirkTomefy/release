@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import mg.bovit.release.dto.MouvementCaisseSoldeDto;
 import mg.bovit.release.dto.MouvementEntreePaiementPayload;
 import mg.bovit.release.dto.MouvementEntreePayload;
+import mg.bovit.release.model.MouvementCaisse;
 import mg.bovit.release.model.MouvementStockEntree;
 import mg.bovit.release.model.MouvementStockEntreePaiement;
 import mg.bovit.release.repository.CaisseRepository;
@@ -38,6 +39,15 @@ public class MouvementStockEntreePaiementService {
                     break;
                 }
             }
+            // save la sortie de caisse
+            MouvementCaisse mouvementCaisse = new MouvementCaisse();
+            mouvementCaisse.setCaisse(mouvementPaiement.getCaisse());
+            mouvementCaisse.setTypeMouvement("SORTIE");
+            mouvementCaisse.setMontant(mouvementPaiement.getMontant());
+            mouvementCaisse.setDate(mouvementStockEntreeSaved.getDateEntree());
+            mouvementCaisseService.save(mouvementCaisse);
+
+            // save le paiement du mouvement d'entree
             mouvementStockEntreePaiementRepository.save(mouvementPaiement);
         }
     }
