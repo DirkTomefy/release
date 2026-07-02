@@ -1,3 +1,4 @@
+-- Active: 1779074118545@@127.0.0.1@5432@bovin_db
 -- ============================================================
 -- Migration nécessaire suite à l'ajout de 2 champs sur PayementEmployee
 -- (le fichier z!caisse.sql n'était pas présent dans l'archive fournie,
