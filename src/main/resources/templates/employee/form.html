@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Élevage · Gestion du troupeau</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Police sobre -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f9f7f4;
+      color: #3e3e3b;
+    }
+    .navbar {
+      background-color: #fff;
+      border-bottom: 1px solid #e2ddd6;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .navbar-brand {
+      font-weight: 600;
+      color: #5b4b3a !important;
+    }
+    .nav-link {
+      color: #6b5e53 !important;
+      font-weight: 500;
+    }
+    .nav-link.active {
+      color: #4a6b3a !important;
+      border-bottom: 2px solid #7a9e5a;
+    }
+    .card {
+      border: 1px solid #e7e0d8;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .table thead th {
+      background-color: #faf8f5;
+      font-weight: 500;
+      color: #6b5e53;
+      border-bottom: 2px solid #e2ddd6;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+    }
+    .table tbody td {
+      vertical-align: middle;
+      border-bottom: 1px solid #f0ede8;
+      padding-top: 0.85rem;
+      padding-bottom: 0.85rem;
+    }
+    .table tbody tr:hover {
+      background-color: #fefcf8;
+    }
+    .badge-actif {
+      background-color: #e2f0da;
+      color: #3d5a2e;
+      border-radius: 20px;
+      padding: 0.35em 0.8em;
+      font-weight: 500;
+    }
+    .badge-vendu {
+      background-color: #f0e6d3;
+      color: #6b4f2e;
+    }
+    .badge-decede {
+      background-color: #fde8e8;
+      color: #813838;
+    }
+    .btn-soft-primary {
+      background-color: #eef3ea;
+      color: #4a6b3a;
+      border: 1px solid #d2ddc4;
+      font-weight: 500;
+    }
+    .btn-soft-primary:hover {
+      background-color: #dde8d1;
+      color: #3a562c;
+    }
+    .btn-soft-danger {
+      background-color: #fef1f1;
+      color: #b34040;
+      border: 1px solid #f5d2d2;
+      font-weight: 500;
+    }
+    .btn-soft-danger:hover {
+      background-color: #fae3e3;
+      color: #962e2e;
+    }
+    .btn-soft-warning {
+      background-color: #fdf6e8;
+      color: #8a6d2e;
+      border: 1px solid #eddea4;
+      font-weight: 500;
+    }
+    .btn-soft-warning:hover {
+      background-color: #f7ecce;
+      color: #705a20;
+    }
+    .page-link {
+      color: #5b4b3a;
+      border: none;
+      border-radius: 8px;
+      margin: 0 2px;
+    }
+    .page-item.active .page-link {
+      background-color: #7a9e5a;
+      border-color: #7a9e5a;
+      color: #fff;
+    }
+    .page-link:hover {
+      background-color: #f0ede8;
+      color: #3e3e3b;
+    }
+    .form-control, .form-select {
+      border-color: #e0d8cf;
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #b6a88e;
+      box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
+    }
+
+    /* Gestion des "pages" sans JavaScript */
+    #listPage, #formPage {
+      display: none;
+    }
+    #listPage:target, #formPage:target {
+      display: block;
+    }
+    /* Par défaut, si aucun fragment n'est ciblé, on affiche la liste */
+    #listPage:not(:target), #formPage:not(:target) {
+      display: none;
+    }
+    /* Quand rien n'est ciblé, on affiche la liste (page d'accueil) */
+    #listPage {
+      display: block;
+    }
+    #listPage:target ~ #formPage,
+    #formPage:target ~ #listPage {
+      display: none;
+    }
+    /* Plus simple : cacher tout sauf la cible */
+    body:not(:has(:target)) #listPage {
+      display: block;
+    }
+    body:not(:has(:target)) #formPage {
+      display: none;
+    }
+    #listPage:target {
+      display: block;
+    }
+    #formPage:target {
+      display: block;
+    }
+    #listPage:target ~ #formPage,
+    #formPage:target ~ #listPage {
+      display: none;
+    }
+    /* Approche propre avec :has() (supporté navigateurs modernes) */
+    /* Si aucun fragment -> liste visible */
+    #listPage { display: block; }
+    #formPage { display: none; }
+    body:has(#listPage:target) #listPage { display: block; }
+    body:has(#listPage:target) #formPage { display: none; }
+    body:has(#formPage:target) #listPage { display: none; }
+    body:has(#formPage:target) #formPage { display: block; }
+  </style>
+</head>
+
+<body>
+    <div id="formEmployeePage">
+        <div class="container py-4">
+
+            <div class="d-flex align-items-center mb-4">
+                <a href="#listEmployeePage" class="btn btn-soft-primary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                    Retour
+                </a>
+
+                <h2 class="fw-semibold mb-0">
+                    <i class="bi bi-person-plus-fill me-2"></i>
+                    Nouvel employé
+                </h2>
+            </div>
+
+              <form action="/employee/save" method="POST" th:object="${employeeForm}" id="employeeForm">
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-person"></i> Informations de l'employé</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom *</label>
+                                <input type="text" th:field="*{nom}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prénom *</label>
+                                <input type="text" th:field="*{prenom}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de naissance</label>
+                                <input type="date" id="dateNaissance" th:field="*{dateNaissance}" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date d'entrée *</label>
+                                <input type="date" id="dateEntree" th:field="*{dateEntree}" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Premier contrat</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Date de début *</label>
+                                <input type="date" id="dateDebut" th:field="*{dateDebut}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de fin</label>
+                                <input type="date" id="dateFin" th:field="*{dateFin}" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Salaire mensuel (Ar) *</label>
+                                <input type="number" th:field="*{salaire}" min="0" step="1000" class="form-control" placeholder="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="#listEmployeePage" class="btn btn-light me-2">Annuler</a>
+                    <button type="submit" class="btn btn-soft-primary">
+                        <i class="bi bi-check-circle me-1"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+<script>
+        const dateNaissance = document.getElementById('dateNaissance');
+        const dateEntree = document.getElementById('dateEntree');
+        const dateDebut = document.getElementById('dateDebut');
+        const dateFin = document.getElementById('dateFin');
+
+        // 1. La date d'entrée dépend de la date de naissance
+        dateNaissance.addEventListener('change', function() {
+            if (this.value) {
+                dateEntree.min = this.value;
+            }
+        });
+
+        // 2. Le contrat ne peut pas commencer avant la date d'entrée de l'employé
+        dateEntree.addEventListener('change', function() {
+            if (this.value) {
+                dateDebut.min = this.value;
+                // Si la date de naissance n'a pas défini la limite basse
+                if(!dateNaissance.value) {
+                    dateNaissance.max = this.value;
+                }
+            }
+        });
+
+        // 3. La date de fin du contrat dépend de la date de début
+        dateDebut.addEventListener('change', function() {
+            if (this.value) {
+                dateFin.min = this.value;
+                // Ajuste dynamiquement la date d'entrée max si nécessaire
+                dateEntree.max = this.value;
+            }
+        });
+    </script>
+</body>
+
+</html>
