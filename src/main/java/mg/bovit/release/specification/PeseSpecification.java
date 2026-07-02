@@ -9,7 +9,7 @@ import jakarta.persistence.criteria.*;
 public class PeseSpecification {
     public static Specification<PeseBovin> fromForm(MulticriteriaListPeseBovin form) {
         return (root, query, cb) -> {
-            Predicate predicate = cb.conjunction();nettoyage
+            Predicate predicate = cb.conjunction();
 
             if (form.getDateRecherePese() != null) {
                 predicate = cb.and(predicate,
