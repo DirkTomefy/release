@@ -8,8 +8,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Materiel;
 import mg.bovit.release.model.MaterielType;
+import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.MaterielService;
 import mg.bovit.release.service.MaterielTypeService;
 import mg.bovit.release.service.MouvementStockService;
@@ -23,6 +25,8 @@ public class MouvementController {
     private MaterielTypeService materielTypeService;
     @Autowired
     private MouvementStockService mouvementStockService;
+    @Autowired
+    private CaisseService caisseService;
 
     @GetMapping("/")
     public String listMouvements() {
@@ -33,13 +37,15 @@ public class MouvementController {
     public String showForm(Model model) {
         List<MaterielType> materielTypes = materielTypeService.findAll();
         List<Materiel> materiels = materielService.findAll();
+        List<Caisse> caisses = caisseService.findAll();
 
-        List<String> typeMouvement = List.of("ENTREE", "SORTIE");
+        // List<String> typeMouvement = List.of("ENTREE", "SORTIE");
         model.addAttribute("materielTypes", materielTypes);
         model.addAttribute("materiels", materiels);
-        model.addAttribute("typeMouvements", typeMouvement);
+        model.addAttribute("caisses", caisses);
+        // model.addAttribute("typeMouvements", typeMouvement);
 
-        return "mouvement/form";
+        return "mouvement/entreeForm";
     }
 
     // @GetMapping("/list")

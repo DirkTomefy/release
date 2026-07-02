@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🐄 Mouvement de stock</title>
+  <title>🐄 Mouvement entrée de stock</title>
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
@@ -498,9 +498,9 @@
   <div class="card-modern">
     <!-- En-tête -->
     <div class="header-section">
-      <h1><i class="fas fa-cow"></i> Mouvement de stock</h1>
+      <h1><i class="fas fa-cow"></i> Mouvement entree de stock</h1>
       <div class="badge-engrais">
-        <i class="fas fa-calendar-plus"></i> Nouvelle entrée ou sortie
+        <i class="fas fa-calendar-plus"></i> Nouvelle entrée
       </div>
     </div>
 
@@ -525,15 +525,6 @@
           </select>
         </div>
 
-        <!-- type mouvement -->
-        <div class="field-group">
-          <label for="typeMouvement"><i class="fas fa-exchange-alt"></i> Type de mouvement</label>
-          <select id="typeMouvement" name="typeMouvement" required>
-            <option th:each="typeMouvement : ${typeMouvements}" th:value="${typeMouvement}" th:text="${typeMouvement}">
-            </option>
-          </select>
-        </div>
-
         <!-- Date mouvement -->
         <div class="field-group">
           <label for="dateMouvement"><i class="fas fa-calendar-day"></i> Date du mouvement</label>
@@ -552,9 +543,9 @@
           <input type="number" id="pu" placeholder="ex: 1250" step="0.01" min="0" value="" />
         </div>
 
-        <!-- Total bovin (calculé, affichage) -->
+        <!-- Total entree mouvement (calculé, affichage) -->
         <div class="field-group">
-          <label for="total"><i class="fas fa-calculator"></i> Total bovin (est.)</label>
+          <label for="total"><i class="fas fa-calculator"></i> Total entrée (est.)</label>
           <input type="text" id="total" readonly value=""
             style="background:#f2f8fc; font-weight:600; color:#0f5430;" />
         </div>
@@ -577,9 +568,7 @@
             <div class="payment-row" data-row-id="1">
               <div class="pay-select">
                 <select class="pay-type">
-                  <option value="1">Mvola</option>
-                  <option value="2" selected>Espèce</option>
-                  <option value="3">Carte bancaire</option>
+                  <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
                 </select>
               </div>
               <div class="pay-montant">
@@ -623,7 +612,7 @@
   <!-- Toast de notification -->
   <div id="toast" class="toast-message"></div>
 
-  <script>
+  <script th:inline="javascript">
     // comment detecter le changement de type de materiel ? -> il faut que je mette un id sur le select du type de materiel et que je fasse un addEventListener dessus pour detecter le changement et ensuite faire un fetch pour recuperer les materiels correspondants au type selectionné
     document.getElementById('materielTypeId').addEventListener('change', function () {
       // console.log(this.value);
@@ -644,19 +633,8 @@
         })
         .catch(error => console.error('Erreur lors de la récupération des matériels :', error));
     });
-    document.getElementById('typeMouvement').addEventListener('change', function () {
-      const type = this.value;
-      if (type === 'ENTREE') {
-        document.getElementById('pu').parentElement.style.display = 'block';
-        document.getElementById('total').parentElement.style.display = 'block';
-        document.querySelector('.payment-section').style.display = 'block';
-      } else if (type === 'SORTIE') {
-        document.getElementById('pu').parentElement.style.display = 'none';
-        document.getElementById('total').parentElement.style.display = 'none';
-        document.querySelector('.payment-section').style.display = 'none';
-      }
-    });
     (function () {
+      const caisses = /*[[${caisses}]]*/ [];
       // Éléments
       const paymentList = document.getElementById('paymentList');
       const addPaymentBtn = document.getElementById('addPaymentBtn');
@@ -716,15 +694,14 @@
 
       // Gestion des lignes de paiement
       function createPaymentRow(rowId) {
+        console.log(caisses);
         const row = document.createElement('div');
         row.className = 'payment-row';
         row.dataset.rowId = rowId;
         row.innerHTML = `
             <div class="pay-select">
               <select class="pay-type">
-                <option value="1">Mvola</option>
-                <option value="2" selected>Espèce</option>
-                <option value="3">Carte bancaire</option>
+                ${caisses.map(caisse => `<option value="${caisse.id}">${caisse.libelle}</option>`).join('')}
               </select>
             </div>
             <div class="pay-montant">
@@ -785,11 +762,12 @@
       puInput.addEventListener('input', updateBovinTotal);
       qteInput.addEventListener('input', updateBovinTotal);
 
-      // Validation et envoi
+      // validation et envoi
       validerBtn.addEventListener('click', function () {
-        const raceId = parseInt(document.getElementById('raceId').value);
-        const dateAchat = dateInput.value;
+        const materielId = parseInt(document.getElementById('materielId').value);
+        const pu = parseFloat(puInput.value) || 0;
         const quantite = parseInt(qteInput.value) || 0;
+        const dateMouvement = dateInput.value;
 
         // Récupération des paiements
         const payments = [];
@@ -802,12 +780,12 @@
         });
 
         // Validations
-        if (!dateAchat) {
-          alert('Veuillez saisir une date d\'achat.');
+        if (!dateMouvement) {
+          alert('Veuillez saisir une date de mouvement.');
           return;
         }
-        if (!raceId || raceId < 1) {
-          alert('Veuillez sélectionner une race valide.');
+        if (!materielId || materielId < 1) {
+          alert('Veuillez sélectionner un matériel valide.');
           return;
         }
         if (quantite <= 0) {
@@ -821,14 +799,17 @@
 
         // Construction du payload
         const payload = {
-          dateAchat: dateAchat,
-          raceId: raceId,
+          materielId: materielId,
+          pu: pu,
           quantite: quantite,
+          dateMouvement: dateMouvement,
           payments: payments
         };
 
+        console.log('Payload à envoyer:', payload);
+
         // Envoi vers le serveur
-        fetch('/bovins/achat', {
+        fetch('/mouvement/form/entree', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -838,9 +819,9 @@
             if (data.status === 'success') {
               showToast(data.message, 'success');
               // Réinitialisation partielle ou redirection
-              setTimeout(() => {
-                window.location.href = '/bovins';
-              }, 1500);
+              // setTimeout(() => {
+              //   window.location.href = '/mouvements';
+              // }, 1500);
             } else {
               showToast('Erreur : ' + data.message, 'error');
             }

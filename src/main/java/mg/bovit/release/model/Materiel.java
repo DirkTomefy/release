@@ -21,6 +21,8 @@ public class Materiel {
     @JoinColumn(name = "id_type_materiel")
     private MaterielType type;
 
+    private String typeGestion; // FIFO ou LIFO
+
     public Long getId() {
         return id;
     }
@@ -43,6 +45,14 @@ public class Materiel {
 
     public void setType(MaterielType type) {
         this.type = type;
+    }
+
+    public String getTypeGestion() {
+        return typeGestion;
+    }
+
+    public void setTypeGestion(String typeGestion) {
+        this.typeGestion = typeGestion;
     }
 
 }
