@@ -547,173 +547,167 @@
       </div>
 
       <!-- Formulaire -->
-<form id="payeForm" onsubmit="return false;">
-  <div class="form-grid">
-    <div class="field-group">
-      <label for="employeeSelect"><i class="fas fa-user"></i> Employé</label>
-      <select id="employeeSelect" class="form-control" name="employeeId" required>
-        <option value="">-- Sélectionner un employé --</option>
-        <option th:each="emp : ${employees}" 
-                th:value="${emp.id}" 
-                th:text="${emp.nom + ' ' + emp.prenom}">
-        </option>
-      </select>
-    </div>
-
-    <div class="field-group">
-      <label for="moisPaye"><i class="fas fa-calendar-day"></i> Mois à payer</label>
-      <input type="month" id="moisPaye" name="moisPaye" required />
-    </div>
-
-<div class="field-group">
-  <label for="typePayementId"><i class="fas fa-tag"></i> Type de paiement</label>
-  <select id="typePayementId" name="typePayementId" required>
-    <option value="">-- Sélectionner un type --</option>
-    <option th:each="type : ${typesPayement}" 
-            th:value="${type.id}" 
-            th:text="${type.libelle}">
-    </option>
-  </select>
-</div>
-
-    <div class="field-group">
-  <label for="salaireContrat"><i class="fas fa-file-contract"></i> Salaire contrat (Ar)</label>
-  <input type="text" id="salaireContrat" readonly value="0,00" data-raw-value="0" />
-</div>
-
-<div class="field-group">
-  <label for="resteDu"><i class="fas fa-hourglass-half"></i> Reste dû ce mois (Ar)</label>
-  <input type="text" id="resteDu" readonly value="0,00" data-raw-value="0" />
-</div>
-
-    <div class="field-group">
-      <label for="montantAVerser"><i class="fas fa-hand-holding-dollar"></i> Montant à verser (Ar)</label>
-      <input
-        type="number"
-        id="montantAVerser"
-        name="montantAVerser"
-        placeholder="ex: 300000"
-        step="0.01"
-        min="0"
-        value="0"
-        required
-      />
-    </div>
-
-    <div class="info-box box-danger" id="moisPayeBox">
-      <i class="fas fa-circle-exclamation"></i>
-      <span>Le salaire de ce mois a déjà été réglé pour cet employé. Ce paiement sera ignoré (skip).</span>
-    </div>
-
-    <div class="info-box box-warning" id="avanceBox">
-      <i class="fas fa-triangle-exclamation"></i>
-      <span>Avance(s) déjà enregistrée(s) ce mois : affichée à titre indicatif uniquement — elle n'est <u>pas</u> déduite automatiquement du reste dû.</span>
-    </div>
-
-    <div class="info-box box-neutral" id="sanctionBox">
-      <i class="fas fa-info-circle"></i>
-      <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
-    </div>
-
-    <div class="payment-section">
-      <div class="payment-header">
-        <div class="payment-title">
-          <i class="fas fa-hand-holding-dollar"></i>
-          Caisses utilisées
-          <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
-        </div>
-        <button type="button" class="btn-add-payment" id="addPaymentBtn">
-          <i class="fas fa-plus-circle"></i> Ajouter ligne
-        </button>
-      </div>
-
-      <div class="payment-list" id="paymentList">
-        <div class="payment-row" data-row-id="1">
-          <div class="pay-select">
-            <select class="pay-type" required>
-              <option value="">-- Caisse --</option>
-              <option th:each="caisse : ${caisses}" 
-                      th:value="${caisse.id}" 
-                      th:text="${caisse.libelle}">
+      <form id="payeForm" onsubmit="return false;">
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="employeeSelect"><i class="fas fa-user"></i> Employé</label>
+            <select id="employeeSelect" class="form-control" name="employeeId" required>
+              <option value="">-- Sélectionner un employé --</option>
+              <option th:each="emp : ${employees}"
+                      th:value="${emp.id}"
+                      th:text="${emp.nom + ' ' + emp.prenom}"
+                      th:selected="${preselectEmployeeId != null and emp.id == preselectEmployeeId}">
               </option>
             </select>
           </div>
-          <div class="pay-montant">
+
+          <div class="field-group">
+            <label for="moisPaye"><i class="fas fa-calendar-day"></i> Mois à payer</label>
+            <input type="month" id="moisPaye" name="moisPaye"
+                   th:value="${preselectMois}" required />
+          </div>
+
+          <div class="field-group">
+            <label for="typePayementId"><i class="fas fa-tag"></i> Type de paiement</label>
+            <select id="typePayementId" name="typePayementId" required>
+              <option value="">-- Sélectionner un type --</option>
+              <option th:each="type : ${typesPayement}"
+                      th:value="${type.id}"
+                      th:text="${type.libelle}"
+                      th:attr="data-libelle=${type.libelle}">
+              </option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="salaireContrat"><i class="fas fa-file-contract"></i> Salaire contrat (Ar)</label>
+            <input type="text" id="salaireContrat" readonly value="0,00" data-raw-value="0" />
+          </div>
+
+          <div class="field-group">
+            <label for="resteDu"><i class="fas fa-hourglass-half"></i> Reste dû ce mois (Ar)</label>
+            <input type="text" id="resteDu" readonly value="0,00" data-raw-value="0" />
+          </div>
+
+          <div class="field-group">
+            <label for="montantAVerser"><i class="fas fa-hand-holding-dollar"></i> Montant à verser (Ar)</label>
             <input
               type="number"
-              class="pay-amount"
-              placeholder="0.00"
+              id="montantAVerser"
+              name="montantAVerser"
+              placeholder="ex: 300000"
               step="0.01"
               min="0"
               value="0"
               required
             />
           </div>
-          <button type="button" class="btn-remove-pay" disabled>
-            <i class="fas fa-trash-alt"></i>
-          </button>
+
+          <div class="info-box box-danger" id="moisPayeBox">
+            <i class="fas fa-circle-exclamation"></i>
+            <span>Le salaire de ce mois a déjà été réglé pour cet employé. Ce paiement sera ignoré (skip).</span>
+          </div>
+
+          <div class="info-box box-warning" id="avanceBox">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Avance(s) déjà enregistrée(s) ce mois : affichée à titre indicatif uniquement — elle n'est <u>pas</u> déduite automatiquement du reste dû.</span>
+          </div>
+
+          <div class="info-box box-neutral" id="sanctionBox">
+            <i class="fas fa-info-circle"></i>
+            <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
+          </div>
+
+          <div class="payment-section">
+            <div class="payment-header">
+              <div class="payment-title">
+                <i class="fas fa-hand-holding-dollar"></i>
+                Caisses utilisées
+                <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
+              </div>
+              <button type="button" class="btn-add-payment" id="addPaymentBtn">
+                <i class="fas fa-plus-circle"></i> Ajouter ligne
+              </button>
+            </div>
+
+            <div class="payment-list" id="paymentList">
+              <div class="payment-row" data-row-id="1">
+                <div class="pay-select">
+                  <select class="pay-type" required>
+                    <option value="">-- Caisse --</option>
+                    <option th:each="caisse : ${caisses}"
+                            th:value="${caisse.id}"
+                            th:text="${caisse.libelle}">
+                    </option>
+                  </select>
+                </div>
+                <div class="pay-montant">
+                  <input
+                    type="number"
+                    class="pay-amount"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value="0"
+                    required
+                  />
+                </div>
+                <button type="button" class="btn-remove-pay" disabled>
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+
+            <div style="margin-top: 0.6rem; font-size: 0.8rem; color: #1f6d47; display: flex; gap: 1rem; flex-wrap: wrap;">
+              <span><i class="fas fa-info-circle"></i> Chaque ligne = une caisse</span>
+              <span><i class="fas fa-arrow-right"></i> Le total doit correspondre au montant à verser</span>
+            </div>
+          </div>
+
+          <div class="total-highlight">
+            <span><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti sur les caisses</span>
+            <span class="total-value" id="totalDisplay">0,00 Ar</span>
+          </div>
         </div>
-      </div>
-      
-      <div style="margin-top: 0.6rem; font-size: 0.8rem; color: #1f6d47; display: flex; gap: 1rem; flex-wrap: wrap;">
-        <span><i class="fas fa-info-circle"></i> Chaque ligne = une caisse</span>
-        <span><i class="fas fa-arrow-right"></i> Le total doit correspondre au montant à verser</span>
-      </div>
-    </div>
 
-    <div class="total-highlight">
-      <span><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti sur les caisses</span>
-      <span class="total-value" id="totalDisplay">0,00 Ar</span>
-    </div>
-  </div>
-
-  <div class="actions-row">
-    <div class="btn-group">
-      <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
-        <i class="fas fa-check-circle"></i> Valider le paiement
-      </button>
-      <button type="reset" class="btn btn-outline" id="resetBtn">
-        <i class="fas fa-undo-alt"></i> Réinitialiser
-      </button>
-    </div>
-    <span style="font-size: 0.85rem; color: #2b5f77; background: #e3f0f8; padding: 0.3rem 1.4rem; border-radius: 40px;">
-      <i class="far fa-clock"></i> Prêt
-    </span>
-  </div>
-</form>
+        <div class="actions-row">
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
+              <i class="fas fa-check-circle"></i> Valider le paiement
+            </button>
+            <button type="reset" class="btn btn-outline" id="resetBtn">
+              <i class="fas fa-undo-alt"></i> Réinitialiser
+            </button>
+          </div>
+          <span style="font-size: 0.85rem; color: #2b5f77; background: #e3f0f8; padding: 0.3rem 1.4rem; border-radius: 40px;">
+            <i class="far fa-clock"></i> Prêt
+          </span>
+        </div>
+      </form>
     </div>
 
     <!-- Toast de notification -->
     <div id="toast" class="toast-message"></div>
 
-    <script>
-      /*
-        HYPOTHÈSES prises pour ce formulaire (schéma actuel ne définit pas
-        de table "sanction" ni d'API précise) :
+    <!--
+      Modèle HTML des options de caisse, rendu côté serveur par Thymeleaf,
+      réutilisé en JS pour peupler chaque nouvelle ligne de paiement ajoutée
+      dynamiquement (au lieu de valeurs statiques copiées-collées du
+      formulaire d'achat de bovins, qui ne correspondaient à aucune vraie
+      caisse de ce système).
+    -->
+    <select id="caisseOptionsTemplate" style="display: none;">
+      <option value="">-- Caisse --</option>
+      <option th:each="caisse : ${caisses}"
+              th:value="${caisse.id}"
+              th:text="${caisse.libelle}">
+      </option>
+    </select>
 
-        1. type_payement_employee contient au minimum 3 lignes seedées :
-           1 = Salaire, 2 = Avance, 3 = Sanction (à adapter aux vrais id).
-        2. Une route GET /employees/:id/statut-paye?mois=YYYY-MM renvoie :
-           {
-             salaire: number,          // salaire du contrat en cours
-             dejaPaye: boolean,        // true si le salaire du mois est déjà réglé
-             resteDu: number,          // salaire - somme des paiements "Salaire" du mois
-             totalAvance: number,      // somme des paiements "Avance" du mois (info only)
-             totalSanction: number     // somme des paiements "Sanction" du mois (info only)
-           }
-           Si cette route n'existe pas encore côté back, il faut la créer :
-           elle doit lire contrat.salaire (contrat actif de l'employé) et
-           SUM(payement_employee) filtré par mois/type.
-        3. Une avance ou une sanction NE remet PAS à jour "resteDu" du salaire :
-           conformément à la consigne ("tsy ampiana ny reste_paye fa affichage
-           fotsiny"), elles sont seulement affichées, jamais soustraites
-           automatiquement du salaire restant.
-        4. Le paiement de type "Salaire" est le seul qui peut marquer le mois
-           comme payé côté back (à vous de décider, ex: reste_paye = 0).
-      */
+    <script th:inline="javascript">
       (function () {
-        // Éléments
-        const employeeSelect = document.getElementById("employeeId");
+        // ----- Éléments -----
+        const employeeSelect = document.getElementById("employeeSelect");
         const moisInput = document.getElementById("moisPaye");
         const typeSelect = document.getElementById("typePayementId");
         const salaireInput = document.getElementById("salaireContrat");
@@ -730,12 +724,13 @@
         const totalDisplay = document.getElementById("totalDisplay");
         const validerBtn = document.getElementById("validerBtn");
         const toast = document.getElementById("toast");
+        const caisseOptionsTemplate = document.getElementById("caisseOptionsTemplate");
 
         let rowCounter = 1;
-        let statutMois = null; // dernière réponse de /statut-paye
+        let statutMois = null; // dernière réponse de /employees/{id}/statut-paye
         let moisDejaPaye = false;
 
-        // Mois par défaut = mois courant
+        // Mois par défaut = mois courant (sauf si pré-rempli depuis les alertes)
         if (!moisInput.value) {
           const now = new Date();
           const y = now.getFullYear();
@@ -749,22 +744,11 @@
           );
         }
 
-        // ----- Chargement de la liste des employés -----
-        function loadEmployees() {
-          fetch("/employees/list")
-            .then((r) => r.json())
-            .then((data) => {
-              (data.employees || []).forEach((emp) => {
-                const opt = document.createElement("option");
-                opt.value = emp.id;
-                opt.textContent = `${emp.nom} ${emp.prenom}`;
-                employeeSelect.appendChild(opt);
-              });
-            })
-            .catch(() => {
-              // Le back n'est pas encore branché : le select reste vide,
-              // à remplir manuellement en attendant.
-            });
+        function typeSelectionneEstSalaire() {
+          const opt = typeSelect.selectedOptions[0];
+          if (!opt) return false;
+          const libelle = opt.getAttribute("data-libelle") || "";
+          return libelle.toLowerCase() === "salaire";
         }
 
         // ----- Vérification du statut du mois pour l'employé sélectionné -----
@@ -780,28 +764,29 @@
           if (!empId || !mois) {
             salaireInput.value = "0,00";
             resteDuInput.value = "0,00";
+            statutMois = null;
             return;
           }
 
-          fetch(
-            `/employees/${empId}/statut-paye?mois=${encodeURIComponent(mois)}`
-          )
+          fetch(`/employees/${empId}/statut-paye?mois=${encodeURIComponent(mois)}`)
             .then((r) => r.json())
             .then((data) => {
               statutMois = data;
               salaireInput.value = formatAr(data.salaire);
               resteDuInput.value = formatAr(data.resteDu);
+              salaireInput.setAttribute("data-raw-value", data.salaire);
+              resteDuInput.setAttribute("data-raw-value", data.resteDu);
 
               if (data.dejaPaye) {
                 moisDejaPaye = true;
                 moisPayeBox.classList.add("show");
-                validerBtn.disabled = true;
-              } else {
-                // pré-remplit le montant à verser avec le reste dû si le type
-                // sélectionné est "Salaire"
-                if (typeSelect.value === "1") {
-                  montantInput.value = data.resteDu;
-                }
+                // On ne bloque le bouton que si le type sélectionné est "Salaire" :
+                // une avance ou une sanction reste possible même si le salaire
+                // du mois est déjà réglé.
+                validerBtn.disabled = typeSelectionneEstSalaire();
+              } else if (typeSelectionneEstSalaire()) {
+                // Pré-remplit le montant à verser avec le reste dû
+                montantInput.value = data.resteDu;
               }
 
               if (data.totalAvance > 0) {
@@ -821,22 +806,22 @@
               }
             })
             .catch(() => {
-              // Route pas encore disponible côté back : on n'affiche rien,
-              // mais on n'empêche pas la saisie manuelle.
               salaireInput.value = "0,00";
               resteDuInput.value = "0,00";
+              statutMois = null;
             });
         }
 
         employeeSelect.addEventListener("change", refreshStatutMois);
         moisInput.addEventListener("change", refreshStatutMois);
         typeSelect.addEventListener("change", function () {
-          if (typeSelect.value === "1" && statutMois) {
+          validerBtn.disabled = moisDejaPaye && typeSelectionneEstSalaire();
+          if (typeSelectionneEstSalaire() && statutMois) {
             montantInput.value = statutMois.resteDu;
           }
         });
 
-        // ----- Gestion des lignes de paiement (caisses), identique au bovin form -----
+        // ----- Gestion des lignes de paiement (caisses), identique au formulaire d'achat -----
         function getPaymentRows() {
           return paymentList.querySelectorAll(".payment-row");
         }
@@ -871,21 +856,29 @@
           const row = document.createElement("div");
           row.className = "payment-row";
           row.dataset.rowId = rowId;
-          row.innerHTML = `
-            <div class="pay-select">
-              <select class="pay-type">
-                <option value="1">Mvola</option>
-                <option value="2" selected>Espèce</option>
-                <option value="3">Carte bancaire</option>
-              </select>
-            </div>
-            <div class="pay-montant">
-              <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">
-            </div>
-            <button type="button" class="btn-remove-pay">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          `;
+
+          const selectWrapper = document.createElement("div");
+          selectWrapper.className = "pay-select";
+          const select = caisseOptionsTemplate.cloneNode(true);
+          select.removeAttribute("id");
+          select.removeAttribute("style");
+          select.className = "pay-type";
+          select.required = true;
+          selectWrapper.appendChild(select);
+
+          const montantWrapper = document.createElement("div");
+          montantWrapper.className = "pay-montant";
+          montantWrapper.innerHTML =
+            '<input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">';
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn-remove-pay";
+          removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+
+          row.appendChild(selectWrapper);
+          row.appendChild(montantWrapper);
+          row.appendChild(removeBtn);
           return row;
         }
 
@@ -949,10 +942,12 @@
             alert("Veuillez sélectionner le mois à payer.");
             return;
           }
-          if (moisDejaPaye && typePayementId === 1) {
-            alert(
-              "Ce mois est déjà payé pour cet employé, ce paiement de type Salaire est ignoré."
-            );
+          if (!typePayementId) {
+            alert("Veuillez sélectionner un type de paiement.");
+            return;
+          }
+          if (moisDejaPaye && typeSelectionneEstSalaire()) {
+            alert("Ce mois est déjà payé pour cet employé, ce paiement de type Salaire est ignoré.");
             return;
           }
           if (montantAVerser <= 0) {
@@ -964,9 +959,8 @@
           const payments = [];
           getPaymentRows().forEach((row) => {
             const caisseId = parseInt(row.querySelector(".pay-type").value);
-            const montant =
-              parseFloat(row.querySelector(".pay-amount").value) || 0;
-            if (montant > 0) {
+            const montant = parseFloat(row.querySelector(".pay-amount").value) || 0;
+            if (caisseId && montant > 0) {
               payments.push({ caisseId, montant });
             }
           });
@@ -978,28 +972,19 @@
 
           const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
           if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
-            alert(
-              "Le total réparti sur les caisses doit être égal au montant à verser."
-            );
+            alert("Le total réparti sur les caisses doit être égal au montant à verser.");
             return;
           }
 
-          // reste_paye envoyé : uniquement pertinent pour le type "Salaire".
-          // Pour Avance / Sanction, on envoie 0 car ces montants ne réduisent
-          // pas automatiquement le salaire restant (affichage seulement).
-          const restePaye =
-            typePayementId === 1
-              ? Math.max((statutMois ? statutMois.resteDu : montantAVerser) - montantAVerser, 0)
-              : 0;
-
           const payload = {
-            idEmployee: employeeId,
-            idTypePayementEmployee: typePayementId,
+            employeeId: employeeId,
+            typePayementId: typePayementId,
             mois: mois,
-            montantAVerser: montantAVerser,
-            restePaye: restePaye,
+            montant: montantAVerser,
             payments: payments,
           };
+
+          validerBtn.disabled = true;
 
           fetch("/employees/payement", {
             method: "POST",
@@ -1011,79 +996,37 @@
               if (data.status === "success") {
                 showToast(data.message || "Paiement enregistré.", "success");
                 setTimeout(() => {
-                  window.location.href = "/employees";
-                }, 1500);
+                  window.location.href = "/employee/paiement";
+                }, 1200);
               } else if (data.status === "skipped") {
-                showToast(
-                  data.message || "Mois déjà payé, paiement ignoré.",
-                  "error"
-                );
+                showToast(data.message || "Mois déjà payé, paiement ignoré.", "error");
+                validerBtn.disabled = false;
               } else {
                 showToast("Erreur : " + data.message, "error");
+                validerBtn.disabled = false;
               }
             })
             .catch((error) => {
               console.error("Erreur réseau:", error);
               showToast("Erreur de communication avec le serveur.", "error");
+              validerBtn.disabled = false;
             });
         });
 
         function showToast(message, type) {
           toast.textContent = message;
-          toast.className =
-            "toast-message show" + (type === "error" ? " error" : "");
+          toast.className = "toast-message show" + (type === "error" ? " error" : "");
           setTimeout(() => {
             toast.classList.remove("show");
           }, 4000);
         }
 
-        // Init
-        loadEmployees();
+        // ----- Init -----
         initExistingRows();
+        if (employeeSelect.value && moisInput.value) {
+          refreshStatutMois();
+        }
       })();
-      // Tout en bas de paiement.html, dans la fonction fetch :
-      fetch("/employee/paiement", { // <-- Vérifie qu'il n'y a pas de "s" à employees
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-      })
-
-
-      const employeeSelect = document.getElementById('employeeSelect');
-const moisPayeInput = document.getElementById('moisPaye');
-const salaireContratInput = document.getElementById('salaireContrat');
-const resteDuInput = document.getElementById('resteDu');
-
-function chargerDetailsSalaire() {
-    const employeeId = employeeSelect.value;
-    const mois = moisPayeInput.value; // Format: YYYY-MM
-
-    if (!employeeId || !mois) {
-        salaireContratInput.value = "0,00";
-        resteDuInput.value = "0,00";
-        return;
-    }
-
-    // Appel vers ton API Spring Boot
-    fetch(`/api/employees/${employeeId}/salaire-details?mois=${mois}`)
-        .then(response => response.json())
-        .then(data => {
-            // Formatage en Ariary (Ex: 800000 -> 800 000,00 Ar)
-            const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 });
-            
-            salaireContratInput.value = formatter.format(data.salaireContrat);
-            resteDuInput.value = formatter.format(data.resteDu);
-            
-            // Stockage de la valeur brute pour tes calculs JS internes
-            salaireContratInput.setAttribute('data-raw-value', data.salaireContrat);
-            resteDuInput.setAttribute('data-raw-value', data.resteDu);
-        })
-        .catch(err => console.error("Erreur lors de la récupération des montants :", err));
-}
-
-// Déclenche l'affichage dès qu'un élément change
-employeeSelect.addEventListener('change', chargerDetailsSalaire);
-moisPayeInput.addEventListener('change', chargerDetailsSalaire);
     </script>
   </body>
 </html>

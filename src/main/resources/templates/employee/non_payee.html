@@ -70,7 +70,7 @@
       Employés non payés (mois précédents)
     </h1>
 
-    <a href="#payPage" class="btn btn-soft-primary">
+    <a th:href="@{/employee/paiement}" class="btn btn-soft-primary">
       <i class="bi bi-cash-coin me-1"></i> Paiement
     </a>
   </div>
@@ -114,7 +114,7 @@
             <span class="badge bg-danger text-white">Non payé</span>
           </td>
           <td>
-            <a th:href="@{/employees/payer(id=${alerte.employee.id})}" class="btn btn-sm btn-primary">
+            <a th:href="@{/employee/paiement(employeeId=${alerte.employee.id}, mois=${alerte.moisManquant})}" class="btn btn-sm btn-primary">
               <i class="bi bi-cash"></i> Payer
             </a>
           </td>

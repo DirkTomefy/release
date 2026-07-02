@@ -33,4 +33,22 @@ public class PayementRestController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    /**
+     * Statut de paiement d'un employé pour un mois donné : salaire du
+     * contrat, si le mois est déjà payé, reste dû, et récap avances/sanctions
+     * du mois (affichées à titre informatif uniquement).
+     */
+    @GetMapping("/{id}/statut-paye")
+    public ResponseEntity<Map<String, Object>> statutPaye(
+            @PathVariable("id") Long id,
+            @RequestParam("mois") String mois) {
+        try {
+            return ResponseEntity.ok(payementEmployeeService.getStatutPaye(id, mois));
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
 }

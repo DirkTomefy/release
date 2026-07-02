@@ -3,6 +3,7 @@ package mg.bovit.release.model;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 
 @Entity
@@ -25,6 +26,30 @@ public class PayementEmployee {
         nullable = false
     )
     private Timestamp datePayement;
+
+    /**
+     * Mois concerne par le paiement (toujours stocke au 1er du mois),
+     * PAS la date reelle a laquelle le paiement a ete effectue.
+     * Permet de payer un mois en retard sans fausser la verification
+     * "mois deja paye ?" et les alertes de non-paiement.
+     */
+    @Column(
+        name = "mois",
+        nullable = false
+    )
+    private Date mois;
+
+    /**
+     * Montant reellement verse lors de cette transaction
+     * (somme repartie sur les differentes caisses utilisees).
+     */
+    @Column(
+        name = "montant",
+        nullable = false,
+        precision = 12,
+        scale = 2
+    )
+    private BigDecimal montant;
 
     @Column(
         name = "reste_paye",
@@ -64,6 +89,22 @@ public class PayementEmployee {
 
     public void setDatePayement(Timestamp datePayement) {
         this.datePayement = datePayement;
+    }
+
+    public Date getMois() {
+        return mois;
+    }
+
+    public void setMois(Date mois) {
+        this.mois = mois;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
     }
 
     public BigDecimal getRestePaye() {
