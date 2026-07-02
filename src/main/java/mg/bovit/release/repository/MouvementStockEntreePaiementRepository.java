@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import mg.bovit.release.model.*;
 
 @Repository
-public interface MouvementStockRepository extends JpaRepository<MouvementStock, Long>, JpaSpecificationExecutor<MouvementStock> {
+public interface MouvementStockEntreePaiementRepository extends JpaRepository<MouvementStockEntreePaiement, Long>, JpaSpecificationExecutor<MouvementStockEntreePaiement> {
     
 }

@@ -9,8 +9,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "mvt_stock")
-public class MouvementStock {
+@Table(name = "mvt_stock_entree")
+public class MouvementStockEntree {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,11 +19,10 @@ public class MouvementStock {
     @JoinColumn(name = "id_materiel")
     private Materiel materiel;
 
-    private String typeMouvement; // ENTREE ou SORTIE
     private Double prixUnitaire;
     private Double qte;
-    private Double qteEnStock;
-    private java.sql.Date dateMouvement;
+    private Double qteRestant;
+    private java.sql.Date dateEntree;
 
     public Long getId() {
         return id;
@@ -39,14 +38,6 @@ public class MouvementStock {
 
     public void setMateriel(Materiel materiel) {
         this.materiel = materiel;
-    }
-
-    public String getTypeMouvement() {
-        return typeMouvement;
-    }
-
-    public void setTypeMouvement(String typeMouvement) {
-        this.typeMouvement = typeMouvement;
     }
 
     public Double getPrixUnitaire() {
@@ -65,20 +56,20 @@ public class MouvementStock {
         this.qte = qte;
     }
 
-    public Double getQteEnStock() {
-        return qteEnStock;
+    public Double getQteRestant() {
+        return qteRestant;
     }
 
-    public void setQteEnStock(Double qteEnStock) {
-        this.qteEnStock = qteEnStock;
+    public void setQteRestant(Double qteRestant) {
+        this.qteRestant = qteRestant;
     }
 
-    public java.sql.Date getDateMouvement() {
-        return dateMouvement;
+    public java.sql.Date getDateEntree() {
+        return dateEntree;
     }
 
-    public void setDateMouvement(java.sql.Date dateMouvement) {
-        this.dateMouvement = dateMouvement;
+    public void setDateEntree(java.sql.Date dateEntree) {
+        this.dateEntree = dateEntree;
     }
 
 }

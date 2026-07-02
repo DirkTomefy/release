@@ -546,8 +546,7 @@
         <!-- Total entree mouvement (calculé, affichage) -->
         <div class="field-group">
           <label for="total"><i class="fas fa-calculator"></i> Total entrée (est.)</label>
-          <input type="text" id="total" readonly value=""
-            style="background:#f2f8fc; font-weight:600; color:#0f5430;" />
+          <input type="text" id="total" readonly value="" style="background:#f2f8fc; font-weight:600; color:#0f5430;" />
         </div>
 
         <!-- SECTION PAIEMENT -->
@@ -634,7 +633,7 @@
         .catch(error => console.error('Erreur lors de la récupération des matériels :', error));
     });
     (function () {
-      const caisses = /*[[${caisses}]]*/ [];
+      const caisses = /*[[${caisses}]]*/[];
       // Éléments
       const paymentList = document.getElementById('paymentList');
       const addPaymentBtn = document.getElementById('addPaymentBtn');
@@ -800,7 +799,7 @@
         // Construction du payload
         const payload = {
           materielId: materielId,
-          pu: pu,
+          prixUnitaire: pu,
           quantite: quantite,
           dateMouvement: dateMouvement,
           payments: payments

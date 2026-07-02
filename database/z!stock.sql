@@ -49,13 +49,13 @@ CREATE TABLE mvt_stock_entree (
         REFERENCES materiel(id)
 );
 
-CREATE TABLE mvt_stock_entree_payement (
+CREATE TABLE mvt_stock_entree_paiement (
     id SERIAL PRIMARY KEY,
     id_mvt_stock_entree INTEGER NOT NULL,
     id_caisse INTEGER NOT NULL,
     montant DOUBLE PRECISION NOT NULL,
 
-    CONSTRAINT fk_mvt_stock_entree_payment
+    CONSTRAINT fk_mvt_stock_entree_paiement -- payement ou paiement ? -> paiement
         FOREIGN KEY (id_mvt_stock_entree)
         REFERENCES mvt_stock_entree(id),
     

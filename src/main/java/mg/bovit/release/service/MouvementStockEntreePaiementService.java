@@ -1,0 +1,34 @@
+package mg.bovit.release.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import mg.bovit.release.dto.MouvementEntreePaiementPayload;
+import mg.bovit.release.dto.MouvementEntreePayload;
+import mg.bovit.release.model.MouvementStockEntree;
+import mg.bovit.release.model.MouvementStockEntreePaiement;
+import mg.bovit.release.repository.CaisseRepository;
+import mg.bovit.release.repository.MouvementStockEntreePaiementRepository;
+import mg.bovit.release.repository.MouvementStockEntreeRepository;
+
+@Service
+public class MouvementStockEntreePaiementService {
+    @Autowired
+    private MouvementStockEntreePaiementRepository mouvementStockEntreePaiementRepository;
+
+    @Autowired
+    private CaisseRepository caisseRepository;
+
+    public void saveListPaiementFromPayload(MouvementEntreePayload payload, MouvementStockEntree mouvementStockEntreeSaved) {
+        // on extrait les paiements du payload et on les sauvegarde
+        for (MouvementEntreePaiementPayload mouvementEntreePaiementPayload : payload.getPayments()) {
+            MouvementStockEntreePaiement mouvementPaiement = new MouvementStockEntreePaiement();
+            mouvementPaiement.setMouvementStockEntree(mouvementStockEntreeSaved);
+            mouvementPaiement.setCaisse(caisseRepository.getReferenceById(mouvementEntreePaiementPayload.getCaisseId()));
+            mouvementPaiement.setMontant(mouvementEntreePaiementPayload.getMontant());
+            mouvementStockEntreePaiementRepository.save(mouvementPaiement);
+        }
+    }
+}
