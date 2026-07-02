@@ -13,7 +13,7 @@ public class PeseSpecification {
 
             if (form.getRaceId() != null) {
                 predicate = cb.and(predicate,
-                        cb.equal(root.get("race").get("id"), form.getRaceId()));
+                        cb.equal(root.get("id_bovin").get("race").get("id"), form.getRaceId()));
             }
 
             if (form.getDateRecherePese() != null) {
