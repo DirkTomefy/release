@@ -6,13 +6,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
-import mg.bovit.release.specification.BovinSpecification;
 import mg.bovit.release.specification.PeseSpecification;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
-import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 
 @Service
