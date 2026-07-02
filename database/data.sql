@@ -52,9 +52,13 @@ CREATE TABLE employee (
 CREATE TABLE contrat (
     id SERIAL PRIMARY KEY,
     date_debut DATE NOT NULL,
-    date_fin DATE, 
+    date_fin DATE,
+    id_employee INT NOT NULL, 
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    salaire NUMERIC(12, 2) NOT NULL CHECK (salaire >= 0)
+    salaire NUMERIC(12, 2) NOT NULL CHECK (salaire >= 0),
+
+    CONSTRAINT fk_contrat_employee 
+    FOREIGN KEY (id_employee) REFERENCES employee(id)
 );
 
 CREATE TABLE type_payement_employee (
@@ -73,4 +77,17 @@ CREATE TABLE payement_employee (
         REFERENCES employee(id) ON DELETE CASCADE,
     CONSTRAINT fk_payement_type FOREIGN KEY (id_type_payement_employee) 
         REFERENCES type_payement_employee(id) ON DELETE RESTRICT
+);
+
+-- ! a ne pas oublier
+CREATE TABLE mvt_caisse(
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL,
+    montant  DOUBLE PRECISION NOT NULL,
+    id_caisse INTEGER NOT NULL,
+
+    CONSTRAINT fk_mvt_caisse_caisseFOREIGN KEY (id_caisse)
+
+        REFERENCES caisse(id)
+
 );
