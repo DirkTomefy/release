@@ -1,5 +1,7 @@
 package mg.bovit.release.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +16,9 @@ public interface MouvementStockEntreeRepository extends JpaRepository<MouvementS
     @Query("SELECT SUM(qte_restant) AS total_qte_restant\n" + //
                 "FROM MouvementStockEntree mse\n" + //
                 "WHERE mse.materiel.id = :materielId")
-    Double getQuantiteRestantByIdMateriel(@Param("materielId") Long materielId);
+    public Double getQuantiteRestantByIdMateriel(@Param("materielId") Long materielId);
+
+    @Query("SELECT mse FROM MouvementStockEntree mse WHERE mse.materiel.id = :materielId")
+    public List<MouvementStockEntree> findAllByIdMateriel(@Param("materielId") Long materielId);
     
 }
