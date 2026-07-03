@@ -25,4 +25,4 @@ CREATE Table vente_detail (
     REFERENCES vente_bovin(id),
     CONSTRAINT fk_vente_detail_bovin FOREIGN KEY (id_bovin)
     REFERENCES bovin(id)
-)
+);
