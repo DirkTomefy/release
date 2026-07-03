@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class ContratService {
@@ -19,17 +21,46 @@ public class ContratService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    public List<Contrat> findAllContrats() {
+        return contratRepository.findAll();
+    }
+
     @Transactional
     public void saveContratWithEmployee(Contrat contrat, Long employeeId) {
-        // Trouver l'employé lié
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalArgumentException("Employé introuvable avec l'ID : " + employeeId));
-        
-        // Mettre à jour les métadonnées du contrat
+
+        if (contrat.getDateDebut() == null) {
+            throw new IllegalArgumentException("La date de début du contrat est obligatoire.");
+        }
+        LocalDate dateDebut = contrat.getDateDebut().toLocalDate();
+        if (employee.getDateEntree() == null) {
+            throw new IllegalArgumentException("La date d'entrée de l'employé est obligatoire.");
+        }
+        LocalDate dateEntree = employee.getDateEntree().toLocalDate();
+        if (dateDebut.isBefore(dateEntree)) {
+            throw new IllegalArgumentException("Le contrat ne peut pas commencer avant la date d'entrée de l'employé.");
+        }
+
+        List<Contrat> contratsExistants = contratRepository.findByEmployee(employee);
+        if (contratsExistants.stream().anyMatch(existing -> chevauche(contrat, existing))) {
+            throw new IllegalArgumentException("Ce contrat chevauche un autre contrat déjà enregistré pour cet employé.");
+        }
+
         contrat.setEmployee(employee);
         contrat.setDateCreation(new Timestamp(System.currentTimeMillis()));
-        
-        // Sauvegarde
         contratRepository.save(contrat);
+    }
+
+    private boolean chevauche(Contrat nouveau, Contrat existant) {
+        LocalDate debutNouveau = nouveau.getDateDebut().toLocalDate();
+        LocalDate finNouveau = nouveau.getDateFin() != null ? nouveau.getDateFin().toLocalDate() : null;
+        LocalDate debutExistant = existant.getDateDebut().toLocalDate();
+        LocalDate finExistant = existant.getDateFin() != null ? existant.getDateFin().toLocalDate() : null;
+
+        LocalDate finNouveauEffective = finNouveau != null ? finNouveau : LocalDate.MAX;
+        LocalDate finExistantEffective = finExistant != null ? finExistant : LocalDate.MAX;
+
+        return !debutNouveau.isAfter(finExistantEffective) && !debutExistant.isAfter(finNouveauEffective);
     }
 }
