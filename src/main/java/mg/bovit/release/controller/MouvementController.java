@@ -87,6 +87,7 @@ public class MouvementController {
         return "mouvement/formSortie";
     }
 
+    @PostMapping("/form/sortie")
     public ResponseEntity<Map<String, String>> saveMouvementSortie(@RequestBody MouvementEntreePayload payload) {
         Map<String, String> response = new HashMap<>();
         try {
