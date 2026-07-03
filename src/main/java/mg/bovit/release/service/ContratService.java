@@ -21,6 +21,10 @@ public class ContratService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    public List<Contrat> findAllContrats() {
+        return contratRepository.findAll();
+    }
+
     @Transactional
     public void saveContratWithEmployee(Contrat contrat, Long employeeId) {
         Employee employee = employeeRepository.findById(employeeId)

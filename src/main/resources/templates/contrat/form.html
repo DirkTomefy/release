@@ -158,84 +158,83 @@
             box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
         }
 
-        /* Gestion des "pages" sans JavaScript */
-        #listPage,
-        #formPage {
+        /* Gestion des pages contrat par fragments */
+        #listContratPage,
+        #formContratPage {
             display: none;
         }
 
-        #listPage:target,
-        #formPage:target {
+        #listContratPage:target,
+        #formContratPage:target {
             display: block;
         }
 
-        /* Par défaut, si aucun fragment n'est ciblé, on affiche la liste */
-        #listPage:not(:target),
-        #formPage:not(:target) {
-            display: none;
-        }
-
-        /* Quand rien n'est ciblé, on affiche la liste (page d'accueil) */
-        #listPage {
+        body:not(:has(:target)) #listContratPage {
             display: block;
         }
 
-        #listPage:target~#formPage,
-        #formPage:target~#listPage {
+        body:not(:has(:target)) #formContratPage {
             display: none;
         }
 
-        /* Plus simple : cacher tout sauf la cible */
-        body:not(:has(:target)) #listPage {
-            display: block;
-        }
-
-        body:not(:has(:target)) #formPage {
+        body:has(#formContratPage:target) #listContratPage {
             display: none;
         }
 
-        #listPage:target {
-            display: block;
-        }
-
-        #formPage:target {
-            display: block;
-        }
-
-        #listPage:target~#formPage,
-        #formPage:target~#listPage {
-            display: none;
-        }
-
-        /* Approche propre avec :has() (supporté navigateurs modernes) */
-        /* Si aucun fragment -> liste visible */
-        #listPage {
-            display: block;
-        }
-
-        #formPage {
-            display: none;
-        }
-
-        body:has(#listPage:target) #listPage {
-            display: block;
-        }
-
-        body:has(#listPage:target) #formPage {
-            display: none;
-        }
-
-        body:has(#formPage:target) #listPage {
-            display: none;
-        }
-
-        body:has(#formPage:target) #formPage {
+        body:has(#formContratPage:target) #formContratPage {
             display: block;
         }
     </style>
 </head>
 
 <body>
+    <!-- ========== PAGE LISTE CONTRATS ========== -->
+    <div id="listContratPage">
+        <div class="container py-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
+                        <i class="bi bi-file-earmark-text-fill me-2" style="color:#7a9e5a;"></i>
+                        Liste des contrats
+                    </h1>
+                    <p class="text-muted mb-0">Consultez les contrats enregistrés et ajoutez-en de nouveaux.</p>
+                </div>
+                <a href="#formContratPage" class="btn btn-soft-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Nouveau contrat
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Employé</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Salaire</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(contrats)}">
+                                    <td colspan="4" class="text-center text-muted">Aucun contrat enregistré.</td>
+                                </tr>
+                                <tr th:each="contratItem : ${contrats}">
+                                    <td th:text="${contratItem.employee != null ? contratItem.employee.nom + ' ' + contratItem.employee.prenom : '-'}"></td>
+                                    <td th:text="${contratItem.dateDebut != null ? #dates.format(contratItem.dateDebut, 'dd/MM/yyyy') : '-'}"></td>
+                                    <td th:text="${contratItem.dateFin != null ? #dates.format(contratItem.dateFin, 'dd/MM/yyyy') : '-'}"></td>
+                                    <td th:text="${#numbers.formatDecimal(contratItem.salaire, 0, 'COMMA', 2, 'POINT') + ' Ar'}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ========== PAGE AJOUT CONTRAT ========== -->
     <div id="formContratPage">
 
