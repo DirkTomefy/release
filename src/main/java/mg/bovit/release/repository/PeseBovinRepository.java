@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import mg.bovit.release.model.*;
 
 @Repository
-public interface PeseBovinRepository extends JpaRepository<PeseBovin, Long> {
+public interface PeseBovinRepository extends JpaRepository<PeseBovin, Long>, JpaSpecificationExecutor<PeseBovin> {
 
     // function to get latest bovin pese by id
     @Query(value = "SELECT * FROM pese_bovin pb WHERE pb.id_bovin = :id_bovin ORDER BY pb.date_pese DESC, pb.id DESC LIMIT 1", nativeQuery = true)

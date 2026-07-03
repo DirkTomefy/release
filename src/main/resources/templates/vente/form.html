@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · Nouvelle vente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #f9f7f4; color: #3e3e3b; }
+        .navbar { background-color: #fff; border-bottom: 1px solid #e2ddd6; }
+        .navbar-brand { font-weight: 600; color: #5b4b3a !important; }
+        .nav-link { color: #6b5e53 !important; font-weight: 500; }
+        .nav-link.active { color: #4a6b3a !important; border-bottom: 2px solid #7a9e5a; }
+        .card { border: 1px solid #e7e0d8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .table thead th { background-color: #faf8f5; font-weight: 500; color: #6b5e53; border-bottom: 2px solid #e2ddd6; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.04em; }
+        .table tbody td { vertical-align: middle; border-bottom: 1px solid #f0ede8; padding-top: 0.7rem; padding-bottom: 0.7rem; }
+        .btn-soft-primary { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; font-weight: 500; }
+        .btn-soft-primary:hover { background-color: #dde8d1; color: #3a562c; }
+        .btn-soft-danger { background-color: #fef1f1; color: #b34040; border: 1px solid #f5d2d2; font-weight: 500; }
+        .form-control, .form-select { border-color: #e0d8cf; border-radius: 8px; padding: 0.6rem 1rem; }
+        .form-control:focus, .form-select:focus { border-color: #b6a88e; box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15); }
+        .page-link { color: #5b4b3a; border: none; border-radius: 8px; margin: 0 2px; }
+        .page-item.active .page-link { background-color: #7a9e5a; border-color: #7a9e5a; color: #fff; }
+        .cart-total { font-size: 1.1rem; font-weight: 600; color: #0f6e38; }
+        .price-input { width: 130px; }
+
+        /* --- Autocomplete client --- */
+        .client-autocomplete-wrapper { position: relative; }
+        #clientDropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            max-height: 240px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #e0d8cf;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            display: none;
+            margin-top: 4px;
+        }
+        #clientDropdown .client-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 0.9rem;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            color: #3e3e3b;
+            cursor: pointer;
+        }
+        #clientDropdown .client-option:hover,
+        #clientDropdown .client-option.active {
+            background-color: #eef3ea;
+        }
+        #clientDropdown .client-empty {
+            padding: 0.6rem 0.9rem;
+            font-size: 0.85rem;
+            color: #9a9188;
+        }
+        #clientSelectedBadge {
+            display: none;
+            font-size: 0.8rem;
+            color: #0f6e38;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/bovins">Animaux</a></li>
+                <li class="nav-item"><a class="nav-link" href="/clients">Clients</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/vente/new">Ventes</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+
+    <h1 class="h4 fw-semibold mb-4" style="color:#4a4a44;">
+        <i class="bi bi-cash-coin me-2" style="color:#c4a35a;"></i>Nouvelle vente
+    </h1>
+
+    <div id="alertZone"></div>
+
+    <!-- Informations de la vente -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h6 fw-semibold mb-3">Informations de la vente</h2>
+            <div class="row g-3">
+                <div class="col-md-5 client-autocomplete-wrapper">
+                    <label class="form-label small text-muted">Client</label>
+                    <input type="text" id="clientSearchInput" class="form-control" autocomplete="off"
+                           placeholder="Rechercher un client (nom, prénom, contact)...">
+                    <input type="hidden" id="clientIdInput">
+                    <div id="clientDropdown"></div>
+                    <div id="clientSelectedBadge"><i class="bi bi-check-circle"></i> Client sélectionné</div>
+                    <a href="/clients/form" target="_blank" class="small d-inline-block mt-2">
+                        <i class="bi bi-plus-circle"></i> Nouveau client
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Date de vente</label>
+                    <input type="date" id="dateVenteInput" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">Description</label>
+                    <input type="text" id="descriptionInput" class="form-control" placeholder="Note, référence...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtre + recherche multicritère globale sur les bovins -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h6 fw-semibold mb-3">Sélection des bovins à vendre</h2>
+            <form th:action="@{/vente/new}" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="page" value="0" />
+                <input type="hidden" name="size" th:value="${criteria.size}" />
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Race</label>
+                    <select name="raceId" class="form-select">
+                        <option value="">Toutes</option>
+                        <option th:each="r : ${races}" th:value="${r.id}" th:text="${r.nom}"
+                                th:selected="${criteria.raceId != null && criteria.raceId == r.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="non_vendu" th:selected="${criteria.statut == 'non_vendu'}">Non vendu</option>
+                        <option value="tous" th:selected="${criteria.statut == 'tous'}">Tous</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Prix achat min</label>
+                    <input type="number" step="0.01" name="prixAchatMin" class="form-control" th:value="${criteria.prixAchatMin}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Prix achat max</label>
+                    <input type="number" step="0.01" name="prixAchatMax" class="form-control" th:value="${criteria.prixAchatMax}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Poids min</label>
+                    <input type="number" step="0.1" name="poidsMin" class="form-control" th:value="${criteria.poidsMin}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Poids max</label>
+                    <input type="number" step="0.1" name="poidsMax" class="form-control" th:value="${criteria.poidsMax}">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-soft-primary">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                    <span class="text-muted small ms-2">
+                        <i class="bi bi-info-circle"></i> Les bovins déjà cochés restent sélectionnés après un filtrage.
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des bovins disponibles -->
+    <div class="card mb-4">
+        <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+                <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>#</th>
+                    <th>Race</th>
+                    <th>Poids actuel</th>
+                    <th>Prix achat</th>
+                    <th style="width: 160px;">Prix de vente</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="bovin : ${bovinPage.content}"
+                    th:attr="data-bovin-id=${bovin.id},data-race=${bovin.raceNom},data-poids=${bovin.poidsActuel}">
+                    <td>
+                        <input type="checkbox" class="form-check-input bovin-check"
+                               th:value="${bovin.id}" th:attr="data-bovin-id=${bovin.id}">
+                    </td>
+                    <td class="text-muted" th:text="${bovin.id}">1</td>
+                    <td th:text="${bovin.raceNom}">Holstein</td>
+                    <td th:text="${bovin.poidsActuel != null ? #numbers.formatDecimal(bovin.poidsActuel, 0, 1) + ' kg' : '-'}">320 kg</td>
+                    <td th:text="${#numbers.formatDecimal(bovin.prixAchat, 0, 2)}">1500.00</td>
+                    <td>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm price-input bovin-price"
+                               th:attr="data-bovin-id=${bovin.id}" placeholder="Prix">
+                    </td>
+                </tr>
+                <tr th:if="${bovinPage.content.isEmpty()}">
+                    <td colspan="6" class="text-center text-muted py-4">Aucun bovin disponible pour ces critères</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mb-4" aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${bovinPage.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/vente/new(page=${bovinPage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax}, poidsMin=${criteria.poidsMin}, poidsMax=${criteria.poidsMax})}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            <li th:each="i : ${#numbers.sequence(0, bovinPage.totalPages - 1)}"
+                class="page-item" th:classappend="${i == bovinPage.number} ? 'active'">
+                <a class="page-link" th:href="@{/vente/new(page=${i}, size=${criteria.size}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax}, poidsMin=${criteria.poidsMin}, poidsMax=${criteria.poidsMax})}"
+                   th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${bovinPage.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/vente/new(page=${bovinPage.number + 1}, size=${criteria.size}, raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax}, poidsMin=${criteria.poidsMin}, poidsMax=${criteria.poidsMax})}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Panier / récapitulatif de la vente -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h6 fw-semibold mb-3">
+                <i class="bi bi-cart-check me-1"></i> Bovins sélectionnés
+                (<span id="cartCount">0</span>)
+            </h2>
+            <table class="table table-borderless mb-2" id="cartTable">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Race</th>
+                    <th>Poids actuel</th>
+                    <th>Prix de vente</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="cartBody">
+                <tr id="cartEmptyRow">
+                    <td colspan="5" class="text-center text-muted py-3">Aucun bovin sélectionné pour le moment</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-end">
+                <div class="cart-total">Total : <span id="cartTotal">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode de paiement -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 fw-semibold mb-0">
+                    <i class="bi bi-cash-stack me-1"></i> Modes de paiement
+                    <span class="badge bg-light text-dark border ms-1" id="payCountBadge">1 ligne</span>
+                </h2>
+                <button type="button" class="btn btn-soft-primary btn-sm" id="addPaymentBtn">
+                    <i class="bi bi-plus-circle"></i> Ajouter une ligne
+                </button>
+            </div>
+
+            <div id="paymentList">
+                <div class="row g-2 align-items-center mb-2 payment-row" data-row-id="1">
+                    <div class="col-6 col-md-5">
+                        <select class="form-select pay-type">
+                            <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
+                        </select>
+                    </div>
+                    <div class="col-5 col-md-5">
+                        <input type="number" class="form-control pay-amount" placeholder="0.00" step="0.01" min="0" value="0">
+                    </div>
+                    <div class="col-1">
+                        <button type="button" class="btn btn-soft-danger btn-sm btn-remove-pay" disabled>
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="paymentValidationMessage" class="small mt-2" style="display:none;"></div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <div class="cart-total">Total paiements reçus : <span id="paymentTotalDisplay">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mb-5">
+        <a href="/bovins" class="btn btn-outline-secondary">Annuler</a>
+        <button type="button" id="submitVenteBtn" class="btn btn-soft-primary">
+            <i class="bi bi-check-circle me-1"></i> Enregistrer la vente
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+(function () {
+    var STORAGE_KEY = 'venteCart';
+
+    // Données clients injectées par Thymeleaf (nécessite Jackson, déjà présent pour vos endpoints REST)
+    var clientsData = /*[[${clients}]]*/ [];
+
+    function loadCart() {
+        try {
+            var raw = sessionStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : { clientId: '', description: '', dateVente: '', lignes: {} };
+        } catch (e) {
+            return { clientId: '', description: '', dateVente: '', lignes: {} };
+        }
+    }
+
+    function saveCart(cart) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    }
+
+    var cart = loadCart();
+
+    // ---- Client : recherche autocomplete personnalisée ----
+    var clientSearchInput = document.getElementById('clientSearchInput');
+    var clientIdInput = document.getElementById('clientIdInput');
+    var clientDropdown = document.getElementById('clientDropdown');
+    var clientSelectedBadge = document.getElementById('clientSelectedBadge');
+
+    function clientLabel(c) {
+        return c.nom + ' ' + c.prenom + ' — ' + c.contact;
+    }
+
+    function renderClientDropdown(list) {
+        if (list.length === 0) {
+            clientDropdown.innerHTML = '<div class="client-empty">Aucun client trouvé</div>';
+        } else {
+            clientDropdown.innerHTML = list.map(function (c) {
+                return '<button type="button" class="client-option" data-id="' + c.id + '">' +
+                    clientLabel(c).replace(/</g, '&lt;') +
+                    '</button>';
+            }).join('');
+        }
+        clientDropdown.style.display = 'block';
+    }
+
+    function filterClients() {
+        var term = clientSearchInput.value.trim().toLowerCase();
+        if (term.length === 0) {
+            renderClientDropdown(clientsData);
+            return;
+        }
+        var filtered = clientsData.filter(function (c) {
+            var haystack = ((c.nom || '') + ' ' + (c.prenom || '') + ' ' + (c.contact || '')).toLowerCase();
+            return haystack.indexOf(term) !== -1;
+        });
+        renderClientDropdown(filtered);
+    }
+
+    function selectClient(id) {
+        var found = clientsData.find(function (c) { return String(c.id) === String(id); });
+        if (!found) { return; }
+        clientIdInput.value = found.id;
+        clientSearchInput.value = clientLabel(found);
+        clientDropdown.style.display = 'none';
+        clientSelectedBadge.style.display = 'block';
+        cart.clientId = String(found.id);
+        saveCart(cart);
+    }
+
+    clientSearchInput.addEventListener('input', function () {
+        clientIdInput.value = '';
+        clientSelectedBadge.style.display = 'none';
+        cart.clientId = '';
+        saveCart(cart);
+        filterClients();
+    });
+
+    clientSearchInput.addEventListener('focus', function () {
+        filterClients();
+    });
+
+    clientDropdown.addEventListener('click', function (e) {
+        var btn = e.target.closest('.client-option');
+        if (!btn) { return; }
+        selectClient(btn.getAttribute('data-id'));
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target !== clientSearchInput && !clientDropdown.contains(e.target)) {
+            clientDropdown.style.display = 'none';
+        }
+    });
+
+    // ---- Champs généraux de la vente ----
+    var descriptionInput = document.getElementById('descriptionInput');
+    var dateVenteInput = document.getElementById('dateVenteInput');
+
+    descriptionInput.addEventListener('input', function () {
+        cart.description = descriptionInput.value;
+        saveCart(cart);
+    });
+    dateVenteInput.addEventListener('input', function () {
+        cart.dateVente = dateVenteInput.value;
+        saveCart(cart);
+    });
+
+    // Restauration de l'état
+    if (cart.clientId) { selectClient(cart.clientId); }
+    if (cart.description) { descriptionInput.value = cart.description; }
+    if (cart.dateVente) { dateVenteInput.value = cart.dateVente; }
+
+    // ---- Sélection des bovins (checkbox + prix) ----
+    function refreshCartView() {
+        var body = document.getElementById('cartBody');
+        var ids = Object.keys(cart.lignes || {});
+        body.innerHTML = '';
+
+        if (ids.length === 0) {
+            body.innerHTML = '<tr id="cartEmptyRow"><td colspan="5" class="text-center text-muted py-3">Aucun bovin sélectionné pour le moment</td></tr>';
+        } else {
+            var total = 0;
+            ids.forEach(function (id) {
+                var ligne = cart.lignes[id];
+                total += Number(ligne.prixVente) || 0;
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td class="text-muted">' + id + '</td>' +
+                    '<td>' + (ligne.race || '-') + '</td>' +
+                    '<td>' + (ligne.poids ? ligne.poids + ' kg' : '-') + '</td>' +
+                    '<td>' + (ligne.prixVente || 0) + '</td>' +
+                    '<td class="text-end"><button type="button" class="btn btn-soft-danger btn-sm remove-line" data-id="' + id + '"><i class="bi bi-x-lg"></i></button></td>';
+                body.appendChild(tr);
+            });
+            document.getElementById('cartTotal').textContent = total.toLocaleString('fr-FR');
+        }
+        document.getElementById('cartCount').textContent = ids.length;
+
+        Array.prototype.forEach.call(body.querySelectorAll('.remove-line'), function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-id');
+                delete cart.lignes[id];
+                saveCart(cart);
+                var checkbox = document.querySelector('.bovin-check[data-bovin-id="' + id + '"]');
+                if (checkbox) { checkbox.checked = false; }
+                refreshCartView();
+            });
+        });
+
+        // Recalcule la validation des paiements à chaque changement du panier
+        validatePayments();
+    }
+
+    // ---- Paiements (caisses) ----
+    var paymentList = document.getElementById('paymentList');
+    var addPaymentBtn = document.getElementById('addPaymentBtn');
+    var payCountBadge = document.getElementById('payCountBadge');
+    var paymentTotalDisplay = document.getElementById('paymentTotalDisplay');
+    var paymentValidationMessage = document.getElementById('paymentValidationMessage');
+    var paymentRowCounter = 1;
+
+    function getPaymentRows() {
+        return paymentList.querySelectorAll('.payment-row');
+    }
+
+    function getPaymentTotal() {
+        var sum = 0;
+        getPaymentRows().forEach(function (row) {
+            sum += parseFloat(row.querySelector('.pay-amount').value) || 0;
+        });
+        return sum;
+    }
+
+    function getCartTotal() {
+        var total = 0;
+        Object.keys(cart.lignes || {}).forEach(function (id) {
+            total += Number(cart.lignes[id].prixVente) || 0;
+        });
+        return total;
+    }
+
+    function validatePayments() {
+        var sum = getPaymentTotal();
+        var cartTotal = getCartTotal();
+
+        paymentTotalDisplay.textContent = sum.toLocaleString('fr-FR');
+
+        if (cartTotal > 0 && sum > 0) {
+            if (Math.abs(sum - cartTotal) < 0.01) {
+                paymentValidationMessage.style.display = 'block';
+                paymentValidationMessage.className = 'small mt-2 text-success';
+                paymentValidationMessage.innerHTML = '<i class="bi bi-check-circle"></i> Les paiements correspondent au total de la vente (' + cartTotal.toLocaleString('fr-FR') + ')';
+            } else {
+                paymentValidationMessage.style.display = 'block';
+                paymentValidationMessage.className = 'small mt-2 text-danger';
+                var diff = Math.abs(sum - cartTotal);
+                paymentValidationMessage.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Différence de ' + diff.toLocaleString('fr-FR') + ' entre les paiements (' + sum.toLocaleString('fr-FR') + ') et le total de la vente (' + cartTotal.toLocaleString('fr-FR') + ')';
+            }
+        } else {
+            paymentValidationMessage.style.display = 'none';
+        }
+
+        var count = getPaymentRows().length;
+        payCountBadge.textContent = count + ' ligne' + (count > 1 ? 's' : '');
+    }
+
+    function createPaymentRow(rowId) {
+        var row = document.createElement('div');
+        row.className = 'row g-2 align-items-center mb-2 payment-row';
+        row.dataset.rowId = rowId;
+
+        var firstSelect = document.querySelector('.pay-type');
+        var optionsHtml = firstSelect ? firstSelect.innerHTML : '';
+
+        row.innerHTML =
+            '<div class="col-6 col-md-5">' +
+                '<select class="form-select pay-type">' + optionsHtml + '</select>' +
+            '</div>' +
+            '<div class="col-5 col-md-5">' +
+                '<input type="number" class="form-control pay-amount" placeholder="0.00" step="0.01" min="0" value="0">' +
+            '</div>' +
+            '<div class="col-1">' +
+                '<button type="button" class="btn btn-soft-danger btn-sm btn-remove-pay"><i class="bi bi-trash"></i></button>' +
+            '</div>';
+        return row;
+    }
+
+    function attachPaymentRowEvents(row) {
+        row.querySelector('.pay-amount').addEventListener('input', validatePayments);
+        row.querySelector('.btn-remove-pay').addEventListener('click', function () {
+            if (getPaymentRows().length <= 1) {
+                showAlert('warning', 'Il doit rester au moins une ligne de paiement.');
+                return;
+            }
+            row.remove();
+            validatePayments();
+            updateRemovePaymentButtons();
+        });
+    }
+
+    function updateRemovePaymentButtons() {
+        var rows = getPaymentRows();
+        rows.forEach(function (row) {
+            row.querySelector('.btn-remove-pay').disabled = rows.length <= 1;
+        });
+    }
+
+    addPaymentBtn.addEventListener('click', function () {
+        paymentRowCounter++;
+        var newRow = createPaymentRow(paymentRowCounter);
+        paymentList.appendChild(newRow);
+        attachPaymentRowEvents(newRow);
+        validatePayments();
+        updateRemovePaymentButtons();
+    });
+
+    getPaymentRows().forEach(function (row) { attachPaymentRowEvents(row); });
+    updateRemovePaymentButtons();
+
+    Array.prototype.forEach.call(document.querySelectorAll('.bovin-check'), function (checkbox) {
+        var id = checkbox.getAttribute('data-bovin-id');
+        var row = checkbox.closest('tr');
+        var priceInput = row.querySelector('.bovin-price');
+
+        // Restauration de la case et du prix depuis le panier
+        if (cart.lignes && cart.lignes[id]) {
+            checkbox.checked = true;
+            priceInput.value = cart.lignes[id].prixVente || '';
+        }
+
+        checkbox.addEventListener('change', function () {
+            if (checkbox.checked) {
+                cart.lignes[id] = {
+                    prixVente: priceInput.value || '',
+                    race: row.getAttribute('data-race'),
+                    poids: row.getAttribute('data-poids')
+                };
+            } else {
+                delete cart.lignes[id];
+            }
+            saveCart(cart);
+            refreshCartView();
+        });
+
+        priceInput.addEventListener('input', function () {
+            if (checkbox.checked) {
+                cart.lignes[id] = cart.lignes[id] || {};
+                cart.lignes[id].prixVente = priceInput.value;
+                cart.lignes[id].race = row.getAttribute('data-race');
+                cart.lignes[id].poids = row.getAttribute('data-poids');
+                saveCart(cart);
+                refreshCartView();
+            }
+        });
+    });
+
+    refreshCartView();
+
+    // ---- Soumission de la vente ----
+    function showAlert(type, message) {
+        var zone = document.getElementById('alertZone');
+        zone.innerHTML = '<div class="alert alert-' + type + '">' + message + '</div>';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('submitVenteBtn').addEventListener('click', function () {
+        var ids = Object.keys(cart.lignes || {});
+        if (!cart.clientId) {
+            showAlert('danger', 'Veuillez sélectionner un client.');
+            return;
+        }
+        if (ids.length === 0) {
+            showAlert('danger', 'Sélectionnez au moins un bovin à vendre.');
+            return;
+        }
+
+        // Récupération des paiements
+        var payments = [];
+        getPaymentRows().forEach(function (row) {
+            var caisseId = parseInt(row.querySelector('.pay-type').value, 10);
+            var montant = parseFloat(row.querySelector('.pay-amount').value) || 0;
+            if (montant > 0) {
+                payments.push({ caisseId: caisseId, montant: montant });
+            }
+        });
+
+        if (payments.length === 0) {
+            showAlert('danger', 'Ajoutez au moins un paiement avec un montant supérieur à 0.');
+            return;
+        }
+
+        var totalPaiements = payments.reduce(function (sum, p) { return sum + p.montant; }, 0);
+        var cartTotal = getCartTotal();
+        if (Math.abs(totalPaiements - cartTotal) > 0.01) {
+            showAlert('danger', 'Le total des paiements (' + totalPaiements.toLocaleString('fr-FR') + ') ne correspond pas au total de la vente (' + cartTotal.toLocaleString('fr-FR') + ').');
+            return;
+        }
+
+        var payload = {
+            clientId: Number(cart.clientId),
+            description: cart.description || '',
+            dateVente: cart.dateVente || null,
+            lignes: ids.map(function (id) {
+                return {
+                    bovinId: Number(id),
+                    prixVente: Number(cart.lignes[id].prixVente)
+                };
+            }),
+            payments: payments
+        };
+
+        fetch('/vente/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.status === 'success') {
+                    sessionStorage.removeItem(STORAGE_KEY);
+                    showAlert('success', data.message + ' Redirection...');
+                    setTimeout(function () { window.location.href = '/vente/new'; }, 1200);
+                } else {
+                    showAlert('danger', data.message || 'Erreur lors de l\'enregistrement de la vente.');
+                }
+            })
+            .catch(function () {
+                showAlert('danger', 'Erreur réseau lors de l\'enregistrement de la vente.');
+            });
+    });
+})();
+</script>
+</body>
+</html>

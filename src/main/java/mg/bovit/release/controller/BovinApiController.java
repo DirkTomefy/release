@@ -5,6 +5,7 @@ import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Race;
+import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.service.BovinService;
 import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.RaceService;
@@ -28,14 +29,15 @@ public class BovinApiController {
 
     // function to get bovin by id
     @GetMapping("bovin/api/{id}")
-    public Bovin findBovinById(
-        @PathVariable(name="id", required = false) Long id
+    @ResponseBody
+    public BovinWithPoids findBovinById(
+        @PathVariable(name="id") Long id
     ) {
-        Bovin bovin;
+        BovinWithPoids bovin;
 
         try {
             // find bovin by id
-            bovin = bovinService.findById(id);
+            bovin = bovinService.findBovinPoidsById(id);
         } catch (Exception e) {
             bovin = null;
         }
