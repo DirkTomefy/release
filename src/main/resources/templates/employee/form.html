@@ -256,12 +256,14 @@
 
         </div>
     </div>
+    <div th-if="${errorMessage}" class="alert alert-danger">
+        <span th-text="${errorMessage}"></span>
+    </div>
 <script>
         const dateNaissance = document.getElementById('dateNaissance');
         const dateEntree = document.getElementById('dateEntree');
         const dateDebut = document.getElementById('dateDebut');
         const dateFin = document.getElementById('dateFin');
-
         // 1. La date d'entrée dépend de la date de naissance
         dateNaissance.addEventListener('change', function() {
             if (this.value) {
@@ -288,6 +290,44 @@
                 dateEntree.max = this.value;
             }
         });
+
+        function ajusterLimiteAge() {
+            // On récupère les éléments du DOM
+            const dateNaissanceInput = document.getElementById('dateNaissance'); 
+            const dateEntreeInput = document.getElementById('dateEntree');       
+
+            // Sécurité au cas où les éléments ne sont pas encore chargés
+            if (!dateNaissanceInput || !dateEntreeInput) return;
+
+            if (dateNaissanceInput.value) {
+                // On récupère la date de naissance saisie
+                const dateNaissance = new Date(dateNaissanceInput.value);
+                
+                // On AJOUTE 18 ans pour obtenir la date exacte de sa majorité
+                dateNaissance.setFullYear(dateNaissance.getFullYear() + 18);
+                
+                const anneeMin = dateNaissance.getFullYear();
+                const moisMin = String(dateNaissance.getMonth() + 1).padStart(2, '0');
+                const jourMin = String(dateNaissance.getDate()).padStart(2, '0');
+                
+                // On impose la date MINIMALE d'embauche (format standard YYYY-MM-DD)
+                dateEntreeInput.min = `${anneeMin}-${moisMin}-${jourMin}`;
+                
+                // Optionnel : Si une date d'entrée était déjà choisie et qu'elle est devenue invalide, on la vide
+                if (dateEntreeInput.value && new Date(dateEntreeInput.value) < dateNaissance) {
+                    dateEntreeInput.value = "";
+                }
+            } else {
+                // Si la date de naissance est vidée, on retire la contrainte sur la date d'entrée
+                dateEntreeInput.removeAttribute('min');
+            }
+        }
+
+        // MODIFICATION : On écoute maintenant les changements sur la Date de Naissance
+        document.getElementById('dateNaissance')?.addEventListener('change', ajusterLimiteAge);
+
+        // Exécution au chargement initial (au cas où le champ est pré-rempli)
+        ajusterLimiteAge();
     </script>
 </body>
 

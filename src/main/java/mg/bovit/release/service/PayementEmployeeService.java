@@ -73,10 +73,16 @@ public class PayementEmployeeService {
         //    sur un même mois, quel que soit leur montant par rapport au salaire
         //    (ex : une avance de 10 000 Ar même si le salaire est de 3 000 000 Ar).
         if (estSalaire) {
-            boolean dejaPaye = payementEmployeeRepository
-                    .existsByEmployeeAndTypePayementEmployeeAndMois(emp, type, mois);
-            if (dejaPaye) {
-                return "skipped";
+            BigDecimal salaireMois = getSalaireActif(emp, mois);
+            List<PayementEmployee> paiementsDuMois = payementEmployeeRepository.findByEmployeeAndMois(emp, mois);
+            BigDecimal totalSalairePaye = sommeParType(paiementsDuMois, LIBELLE_SALAIRE);
+            BigDecimal totalAvance = sommeParType(paiementsDuMois, LIBELLE_AVANCE);
+            BigDecimal totalSanction = sommeParType(paiementsDuMois, LIBELLE_SANCTION);
+            
+            BigDecimal resteDuInitial = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
+            
+            if (resteDuInitial.compareTo(BigDecimal.ZERO) <= 0) {
+                return "skipped"; // Le salaire de ce mois est déjà intégralement complété
             }
         }
 
@@ -130,8 +136,9 @@ public class PayementEmployeeService {
         BigDecimal resteDu = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
 
         if (estSalaire) {
-            if (montantTotal.compareTo(resteDu) > 0) {
-                throw new RuntimeException("Le montant saisi dépasse le reste dû du mois pour cet employé.");
+            // Permet une tolérance pour les centimes lors du dernier paiement
+            if (montantTotal.subtract(resteDu).compareTo(new BigDecimal("0.01")) > 0) {
+                throw new RuntimeException("Le montant saisi dépasse le reste dû du mois (" + resteDu + " Ar) pour cet employé.");
             }
         }
 
