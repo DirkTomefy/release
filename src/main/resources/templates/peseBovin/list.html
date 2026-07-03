@@ -179,13 +179,10 @@
                     <label class="form-label small text-muted">Recherche (ID, Race)</label>
                     <input type="text" name="search" class="form-control" placeholder="Rechercher..." th:value="${criteria.search}">
                 </div>
+                
                 <div class="col-md-2">
-                    <label class="form-label small text-muted">Race</label>
-                    <select name="raceId" class="form-select">
-                        <option value="">Toutes</option>
-                        <option th:each="r : ${races}" th:value="${r.id}" th:text="${r.nom}"
-                                th:selected="${criteria.raceId != null && criteria.raceId == r.id}"></option>
-                    </select>
+                    <label class="form-label small text-muted">Date de pesée</label>
+                    <input type="date" name="dateRecherePese" class="form-control" th:value="${criteria.dateRecherePese}" required>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small text-muted">Date de pesée</label>
@@ -225,7 +222,6 @@
                 <form th:action="@{/peseBovin/list}" method="get" class="d-inline-flex align-items-center">
                     <input type="hidden" name="search" th:value="${criteria.search}" />
                     <input type="hidden" name="raceId" th:value="${criteria.raceId}" />
-                    <input type="hidden" name="dateRecherePese" th:value="${criteria.dateRecherePese}" />
                     <input type="hidden" name="statut" th:value="${criteria.statut}" />
                     <input type="hidden" name="prixAchatMin" th:value="${criteria.prixAchatMin}" />
                     <input type="hidden" name="prixAchatMax" th:value="${criteria.prixAchatMax}" />
