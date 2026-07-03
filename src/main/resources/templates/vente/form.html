@@ -24,8 +24,51 @@
         .page-link { color: #5b4b3a; border: none; border-radius: 8px; margin: 0 2px; }
         .page-item.active .page-link { background-color: #7a9e5a; border-color: #7a9e5a; color: #fff; }
         .cart-total { font-size: 1.1rem; font-weight: 600; color: #0f6e38; }
-        select#clientSelect option[hidden] { display: none; }
         .price-input { width: 130px; }
+
+        /* --- Autocomplete client --- */
+        .client-autocomplete-wrapper { position: relative; }
+        #clientDropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            max-height: 240px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #e0d8cf;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            display: none;
+            margin-top: 4px;
+        }
+        #clientDropdown .client-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 0.9rem;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            color: #3e3e3b;
+            cursor: pointer;
+        }
+        #clientDropdown .client-option:hover,
+        #clientDropdown .client-option.active {
+            background-color: #eef3ea;
+        }
+        #clientDropdown .client-empty {
+            padding: 0.6rem 0.9rem;
+            font-size: 0.85rem;
+            color: #9a9188;
+        }
+        #clientSelectedBadge {
+            display: none;
+            font-size: 0.8rem;
+            color: #0f6e38;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -61,18 +104,14 @@
         <div class="card-body">
             <h2 class="h6 fw-semibold mb-3">Informations de la vente</h2>
             <div class="row g-3">
-                <div class="col-md-5">
+                <div class="col-md-5 client-autocomplete-wrapper">
                     <label class="form-label small text-muted">Client</label>
-                    <input type="text" id="clientSearchInput" class="form-control mb-2"
+                    <input type="text" id="clientSearchInput" class="form-control" autocomplete="off"
                            placeholder="Rechercher un client (nom, prénom, contact)...">
-                    <select id="clientSelect" class="form-select">
-                        <option value="">-- Choisir un client --</option>
-                        <option th:each="c : ${clients}"
-                                th:value="${c.id}"
-                                th:text="${c.nom + ' ' + c.prenom + ' — ' + c.contact}"
-                                th:attr="data-label=${c.nom + ' ' + c.prenom + ' ' + c.contact}"></option>
-                    </select>
-                    <a href="/clients/form" target="_blank" class="small">
+                    <input type="hidden" id="clientIdInput">
+                    <div id="clientDropdown"></div>
+                    <div id="clientSelectedBadge"><i class="bi bi-check-circle"></i> Client sélectionné</div>
+                    <a href="/clients/form" target="_blank" class="small d-inline-block mt-2">
                         <i class="bi bi-plus-circle"></i> Nouveau client
                     </a>
                 </div>
@@ -170,7 +209,7 @@
                     </td>
                 </tr>
                 <tr th:if="${bovinPage.content.isEmpty()}">
-                    <td colspan="6" class="text-center text-muted py-4">Aucun bovin disponible pour ces critères - Ammpivo eto ambany eto le caisse</td>
+                    <td colspan="6" class="text-center text-muted py-4">Aucun bovin disponible pour ces critères</td>
                 </tr>
                 </tbody>
             </table>
@@ -279,6 +318,9 @@
 (function () {
     var STORAGE_KEY = 'venteCart';
 
+    // Données clients injectées par Thymeleaf (nécessite Jackson, déjà présent pour vos endpoints REST)
+    var clientsData = /*[[${clients}]]*/ [];
+
     function loadCart() {
         try {
             var raw = sessionStorage.getItem(STORAGE_KEY);
@@ -294,23 +336,75 @@
 
     var cart = loadCart();
 
-    // ---- Client dropdown + recherche ----
+    // ---- Client : recherche autocomplete personnalisée ----
     var clientSearchInput = document.getElementById('clientSearchInput');
-    var clientSelect = document.getElementById('clientSelect');
+    var clientIdInput = document.getElementById('clientIdInput');
+    var clientDropdown = document.getElementById('clientDropdown');
+    var clientSelectedBadge = document.getElementById('clientSelectedBadge');
+
+    function clientLabel(c) {
+        return c.nom + ' ' + c.prenom + ' — ' + c.contact;
+    }
+
+    function renderClientDropdown(list) {
+        if (list.length === 0) {
+            clientDropdown.innerHTML = '<div class="client-empty">Aucun client trouvé</div>';
+        } else {
+            clientDropdown.innerHTML = list.map(function (c) {
+                return '<button type="button" class="client-option" data-id="' + c.id + '">' +
+                    clientLabel(c).replace(/</g, '&lt;') +
+                    '</button>';
+            }).join('');
+        }
+        clientDropdown.style.display = 'block';
+    }
 
     function filterClients() {
         var term = clientSearchInput.value.trim().toLowerCase();
-        Array.prototype.forEach.call(clientSelect.options, function (opt) {
-            if (!opt.value) { return; }
-            var label = (opt.getAttribute('data-label') || opt.textContent).toLowerCase();
-            opt.hidden = term.length > 0 && label.indexOf(term) === -1;
+        if (term.length === 0) {
+            renderClientDropdown(clientsData);
+            return;
+        }
+        var filtered = clientsData.filter(function (c) {
+            var haystack = ((c.nom || '') + ' ' + (c.prenom || '') + ' ' + (c.contact || '')).toLowerCase();
+            return haystack.indexOf(term) !== -1;
         });
+        renderClientDropdown(filtered);
     }
 
-    clientSearchInput.addEventListener('input', filterClients);
-    clientSelect.addEventListener('change', function () {
-        cart.clientId = clientSelect.value;
+    function selectClient(id) {
+        var found = clientsData.find(function (c) { return String(c.id) === String(id); });
+        if (!found) { return; }
+        clientIdInput.value = found.id;
+        clientSearchInput.value = clientLabel(found);
+        clientDropdown.style.display = 'none';
+        clientSelectedBadge.style.display = 'block';
+        cart.clientId = String(found.id);
         saveCart(cart);
+    }
+
+    clientSearchInput.addEventListener('input', function () {
+        clientIdInput.value = '';
+        clientSelectedBadge.style.display = 'none';
+        cart.clientId = '';
+        saveCart(cart);
+        filterClients();
+    });
+
+    clientSearchInput.addEventListener('focus', function () {
+        filterClients();
+    });
+
+    clientDropdown.addEventListener('click', function (e) {
+        var btn = e.target.closest('.client-option');
+        if (!btn) { return; }
+        selectClient(btn.getAttribute('data-id'));
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target !== clientSearchInput && !clientDropdown.contains(e.target)) {
+            clientDropdown.style.display = 'none';
+        }
     });
 
     // ---- Champs généraux de la vente ----
@@ -327,7 +421,7 @@
     });
 
     // Restauration de l'état
-    if (cart.clientId) { clientSelect.value = cart.clientId; }
+    if (cart.clientId) { selectClient(cart.clientId); }
     if (cart.description) { descriptionInput.value = cart.description; }
     if (cart.dateVente) { dateVenteInput.value = cart.dateVente; }
 
@@ -589,8 +683,6 @@
                 showAlert('danger', 'Erreur réseau lors de l\'enregistrement de la vente.');
             });
     });
-
-    filterClients();
 })();
 </script>
 </body>
