@@ -78,6 +78,32 @@ public class MouvementController {
         }
     }
 
-    // @GetMapping("/list")
+    @GetMapping("/form/sortie")
+    public String showFormSortie(Model model) {
+        List<MaterielType> materielTypes = materielTypeService.findAll();
+        List<Materiel> materiels = materielService.findAll();
+        model.addAttribute("materielTypes", materielTypes);
+        model.addAttribute("materiels", materiels);
+        return "mouvement/formSortie";
+    }
+
+    public ResponseEntity<Map<String, String>> saveMouvementSortie(@RequestBody MouvementEntreePayload payload) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            //? ici on gere les 2 action qui sont ajout dans mvt_stock_sortie et update de mvt_stock_entree
+            // si l'un d'eux echoue, on annule TOUTTTTT
+            // mouvementStockSortieService.transactionerEnregistrerMouvementSortie(payload);
+
+            response.put("status", "success");
+            response.put("message", "Mouvement de sortie enregistré avec succès");
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage()); // Exemple: "Le montant du paiement dépasse..."
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
 }
 // Erreur : No converter found capable of converting from type [java.util.HashMap<?, ?>] to type [mg.bovit.release.dto.MouvementCaisseSoldeDto]
