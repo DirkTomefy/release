@@ -1,16 +1,16 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" lang="fr">
-<head>
+<html lang="fr">
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🐄 Achat de bovins</title>
+    <title>💵 Paiement employé</title>
     <!-- Font Awesome 6 -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
     <style>
-      /* ----- RESET & BASE ----- */
+      /* ----- RESET & BASE (repris du template achat de bovins) ----- */
       * {
         margin: 0;
         padding: 0;
@@ -367,9 +367,50 @@
         transition: 0.2s;
       }
 
-      .total-highlight .total-value.error {
-        color: #b34a3a;
+      /* ----- Boîtes d'info spécifiques au paiement employé ----- */
+      .info-box {
+        grid-column: span 2;
+        border-radius: 30px;
+        padding: 1rem 1.6rem;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid transparent;
+      }
+
+      @media (max-width: 700px) {
+        .info-box {
+          grid-column: span 1;
+        }
+      }
+
+      .info-box.show {
+        display: flex;
+        animation: fadeIn 0.25s ease;
+      }
+
+      .info-box i {
+        font-size: 1.1rem;
+      }
+
+      .info-box.box-danger {
         background: #fde8e3;
+        border-color: #f0c8c8;
+        color: #b34a3a;
+      }
+
+      .info-box.box-warning {
+        background: #fff6e0;
+        border-color: #f2dfa3;
+        color: #8a6d1a;
+      }
+
+      .info-box.box-neutral {
+        background: #e3f0f8;
+        border-color: #c4dcea;
+        color: #2b5f77;
       }
 
       .actions-row {
@@ -427,6 +468,13 @@
         box-shadow: 0 12px 28px -8px #14703a80;
       }
 
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
       .btn-outline {
         background: transparent;
         border: 1px solid #b6cfdd;
@@ -436,17 +484,6 @@
       .btn-outline:hover {
         background: #e6f0f6;
         border-color: #7fa5bb;
-      }
-
-      .btn-danger-outline {
-        background: transparent;
-        border: 1px solid #f0c8c8;
-        color: #b34a3a;
-      }
-
-      .btn-danger-outline:hover {
-        background: #fee9e7;
-        border-color: #b34a3a;
       }
 
       .btn-lg {
@@ -497,142 +534,95 @@
         display: block;
         animation: fadeIn 0.3s ease;
       }
-
-      .validation-message {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 12px;
-        padding: 0.8rem 1.2rem;
-        color: #856404;
-        font-size: 0.9rem;
-        display: none;
-        grid-column: span 2;
-      }
-
-      .validation-message.show {
-        display: block;
-      }
-
-      .validation-message.success {
-        background: #d4edda;
-        border-color: #28a745;
-        color: #155724;
-      }
-
-      .field-group input.error {
-        border-color: #dc3545;
-        background: #fff5f5;
-      }
-
-      .field-group input.success {
-        border-color: #28a745;
-        background: #f0fff4;
-      }
     </style>
   </head>
   <body>
     <div class="card-modern">
       <!-- En-tête -->
       <div class="header-section">
-        <h1><i class="fas fa-cow"></i> Achat de bovins</h1>
+        <h1><i class="fas fa-money-check-dollar"></i> Paiement employé</h1>
         <div class="badge-engrais">
-          <i class="fas fa-calendar-plus"></i> Nouvelle entrée
+          <i class="fas fa-calendar-plus"></i> Nouveau paiement
         </div>
       </div>
 
       <!-- Formulaire -->
-      <form id="bovinForm" onsubmit="return false;">
+      <form id="payeForm" onsubmit="return false;">
         <div class="form-grid">
-          <!-- Race (DYNAMIQUE depuis la BDD) -->
           <div class="field-group">
-            <label for="raceId"><i class="fas fa-tag"></i> Race</label>
-            <select id="raceId" name="raceId" th:field="${buyRequest.raceId}">
-              <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
+            <label for="employeeSelect"><i class="fas fa-user"></i> Employé</label>
+            <select id="employeeSelect" class="form-control" name="employeeId" required>
+              <option value="">-- Sélectionner un employé --</option>
+              <option th:each="emp : ${employees}"
+                      th:value="${emp.id}"
+                      th:text="${emp.nom + ' ' + emp.prenom}"
+                      th:selected="${preselectEmployeeId != null and emp.id == preselectEmployeeId}">
+              </option>
             </select>
           </div>
 
-          <!-- Date d'achat -->
           <div class="field-group">
-            <label for="dateAchat"
-              ><i class="fas fa-calendar-day"></i> Date d'achat</label
-            >
-            <input type="date" id="dateAchat" name="dateAchat" th:field="${buyRequest.dateAchat}" required />
+            <label for="moisPaye"><i class="fas fa-calendar-day"></i> Mois à payer</label>
+            <input type="month" id="moisPaye" name="moisPaye"
+                   th:value="${preselectMois}" required />
           </div>
 
-          <!-- Quantité -->
           <div class="field-group">
-            <label for="quantite"
-              ><i class="fas fa-hashtag"></i> Quantité</label
-            >
-            <input
-              type="number"
-              id="quantite"
-              name="quantite"
-              placeholder="ex: 5"
-              min="1"
-              th:field="${buyRequest.quantite}"
-            />
+            <label for="typePayementId"><i class="fas fa-tag"></i> Type de paiement</label>
+            <select id="typePayementId" name="typePayementId" required>
+              <option value="">-- Sélectionner un type --</option>
+              <option th:each="type : ${typesPayement}"
+                      th:value="${type.id}"
+                      th:text="${type.libelle}"
+                      th:attr="data-libelle=${type.libelle}">
+              </option>
+            </select>
           </div>
 
-          <!-- Prix unitaire -->
           <div class="field-group">
-            <label for="prixUnitaire"
-              ><i class="fas fa-dollar-sign"></i> Prix unitaire (€)</label
-            >
+            <label for="salaireContrat"><i class="fas fa-file-contract"></i> Salaire contrat (Ar)</label>
+            <input type="text" id="salaireContrat" readonly value="0,00" data-raw-value="0" />
+          </div>
+
+          <div class="field-group">
+            <label for="resteDu"><i class="fas fa-hourglass-half"></i> Reste dû ce mois (Ar)</label>
+            <input type="text" id="resteDu" readonly value="0,00" data-raw-value="0" />
+          </div>
+
+          <div class="field-group">
+            <label for="montantAVerser"><i class="fas fa-hand-holding-dollar"></i> Montant à verser (Ar)</label>
             <input
               type="number"
-              id="prixUnitaire"
-              name="prixUnitaire"
-              placeholder="ex: 1250.00"
+              id="montantAVerser"
+              name="montantAVerser"
+              placeholder="ex: 300000"
               step="0.01"
-              min="0.01"
+              min="0"
+              value="0"
               required
             />
           </div>
 
-          <!-- POIDS INITIALS A L'ACHAT -->
-          <div class="field-group">
-            <label for="poidsAchat"
-              ><i class="fas fa-weight-hanging"></i> Poids à l'achat (kg)</label
-            >
-            <input
-              type="number"
-              id="poidsAchat"
-              name="poidsAchat"
-              placeholder="ex: 350.5"
-              step="0.01"
-              min="1"
-              th:field="${buyRequest.poidsAchat}"
-              required
-            />
+          <div class="info-box box-danger" id="moisPayeBox">
+            <i class="fas fa-circle-exclamation"></i>
+            <span>Le salaire de ce mois a déjà été réglé pour cet employé. Ce paiement sera ignoré (skip).</span>
           </div>
 
-          <!-- Total bovin (calculé) -->
-          <div class="field-group">
-            <label for="total"
-              ><i class="fas fa-calculator"></i> Total bovin (€)</label
-            >
-            <input
-              type="text"
-              id="total"
-              readonly
-              value="0.00"
-              style="background: #f2f8fc; font-weight: 600; color: #0f5430"
-            />
+          <div class="info-box box-warning" id="avanceBox">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>Avance(s) déjà enregistrée(s) ce mois : affichée à titre indicatif uniquement — elle n'est <u>pas</u> déduite automatiquement du reste dû.</span>
           </div>
 
-          <!-- Message de validation -->
-          <div id="validationMessage" class="validation-message">
+          <div class="info-box box-neutral" id="sanctionBox">
             <i class="fas fa-info-circle"></i>
-            <span id="validationText">Les paiements sont cohérents</span>
+            <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
           </div>
 
-          <!-- SECTION PAIEMENT -->
           <div class="payment-section">
             <div class="payment-header">
               <div class="payment-title">
                 <i class="fas fa-hand-holding-dollar"></i>
-                Modes de paiement
+                Caisses utilisées
                 <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
               </div>
               <button type="button" class="btn-add-payment" id="addPaymentBtn">
@@ -641,11 +631,14 @@
             </div>
 
             <div class="payment-list" id="paymentList">
-              <!-- Ligne initiale avec caisses dynamiques -->
               <div class="payment-row" data-row-id="1">
                 <div class="pay-select">
-                  <select class="pay-type">
-                    <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
+                  <select class="pay-type" required>
+                    <option value="">-- Caisse --</option>
+                    <option th:each="caisse : ${caisses}"
+                            th:value="${caisse.id}"
+                            th:text="${caisse.libelle}">
+                    </option>
                   </select>
                 </div>
                 <div class="pay-montant">
@@ -656,6 +649,7 @@
                     step="0.01"
                     min="0"
                     value="0"
+                    required
                   />
                 </div>
                 <button type="button" class="btn-remove-pay" disabled>
@@ -663,60 +657,29 @@
                 </button>
               </div>
             </div>
-            <div
-              style="
-                margin-top: 0.6rem;
-                font-size: 0.8rem;
-                color: #1f6d47;
-                display: flex;
-                gap: 1rem;
-                flex-wrap: wrap;
-              "
-            >
-              <span
-                ><i class="fas fa-info-circle"></i> Chaque ligne = un mode de
-                paiement</span
-              >
-              <span
-                ><i class="fas fa-arrow-right"></i> Total = somme des
-                montants</span
-              >
+
+            <div style="margin-top: 0.6rem; font-size: 0.8rem; color: #1f6d47; display: flex; gap: 1rem; flex-wrap: wrap;">
+              <span><i class="fas fa-info-circle"></i> Chaque ligne = une caisse</span>
+              <span><i class="fas fa-arrow-right"></i> Le total doit correspondre au montant à verser</span>
             </div>
           </div>
 
-          <!-- Total paiements -->
           <div class="total-highlight">
-            <span
-              ><i class="fas fa-coins" style="color: #1f8a4a"></i> Total
-              paiements enregistrés</span
-            >
-            <span class="total-value" id="totalDisplay">0,00 €</span>
+            <span><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti sur les caisses</span>
+            <span class="total-value" id="totalDisplay">0,00 Ar</span>
           </div>
         </div>
 
-        <!-- Actions -->
         <div class="actions-row">
           <div class="btn-group">
-            <button
-              type="button"
-              class="btn btn-primary btn-lg"
-              id="validerBtn"
-            >
-              <i class="fas fa-check-circle"></i> Valider l'achat
+            <button type="button" class="btn btn-primary btn-lg" id="validerBtn">
+              <i class="fas fa-check-circle"></i> Valider le paiement
             </button>
             <button type="reset" class="btn btn-outline" id="resetBtn">
               <i class="fas fa-undo-alt"></i> Réinitialiser
             </button>
           </div>
-          <span
-            style="
-              font-size: 0.85rem;
-              color: #2b5f77;
-              background: #e3f0f8;
-              padding: 0.3rem 1.4rem;
-              border-radius: 40px;
-            "
-          >
+          <span style="font-size: 0.85rem; color: #2b5f77; background: #e3f0f8; padding: 0.3rem 1.4rem; border-radius: 40px;">
             <i class="far fa-clock"></i> Prêt
           </span>
         </div>
@@ -726,31 +689,139 @@
     <!-- Toast de notification -->
     <div id="toast" class="toast-message"></div>
 
-    <script>
+    <!--
+      Modèle HTML des options de caisse, rendu côté serveur par Thymeleaf,
+      réutilisé en JS pour peupler chaque nouvelle ligne de paiement ajoutée
+      dynamiquement (au lieu de valeurs statiques copiées-collées du
+      formulaire d'achat de bovins, qui ne correspondaient à aucune vraie
+      caisse de ce système).
+    -->
+    <select id="caisseOptionsTemplate" style="display: none;">
+      <option value="">-- Caisse --</option>
+      <option th:each="caisse : ${caisses}"
+              th:value="${caisse.id}"
+              th:text="${caisse.libelle}">
+      </option>
+    </select>
+
+    <script th:inline="javascript">
       (function () {
-        // Éléments
+        // ----- Éléments -----
+        const employeeSelect = document.getElementById("employeeSelect");
+        const moisInput = document.getElementById("moisPaye");
+        const typeSelect = document.getElementById("typePayementId");
+        const salaireInput = document.getElementById("salaireContrat");
+        const resteDuInput = document.getElementById("resteDu");
+        const montantInput = document.getElementById("montantAVerser");
+
+        const moisPayeBox = document.getElementById("moisPayeBox");
+        const avanceBox = document.getElementById("avanceBox");
+        const sanctionBox = document.getElementById("sanctionBox");
+
         const paymentList = document.getElementById("paymentList");
         const addPaymentBtn = document.getElementById("addPaymentBtn");
         const payCountBadge = document.getElementById("payCountBadge");
         const totalDisplay = document.getElementById("totalDisplay");
-        const totalInput = document.getElementById("total");
-        const prixUnitaireInput = document.getElementById("prixUnitaire");
-        const qteInput = document.getElementById("quantite");
-        const dateInput = document.getElementById("dateAchat");
         const validerBtn = document.getElementById("validerBtn");
-        const resetBtn = document.getElementById("resetBtn");
         const toast = document.getElementById("toast");
-        const poidsInput = document.getElementById("poidsAchat");
-        const validationMessage = document.getElementById("validationMessage");
-        const validationText = document.getElementById("validationText");
-        let rowCounter = 1;
+        const caisseOptionsTemplate = document.getElementById("caisseOptionsTemplate");
 
-        // Initialiser la date par défaut
-        if (!dateInput.value) {
-          dateInput.value = new Date().toISOString().split("T")[0];
+        let rowCounter = 1;
+        let statutMois = null; // dernière réponse de /employees/{id}/statut-paye
+        let moisDejaPaye = false;
+
+        // Mois par défaut = mois courant (sauf si pré-rempli depuis les alertes)
+        if (!moisInput.value) {
+          const now = new Date();
+          const y = now.getFullYear();
+          const m = String(now.getMonth() + 1).padStart(2, "0");
+          moisInput.value = `${y}-${m}`;
         }
 
-        // Fonctions de calcul
+        function formatAr(n) {
+          return (
+            (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " Ar"
+          );
+        }
+
+        function typeSelectionneEstSalaire() {
+          const opt = typeSelect.selectedOptions[0];
+          if (!opt) return false;
+          const libelle = opt.getAttribute("data-libelle") || "";
+          return libelle.toLowerCase() === "salaire";
+        }
+
+        // ----- Vérification du statut du mois pour l'employé sélectionné -----
+        function refreshStatutMois() {
+          const empId = employeeSelect.value;
+          const mois = moisInput.value;
+          moisPayeBox.classList.remove("show");
+          avanceBox.classList.remove("show");
+          sanctionBox.classList.remove("show");
+          moisDejaPaye = false;
+          validerBtn.disabled = false;
+
+          if (!empId || !mois) {
+            salaireInput.value = "0,00";
+            resteDuInput.value = "0,00";
+            statutMois = null;
+            return;
+          }
+
+          fetch(`/employees/${empId}/statut-paye?mois=${encodeURIComponent(mois)}`)
+            .then((r) => r.json())
+            .then((data) => {
+              statutMois = data;
+              salaireInput.value = formatAr(data.salaire);
+              resteDuInput.value = formatAr(data.resteDu);
+              salaireInput.setAttribute("data-raw-value", data.salaire);
+              resteDuInput.setAttribute("data-raw-value", data.resteDu);
+
+              if (data.dejaPaye) {
+                moisDejaPaye = true;
+                moisPayeBox.classList.add("show");
+                // On ne bloque le bouton que si le type sélectionné est "Salaire" :
+                // une avance ou une sanction reste possible même si le salaire
+                // du mois est déjà réglé.
+                validerBtn.disabled = typeSelectionneEstSalaire();
+              } else if (typeSelectionneEstSalaire()) {
+                // Pré-remplit le montant à verser avec le reste dû
+                montantInput.value = data.resteDu;
+              }
+
+              if (data.totalAvance > 0) {
+                avanceBox.querySelector("span").textContent =
+                  `Avance(s) déjà enregistrée(s) ce mois : ${formatAr(
+                    data.totalAvance
+                  )} — affichée à titre indicatif uniquement, non déduite du reste dû.`;
+                avanceBox.classList.add("show");
+              }
+
+              if (data.totalSanction > 0) {
+                sanctionBox.querySelector("span").textContent =
+                  `Sanction(s) enregistrée(s) ce mois : ${formatAr(
+                    data.totalSanction
+                  )} (information uniquement).`;
+                sanctionBox.classList.add("show");
+              }
+            })
+            .catch(() => {
+              salaireInput.value = "0,00";
+              resteDuInput.value = "0,00";
+              statutMois = null;
+            });
+        }
+
+        employeeSelect.addEventListener("change", refreshStatutMois);
+        moisInput.addEventListener("change", refreshStatutMois);
+        typeSelect.addEventListener("change", function () {
+          validerBtn.disabled = moisDejaPaye && typeSelectionneEstSalaire();
+          if (typeSelectionneEstSalaire() && statutMois) {
+            montantInput.value = statutMois.resteDu;
+          }
+        });
+
+        // ----- Gestion des lignes de paiement (caisses), identique au formulaire d'achat -----
         function getPaymentRows() {
           return paymentList.querySelectorAll(".payment-row");
         }
@@ -764,280 +835,197 @@
           return sum;
         }
 
-        function updateBovinTotal() {
-          const pu = parseFloat(prixUnitaireInput.value) || 0;
-          const qte = parseFloat(qteInput.value) || 0;
-          const total = pu * qte;
-          totalInput.value = total.toFixed(2);
-          
-          // Mettre à jour la validation
-          validatePayments();
-        }
-
-        function validatePayments() {
+        function updateGlobalDisplay() {
           const sum = getPaymentTotal();
-          const pu = parseFloat(prixUnitaireInput.value) || 0;
-          const qte = parseFloat(qteInput.value) || 0;
-          const prixTotal = pu * qte;
-          
-          // Afficher le total des paiements
-          totalDisplay.textContent = sum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " €";
-          
-          // Vérification de cohérence
-          const message = document.getElementById("validationMessage");
-          const text = document.getElementById("validationText");
-          
-          if (prixTotal > 0 && sum > 0) {
-            if (Math.abs(sum - prixTotal) < 0.01) {
-              // OK - les montants correspondent
-              message.className = "validation-message show success";
-              text.innerHTML = '✅ Les paiements correspondent au total (' + prixTotal.toFixed(2) + ' €)';
-              totalDisplay.className = "total-value";
-              totalDisplay.style.color = "#0f6e38";
-              totalDisplay.style.background = "#e5f3ec";
-            } else {
-              // Erreur - les montants ne correspondent pas
-              message.className = "validation-message show";
-              const diff = Math.abs(sum - prixTotal);
-              text.innerHTML = '⚠️ Différence de ' + diff.toFixed(2) + ' € entre les paiements (' + sum.toFixed(2) + ' €) et le total (' + prixTotal.toFixed(2) + ' €)';
-              totalDisplay.className = "total-value error";
-              totalDisplay.style.color = "#b34a3a";
-              totalDisplay.style.background = "#fde8e3";
-            }
-          } else {
-            message.className = "validation-message";
-            totalDisplay.className = "total-value";
+          totalDisplay.textContent = formatAr(sum);
+
+          const montant = parseFloat(montantInput.value) || 0;
+          if (Math.abs(sum - montant) < 0.01 && montant > 0) {
             totalDisplay.style.color = "#0f6e38";
             totalDisplay.style.background = "#e5f3ec";
+          } else {
+            totalDisplay.style.color = "#b34a3a";
+            totalDisplay.style.background = "#fde8e3";
           }
-          
-          // Mise à jour du badge
+
           const count = getPaymentRows().length;
           payCountBadge.textContent = count + " ligne" + (count > 1 ? "s" : "");
         }
 
-        // Gestion des lignes de paiement
         function createPaymentRow(rowId) {
           const row = document.createElement("div");
           row.className = "payment-row";
           row.dataset.rowId = rowId;
-          
-          // Récupérer les options de caisse depuis la première ligne
-          const firstSelect = document.querySelector(".pay-type");
-          const optionsHtml = firstSelect ? firstSelect.innerHTML : '<option value="1">Mvola</option><option value="2">Espèce</option>';
-          
-          row.innerHTML = `
-            <div class="pay-select">
-              <select class="pay-type">
-                ${optionsHtml}
-              </select>
-            </div>
-            <div class="pay-montant">
-              <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">
-            </div>
-            <button type="button" class="btn-remove-pay">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          `;
+
+          const selectWrapper = document.createElement("div");
+          selectWrapper.className = "pay-select";
+          const select = caisseOptionsTemplate.cloneNode(true);
+          select.removeAttribute("id");
+          select.removeAttribute("style");
+          select.className = "pay-type";
+          select.required = true;
+          selectWrapper.appendChild(select);
+
+          const montantWrapper = document.createElement("div");
+          montantWrapper.className = "pay-montant";
+          montantWrapper.innerHTML =
+            '<input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">';
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn-remove-pay";
+          removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+
+          row.appendChild(selectWrapper);
+          row.appendChild(montantWrapper);
+          row.appendChild(removeBtn);
           return row;
         }
 
         function attachRowEvents(row) {
           const amountInput = row.querySelector(".pay-amount");
-          amountInput.addEventListener("input", validatePayments);
+          amountInput.addEventListener("input", updateGlobalDisplay);
 
           const removeBtn = row.querySelector(".btn-remove-pay");
           removeBtn.addEventListener("click", function () {
             if (getPaymentRows().length <= 1) {
-              alert("Il doit rester au moins une ligne de paiement.");
+              alert("Il doit rester au moins une ligne de caisse.");
               return;
             }
             row.remove();
-            validatePayments();
+            updateGlobalDisplay();
             updateRemoveButtons();
           });
         }
 
         function updateRemoveButtons() {
           const rows = getPaymentRows();
-          rows.forEach((row, index) => {
+          rows.forEach((row) => {
             const btn = row.querySelector(".btn-remove-pay");
             btn.disabled = rows.length <= 1;
           });
         }
 
-        // Ajouter une ligne
         addPaymentBtn.addEventListener("click", function () {
           rowCounter++;
           const newRow = createPaymentRow(rowCounter);
           paymentList.appendChild(newRow);
           attachRowEvents(newRow);
-          validatePayments();
+          updateGlobalDisplay();
           updateRemoveButtons();
-          // animation
           newRow.style.animation = "none";
           setTimeout(() => {
             newRow.style.animation = "fadeIn 0.25s ease";
           }, 10);
         });
 
-        // Initialisation des lignes existantes
         function initExistingRows() {
           getPaymentRows().forEach((row) => attachRowEvents(row));
           updateRemoveButtons();
-          validatePayments();
+          updateGlobalDisplay();
         }
 
-        // Événements sur les champs de calcul
-        prixUnitaireInput.addEventListener("input", updateBovinTotal);
-        qteInput.addEventListener("input", updateBovinTotal);
+        montantInput.addEventListener("input", updateGlobalDisplay);
 
-        // Validation et envoi
+        // ----- Validation et envoi -----
         validerBtn.addEventListener("click", function () {
-          const raceId = parseInt(document.getElementById("raceId").value);
-          const dateAchat = dateInput.value;
-          const quantite = parseInt(qteInput.value) || 0;
-          const poidsAchat = parseFloat(poidsInput.value) || 0;
-          const prixUnitaire = parseFloat(prixUnitaireInput.value) || 0;
+          const employeeId = parseInt(employeeSelect.value);
+          const mois = moisInput.value;
+          const typePayementId = parseInt(typeSelect.value);
+          const montantAVerser = parseFloat(montantInput.value) || 0;
 
-          // Validations
-          if (poidsAchat <= 0) {
-            alert("Le poids à l'achat doit être supérieur à 0.");
+          if (!employeeId) {
+            alert("Veuillez sélectionner un employé.");
             return;
           }
-
-          if (prixUnitaire <= 0) {
-            alert("Le prix unitaire doit être supérieur à 0.");
+          if (!mois) {
+            alert("Veuillez sélectionner le mois à payer.");
             return;
           }
-
-          if (!dateAchat) {
-            alert("Veuillez saisir une date d'achat.");
+          if (!typePayementId) {
+            alert("Veuillez sélectionner un type de paiement.");
             return;
           }
-          
-          if (!raceId || raceId < 1) {
-            alert("Veuillez sélectionner une race valide.");
+          if (moisDejaPaye && typeSelectionneEstSalaire()) {
+            alert("Ce mois est déjà payé pour cet employé, ce paiement de type Salaire est ignoré.");
             return;
           }
-          
-          if (quantite <= 0) {
-            alert("La quantité doit être supérieure à 0.");
+          if (montantAVerser <= 0) {
+            alert("Le montant à verser doit être supérieur à 0.");
             return;
           }
 
-          // Récupération des paiements
+          // Récupération des lignes de caisse
           const payments = [];
           getPaymentRows().forEach((row) => {
             const caisseId = parseInt(row.querySelector(".pay-type").value);
             const montant = parseFloat(row.querySelector(".pay-amount").value) || 0;
-            if (montant > 0) {
+            if (caisseId && montant > 0) {
               payments.push({ caisseId, montant });
             }
           });
 
           if (payments.length === 0) {
-            alert("Ajoutez au moins un paiement avec un montant > 0.");
+            alert("Ajoutez au moins une caisse avec un montant > 0.");
             return;
           }
 
-          // Vérifier que le total des paiements correspond au prix total
-          const totalPaiements = payments.reduce((sum, p) => sum + p.montant, 0);
-          const prixTotal = prixUnitaire * quantite;
-          if (Math.abs(totalPaiements - prixTotal) > 0.01) {
-            alert(
-              `Le total des paiements (${totalPaiements.toFixed(2)} €) ne correspond pas au prix total calculé (${prixTotal.toFixed(2)} € = ${prixUnitaire} × ${quantite}).\nVeuillez ajuster les montants.`
-            );
+          const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
+          if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
+            alert("Le total réparti sur les caisses doit être égal au montant à verser.");
             return;
           }
 
-          // Construction du payload
           const payload = {
-            dateAchat: dateAchat,
-            raceId: raceId,
-            quantite: quantite,
-            poidsAchat: poidsAchat,
-            prixUnitaire: prixUnitaire,
+            employeeId: employeeId,
+            typePayementId: typePayementId,
+            mois: mois,
+            montant: montantAVerser,
             payments: payments,
           };
 
-          // Désactiver le bouton pendant l'envoi
           validerBtn.disabled = true;
-          validerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
 
-          // Envoi vers le serveur
-          fetch("/bovins/achat", {
+          fetch("/employees/payement", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           })
-            .then((response) => {
-              if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.message || "Erreur serveur"); });
-              }
-              return response.json();
-            })
+            .then((response) => response.json())
             .then((data) => {
               if (data.status === "success") {
-                showToast(data.message, "success");
+                showToast(data.message || "Paiement enregistré.", "success");
                 setTimeout(() => {
-                  window.location.href = "/bovins";
-                }, 1500);
+                  window.location.href = "/employee/paiement";
+                }, 1200);
+              } else if (data.status === "skipped") {
+                showToast(data.message || "Mois déjà payé, paiement ignoré.", "error");
+                validerBtn.disabled = false;
               } else {
                 showToast("Erreur : " + data.message, "error");
                 validerBtn.disabled = false;
-                validerBtn.innerHTML = '<i class="fas fa-check-circle"></i> Valider l\'achat';
               }
             })
             .catch((error) => {
               console.error("Erreur réseau:", error);
-              showToast("Erreur de communication avec le serveur: " + error.message, "error");
+              showToast("Erreur de communication avec le serveur.", "error");
               validerBtn.disabled = false;
-              validerBtn.innerHTML = '<i class="fas fa-check-circle"></i> Valider l\'achat';
             });
         });
 
-        // Réinitialisation
-        resetBtn.addEventListener("click", function () {
-          // Réinitialiser les champs
-          document.getElementById("raceId").selectedIndex = 0;
-          dateInput.value = new Date().toISOString().split("T")[0];
-          qteInput.value = "";
-          prixUnitaireInput.value = "";
-          poidsInput.value = "";
-          
-          // Réinitialiser les paiements
-          paymentList.innerHTML = '';
-          const initialRow = createPaymentRow(1);
-          paymentList.appendChild(initialRow);
-          attachRowEvents(initialRow);
-          rowCounter = 1;
-          
-          // Mettre à jour les affichages
-          updateBovinTotal();
-          validatePayments();
-          updateRemoveButtons();
-          
-          // Réactiver le bouton
-          validerBtn.disabled = false;
-          validerBtn.innerHTML = '<i class="fas fa-check-circle"></i> Valider l\'achat';
-          
-          showToast("Formulaire réinitialisé", "success");
-        });
-
-        // Affichage toast
         function showToast(message, type) {
           toast.textContent = message;
-          toast.className =
-            "toast-message show" + (type === "error" ? " error" : "");
+          toast.className = "toast-message show" + (type === "error" ? " error" : "");
           setTimeout(() => {
             toast.classList.remove("show");
           }, 4000);
         }
 
-        // Init
+        // ----- Init -----
         initExistingRows();
-        updateBovinTotal();
+        if (employeeSelect.value && moisInput.value) {
+          refreshStatutMois();
+        }
       })();
     </script>
   </body>
