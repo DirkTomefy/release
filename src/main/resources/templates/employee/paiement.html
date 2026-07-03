@@ -570,8 +570,8 @@
           <div class="field-group">
             <label for="typePayementId"><i class="fas fa-tag"></i> Type de paiement</label>
             <select id="typePayementId" name="typePayementId" required>
-              <option value="">-- Sélectionner un type --</option>
               <option th:each="type : ${typesPayement}"
+                      th:if="${type.libelle == 'Salaire'}"
                       th:value="${type.id}"
                       th:text="${type.libelle}"
                       th:attr="data-libelle=${type.libelle}">
@@ -664,6 +664,39 @@
             </div>
           </div>
 
+          <div class="payment-section" style="margin-top: 1rem;">
+            <div class="payment-header">
+              <div class="payment-title">
+                <i class="fas fa-hand-holding-hand"></i>
+                Avance / sanction
+                <span class="pay-count-badge">Déduction sur le salaire du mois</span>
+              </div>
+            </div>
+            <div class="form-grid" style="margin-bottom: 0;">
+              <div class="field-group">
+                <label for="avanceTypeSelect"><i class="fas fa-tag"></i> Type</label>
+                <select id="avanceTypeSelect" name="avanceTypeSelect" required>
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Avance">Avance</option>
+                  <option value="Sanction">Sanction</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="avanceMontant"><i class="fas fa-coins"></i> Montant (Ar)</label>
+                <input type="number" id="avanceMontant" name="avanceMontant" placeholder="0.00" step="0.01" min="0" value="0" required>
+              </div>
+              <div class="field-group" style="grid-column: span 2;">
+                <label for="avanceMotif"><i class="fas fa-comment-dots"></i> Motif (optionnel)</label>
+                <input type="text" id="avanceMotif" name="avanceMotif" placeholder="Ex. avance de salaire" />
+              </div>
+            </div>
+            <div class="actions-row" style="margin-top: 1rem; padding-top: 1rem;">
+              <button type="button" class="btn btn-outline" id="saveAdvanceBtn">
+                <i class="fas fa-save"></i> Enregistrer avance / sanction
+              </button>
+            </div>
+          </div>
+
           <div class="total-highlight">
             <span><i class="fas fa-coins" style="color: #1f8a4a"></i> Total réparti sur les caisses</span>
             <span class="total-value" id="totalDisplay">0,00 Ar</span>
@@ -723,6 +756,10 @@
         const payCountBadge = document.getElementById("payCountBadge");
         const totalDisplay = document.getElementById("totalDisplay");
         const validerBtn = document.getElementById("validerBtn");
+        const saveAdvanceBtn = document.getElementById("saveAdvanceBtn");
+        const avanceTypeSelect = document.getElementById("avanceTypeSelect");
+        const avanceMontantInput = document.getElementById("avanceMontant");
+        const avanceMotifInput = document.getElementById("avanceMotif");
         const toast = document.getElementById("toast");
         const caisseOptionsTemplate = document.getElementById("caisseOptionsTemplate");
 
@@ -1011,6 +1048,118 @@
               showToast("Erreur de communication avec le serveur.", "error");
               validerBtn.disabled = false;
             });
+        });
+
+        function buildPayload(typePayementId, montantAVerser) {
+          const payments = [];
+          getPaymentRows().forEach((row) => {
+            const caisseId = parseInt(row.querySelector(".pay-type").value);
+            const montant = parseFloat(row.querySelector(".pay-amount").value) || 0;
+            if (caisseId && montant > 0) {
+              payments.push({ caisseId, montant });
+            }
+          });
+
+          return {
+            employeeId: parseInt(employeeSelect.value),
+            typePayementId: typePayementId,
+            mois: moisInput.value,
+            montant: montantAVerser,
+            payments: payments,
+          };
+        }
+
+        function submitPayment(payload, successMessage) {
+          validerBtn.disabled = true;
+          saveAdvanceBtn.disabled = true;
+          fetch("/employees/payement", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.status === "success") {
+                showToast(data.message || successMessage, "success");
+                setTimeout(() => {
+                  window.location.href = "/employee/paiement";
+                }, 1200);
+              } else if (data.status === "skipped") {
+                showToast(data.message || "Mois déjà payé, paiement ignoré.", "error");
+                validerBtn.disabled = false;
+                saveAdvanceBtn.disabled = false;
+              } else {
+                showToast("Erreur : " + data.message, "error");
+                validerBtn.disabled = false;
+                saveAdvanceBtn.disabled = false;
+              }
+            })
+            .catch((error) => {
+              console.error("Erreur réseau:", error);
+              showToast("Erreur de communication avec le serveur.", "error");
+              validerBtn.disabled = false;
+              saveAdvanceBtn.disabled = false;
+            });
+        }
+
+        saveAdvanceBtn.addEventListener("click", function () {
+          const typeLibelle = avanceTypeSelect.value;
+          const montantAVerser = parseFloat(avanceMontantInput.value) || 0;
+          const employeeId = parseInt(employeeSelect.value);
+          const mois = moisInput.value;
+
+          if (!employeeId) {
+            alert("Veuillez sélectionner un employé.");
+            return;
+          }
+          if (!mois) {
+            alert("Veuillez sélectionner le mois concerné.");
+            return;
+          }
+          if (!typeLibelle) {
+            alert("Veuillez sélectionner Avance ou Sanction.");
+            return;
+          }
+          if (montantAVerser <= 0) {
+            alert("Le montant à enregistrer doit être supérieur à 0.");
+            return;
+          }
+
+          const selectedOption = Array.from(typeSelect.options).find((option) => (option.getAttribute("data-libelle") || "").toLowerCase() === typeLibelle.toLowerCase());
+          if (!selectedOption) {
+            alert("Le type sélectionné n'existe pas dans la liste des paiements.");
+            return;
+          }
+
+          const payments = [];
+          getPaymentRows().forEach((row) => {
+            const caisseId = parseInt(row.querySelector(".pay-type").value);
+            const montant = parseFloat(row.querySelector(".pay-amount").value) || 0;
+            if (caisseId && montant > 0) {
+              payments.push({ caisseId, montant });
+            }
+          });
+
+          if (payments.length === 0) {
+            alert("Ajoutez au moins une caisse avec un montant > 0.");
+            return;
+          }
+
+          const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
+          if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
+            alert("Le total réparti sur les caisses doit être égal au montant à enregistrer.");
+            return;
+          }
+
+          const payload = {
+            employeeId: employeeId,
+            typePayementId: parseInt(selectedOption.value),
+            mois: mois,
+            montant: montantAVerser,
+            payments: payments,
+          };
+
+          submitPayment(payload, "Avance / sanction enregistrée.");
         });
 
         function showToast(message, type) {
