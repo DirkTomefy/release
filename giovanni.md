@@ -54,3 +54,4 @@ on fait le controlller
 on fait les 2 services
 on fait le service de transaction qui fait les 2 precedents en meme temps
 |truc chiant| = gerer la diminution si fifo ou lifo
+on fait un peu de front-end maintenant

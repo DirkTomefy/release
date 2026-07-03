@@ -582,12 +582,7 @@
     (function () {
       const caisses = /*[[${caisses}]]*/[];
       // Éléments
-      const paymentList = document.getElementById('paymentList');
-      const addPaymentBtn = document.getElementById('addPaymentBtn');
-      const payCountBadge = document.getElementById('payCountBadge');
-      const totalDisplay = document.getElementById('totalDisplay');
-      const totalInput = document.getElementById('total');
-      const puInput = document.getElementById('pu');
+      const materielInput = document.getElementById('materielId');
       const qteInput = document.getElementById('quantite');
       const dateInput = document.getElementById('dateMouvement');
       const validerBtn = document.getElementById('validerBtn');
@@ -599,131 +594,11 @@
         dateInput.value = new Date().toISOString().split('T')[0];
       }
 
-      // Fonctions de calcul
-      function getPaymentRows() {
-        return paymentList.querySelectorAll('.payment-row');
-      }
-
-      function getPaymentTotal() {
-        let sum = 0;
-        getPaymentRows().forEach(row => {
-          const amt = parseFloat(row.querySelector('.pay-amount').value) || 0;
-          sum += amt;
-        });
-        return sum;
-      }
-
-      function updateBovinTotal() {
-        const pu = parseFloat(puInput.value) || 0;
-        const qte = parseFloat(qteInput.value) || 0;
-        const total = pu * qte;
-        totalInput.value = total.toFixed(2);
-        updateGlobalDisplay();
-      }
-
-      function updateGlobalDisplay() {
-        const sum = getPaymentTotal();
-        totalDisplay.textContent = sum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
-        // Vérification cohérence avec total bovin (affichage)
-        const bovinTotal = parseFloat(totalInput.value) || 0;
-        if (Math.abs(sum - bovinTotal) < 0.01 && bovinTotal > 0) {
-          totalDisplay.style.color = '#0f6e38';
-          totalDisplay.style.background = '#e5f3ec';
-        } else {
-          totalDisplay.style.color = '#b34a3a';
-          totalDisplay.style.background = '#fde8e3';
-        }
-        // Mise à jour du badge
-        const count = getPaymentRows().length;
-        payCountBadge.textContent = count + ' ligne' + (count > 1 ? 's' : '');
-      }
-
-      // Gestion des lignes de paiement
-      function createPaymentRow(rowId) {
-        console.log(caisses);
-        const row = document.createElement('div');
-        row.className = 'payment-row';
-        row.dataset.rowId = rowId;
-        row.innerHTML = `
-            <div class="pay-select">
-              <select class="pay-type">
-                ${caisses.map(caisse => `<option value="${caisse.id}">${caisse.libelle}</option>`).join('')}
-              </select>
-            </div>
-            <div class="pay-montant">
-              <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">
-            </div>
-            <button type="button" class="btn-remove-pay">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          `;
-        return row;
-      }
-
-      function attachRowEvents(row) {
-        const amountInput = row.querySelector('.pay-amount');
-        amountInput.addEventListener('input', updateGlobalDisplay);
-
-        const removeBtn = row.querySelector('.btn-remove-pay');
-        removeBtn.addEventListener('click', function () {
-          if (getPaymentRows().length <= 1) {
-            alert('Il doit rester au moins une ligne de paiement.');
-            return;
-          }
-          row.remove();
-          updateGlobalDisplay();
-          updateRemoveButtons();
-        });
-      }
-
-      function updateRemoveButtons() {
-        const rows = getPaymentRows();
-        rows.forEach((row, index) => {
-          const btn = row.querySelector('.btn-remove-pay');
-          btn.disabled = (rows.length <= 1);
-        });
-      }
-
-      // Ajouter une ligne
-      addPaymentBtn.addEventListener('click', function () {
-        rowCounter++;
-        const newRow = createPaymentRow(rowCounter);
-        paymentList.appendChild(newRow);
-        attachRowEvents(newRow);
-        updateGlobalDisplay();
-        updateRemoveButtons();
-        // animation
-        newRow.style.animation = 'none';
-        setTimeout(() => { newRow.style.animation = 'fadeIn 0.25s ease'; }, 10);
-      });
-
-      // Initialisation des lignes existantes
-      function initExistingRows() {
-        getPaymentRows().forEach(row => attachRowEvents(row));
-        updateRemoveButtons();
-        updateGlobalDisplay();
-      }
-
-      // Événements sur les champs de calcul (PU, quantité)
-      puInput.addEventListener('input', updateBovinTotal);
-      qteInput.addEventListener('input', updateBovinTotal);
-
       // validation et envoi
       validerBtn.addEventListener('click', function () {
-        const materielId = parseInt(document.getElementById('materielId').value);
-        const pu = parseFloat(puInput.value) || 0;
+        const materielId = parseInt(materielInput.value);
         const quantite = parseInt(qteInput.value) || 0;
         const dateMouvement = dateInput.value;
-
-        // Récupération des paiements
-        const payments = [];
-        getPaymentRows().forEach(row => {
-          const caisseId = parseInt(row.querySelector('.pay-type').value);
-          const montant = parseFloat(row.querySelector('.pay-amount').value) || 0;
-          if (montant > 0) {
-            payments.push({ caisseId, montant });
-          }
-        });
 
         // Validations
         if (!dateMouvement) {
@@ -738,24 +613,18 @@
           alert('La quantité doit être supérieure à 0.');
           return;
         }
-        if (payments.length === 0) {
-          alert('Ajoutez au moins un paiement avec un montant > 0.');
-          return;
-        }
 
         // Construction du payload
         const payload = {
           materielId: materielId,
-          prixUnitaire: pu,
           quantite: quantite,
-          dateMouvement: dateMouvement,
-          payments: payments
+          dateMouvement: dateMouvement
         };
 
         console.log('Payload à envoyer:', payload);
 
         // Envoi vers le serveur
-        fetch('/mouvement/form/entree', {
+        fetch('/mouvement/form/sortie', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -784,12 +653,9 @@
         toast.className = 'toast-message show' + (type === 'error' ? ' error' : '');
         setTimeout(() => {
           toast.classList.remove('show');
-        }, 4000);
+        }, 6000);
       }
 
-      // Init
-      initExistingRows();
-      updateBovinTotal();
     })();
   </script>
 </body>
