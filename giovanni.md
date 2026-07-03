@@ -52,4 +52,5 @@ mode_payement(id, libelle)
 on commence par les modele, repo, service et controller tout simple
 on fait le controlller
 on fait les 2 services
+on fait le service de transaction qui fait les 2 precedents en meme temps
 |truc chiant| = gerer la diminution si fifo ou lifo

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import mg.bovit.release.dto.MouvementEntreePayload;
+import mg.bovit.release.dto.MouvementStockSortiePayload;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Materiel;
 import mg.bovit.release.model.MaterielType;
@@ -22,6 +23,7 @@ import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.MaterielService;
 import mg.bovit.release.service.MaterielTypeService;
 import mg.bovit.release.service.MouvementStockEntreeService;
+import mg.bovit.release.service.MouvementStockSortieService;
 
 @Controller
 @RequestMapping("/mouvement")
@@ -32,6 +34,8 @@ public class MouvementController {
     private MaterielTypeService materielTypeService;
     @Autowired
     private MouvementStockEntreeService mouvementStockEntreeService;
+    @Autowired
+    private MouvementStockSortieService mouvementStockSortieService;
     @Autowired
     private CaisseService caisseService;
 
@@ -61,7 +65,6 @@ public class MouvementController {
         try {
             mouvementStockEntreeService.transactionerEnregistrerMouvementEntreeEtPaiements(payload);
 
-            // On crée un vrai objet JSON { "status": "success", "message": "..." }
             response.put("status", "success");
             response.put("message", "Mouvement enregistré avec succès");
 
@@ -69,7 +72,7 @@ public class MouvementController {
 
         } catch (RuntimeException e) {
             response.put("status", "error");
-            response.put("message", e.getMessage()); // Exemple: "Le montant du paiement dépasse..."
+            response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
@@ -84,12 +87,13 @@ public class MouvementController {
     }
 
     @PostMapping("/form/sortie")
-    public ResponseEntity<Map<String, String>> saveMouvementSortie(@RequestBody MouvementEntreePayload payload) {
+    public ResponseEntity<Map<String, String>> saveMouvementSortie(@RequestBody MouvementStockSortiePayload payload) {
         Map<String, String> response = new HashMap<>();
         try {
-            //? ici on gere les 2 action qui sont ajout dans mvt_stock_sortie et update de mvt_stock_entree
+            // ? ici on gere les 2 action qui sont ajout dans mvt_stock_sortie et update de
+            // mvt_stock_entree
             // si l'un d'eux echoue, on annule TOUTTTTT
-            // mouvementStockSortieService.transactionerEnregistrerMouvementSortie(payload);
+            mouvementStockSortieService.transactionerEnregistrerMouvementSortieEtUpdateMouvementEntree(payload);
 
             response.put("status", "success");
             response.put("message", "Mouvement de sortie enregistré avec succès");
@@ -98,9 +102,8 @@ public class MouvementController {
 
         } catch (RuntimeException e) {
             response.put("status", "error");
-            response.put("message", e.getMessage()); // Exemple: "Le montant du paiement dépasse..."
+            response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 }
-// Erreur : No converter found capable of converting from type [java.util.HashMap<?, ?>] to type [mg.bovit.release.dto.MouvementCaisseSoldeDto]

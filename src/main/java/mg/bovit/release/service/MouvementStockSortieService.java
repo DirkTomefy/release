@@ -2,6 +2,7 @@ package mg.bovit.release.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import mg.bovit.release.dto.MouvementStockSortiePayload;
 import mg.bovit.release.model.MouvementStockSortie;
@@ -12,6 +13,8 @@ import mg.bovit.release.repository.MouvementStockSortieRepository;
 public class MouvementStockSortieService {
     @Autowired
     private MouvementStockSortieRepository mouvementStockSortieRepository;
+    @Autowired
+    private MouvementStockEntreeService mouvementStockEntreeService;
     @Autowired
     private MaterielRepository materielRepository;
 
@@ -25,5 +28,11 @@ public class MouvementStockSortieService {
         mouvementStockSortie.setQte(payload.getQuantite());
         mouvementStockSortie.setDateSortie(java.sql.Date.valueOf(payload.getDateMouvement()));
         return mouvementStockSortieRepository.save(mouvementStockSortie);
+    }
+    
+    @Transactional
+    public void transactionerEnregistrerMouvementSortieEtUpdateMouvementEntree(MouvementStockSortiePayload payload) {
+        saveFromPayloadAndReturn(payload);
+        mouvementStockEntreeService.updateApresSortie(payload);
     }
 }

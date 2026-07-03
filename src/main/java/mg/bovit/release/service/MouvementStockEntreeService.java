@@ -87,7 +87,6 @@ public class MouvementStockEntreeService {
                 quantiteASortir = 0;
                 mouvementStockEntreeAReduire.setQteRestant(mvtQttRestantActuelle);
                 mouvementStockEntreeRepository.save(mouvementStockEntreeAReduire);
-                break;
             } else {
                 double mvtQttRestantActuelle = 0;
                 quantiteASortir = quantiteASortir - mvtQttRestant;
