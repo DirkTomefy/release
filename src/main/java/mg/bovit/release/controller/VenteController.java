@@ -7,6 +7,7 @@ import mg.bovit.release.model.Client;
 import mg.bovit.release.model.Race;
 import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.service.BovinService;
+import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.ClientService;
 import mg.bovit.release.service.RaceService;
 import mg.bovit.release.service.VenteService;
@@ -31,6 +32,9 @@ public class VenteController {
     private BovinService bovinService;
     @Autowired
     private RaceService raceService;
+
+    @Autowired
+    private CaisseService caisseService;
 
     // Page d'insertion d'une vente : liste des clients (dropdown + recherche)
     // et liste des bovins disponibles, filtrable via le multicritère déjà existant
@@ -61,6 +65,7 @@ public class VenteController {
         model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
         model.addAttribute("venteForm", new VenteInsertDto());
+        model.addAttribute("caisses", caisseService.findAll());
 
         return "vente/form";
     }
