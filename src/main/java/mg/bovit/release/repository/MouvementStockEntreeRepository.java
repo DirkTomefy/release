@@ -13,7 +13,7 @@ import mg.bovit.release.model.*;
 @Repository
 public interface MouvementStockEntreeRepository extends JpaRepository<MouvementStockEntree, Long>, JpaSpecificationExecutor<MouvementStockEntree> {
 
-    @Query("SELECT SUM(qte_restant) AS total_qte_restant\n" + //
+    @Query("SELECT SUM(mse.qteRestant) AS total_qte_restant\n" + //
                 "FROM MouvementStockEntree mse\n" + //
                 "WHERE mse.materiel.id = :materielId")
     public Double getQuantiteRestantByIdMateriel(@Param("materielId") Long materielId);
