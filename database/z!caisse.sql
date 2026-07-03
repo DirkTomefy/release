@@ -18,8 +18,8 @@ INSERT INTO mvt_caisse (id_caisse, type_mouvement, montant, date) VALUES
     (3, 'ENTREE', 10000.00, '2024-03-05'),
     (1, 'SORTIE', 3000.00, '2024-04-20');
 
-SELECT id_caisse,
-         SUM(CASE WHEN type_mouvement = 'ENTREE' THEN montant ELSE 0 END)  - 
-         SUM(CASE WHEN type_mouvement = 'SORTIE' THEN montant ELSE 0 END)  as montant_actuelle
-FROM mvt_caisse
-GROUP BY id_caisse
+-- SELECT id_caisse,
+--          SUM(CASE WHEN type_mouvement = 'ENTREE' THEN montant ELSE 0 END)  - 
+--          SUM(CASE WHEN type_mouvement = 'SORTIE' THEN montant ELSE 0 END)  as montant_actuelle
+-- FROM mvt_caisse
+-- GROUP BY id_caisse

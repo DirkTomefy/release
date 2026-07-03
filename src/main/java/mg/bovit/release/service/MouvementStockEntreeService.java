@@ -38,4 +38,8 @@ public class MouvementStockEntreeService {
         MouvementStockEntree mouvementStockEntreeSaved = saveFromPayloadAndReturn(payload);
         mouvementStockEntreePaiementService.saveListPaiementFromPayload(payload, mouvementStockEntreeSaved);
     }
+
+    public Double getQuantiteRestantByIdMateriel(Long materielId) {
+        return mouvementStockEntreeRepository.getQuantiteRestantByIdMateriel(materielId);
+    }
 }

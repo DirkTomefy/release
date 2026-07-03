@@ -18,11 +18,9 @@ import mg.bovit.release.dto.MouvementEntreePayload;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Materiel;
 import mg.bovit.release.model.MaterielType;
-import mg.bovit.release.model.MouvementStockEntree;
 import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.MaterielService;
 import mg.bovit.release.service.MaterielTypeService;
-import mg.bovit.release.service.MouvementStockEntreePaiementService;
 import mg.bovit.release.service.MouvementStockEntreeService;
 
 @Controller
@@ -34,8 +32,6 @@ public class MouvementController {
     private MaterielTypeService materielTypeService;
     @Autowired
     private MouvementStockEntreeService mouvementStockEntreeService;
-    @Autowired
-    private MouvementStockEntreePaiementService mouvementStockEntreePaiementService;
     @Autowired
     private CaisseService caisseService;
 

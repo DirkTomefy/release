@@ -50,4 +50,6 @@ mode_payement(id, libelle)
 ## maintenent on passe a la sortie
 (une sortie necessite une insertion dans mvt_stock_sortie et une update de mvt_stock_entree pour diminuer le qte_restant)
 on commence par les modele, repo, service et controller tout simple
+on fait le controlller
+on fait les 2 services
 |truc chiant| = gerer la diminution si fifo ou lifo
