@@ -32,8 +32,8 @@ public class CaisseController {
         LocalDate debutDefaut = finDefaut.minusDays(29); // 30 derniers jours par défaut
 
         model.addAttribute("caisses", caisses);
-        model.addAttribute("dateDebutDefaut", debutDefaut.toString());
-        model.addAttribute("dateFinDefaut", finDefaut.toString());
+        model.addAttribute("dateDebutDefaut", debutDefaut);
+        model.addAttribute("dateFinDefaut", finDefaut);
 
         return "caisse/stats";
     }
