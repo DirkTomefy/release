@@ -64,11 +64,9 @@ public class CaisseService {
 
         LocalDate debutLocal = dateDebut.toLocalDate();
         LocalDate finLocal = dateFin.toLocalDate();
-        long nbJours = ChronoUnit.DAYS.between(debutLocal, finLocal) + 1;
+        Long nbJours = daysBetween(debutLocal, finLocal);
 
-        Granularite granularite = nbJours <= 31 ? Granularite.JOUR
-                : nbJours <= 180 ? Granularite.SEMAINE
-                : Granularite.MOIS;
+        Granularite granularite = getGranulariteByDays(nbJours);
 
         // TreeMap<LocalDate,...> : la clé est le début de l'intervalle (jour, lundi
         // de la semaine, ou 1er du mois), ce qui garantit un ordre chronologique
@@ -114,6 +112,23 @@ public class CaisseService {
         stats.setSolde(totalEntree - totalSortie);
 
         return stats;
+    }
+
+    // function to get granularite by nbJours
+    private Granularite getGranulariteByDays(Long days) {
+        if (days <= 31) {
+            return Granularite.JOUR;
+        }
+        else if (days <= 180) {
+            return Granularite.SEMAINE;
+        }
+
+        return Granularite.MOIS;
+    }
+
+    // function to get nb days between two date 
+    private Long daysBetween(LocalDate dateDebut, LocalDate dateFin) {
+        return ChronoUnit.DAYS.between(dateDebut, dateFin);
     }
 
     private LocalDate cleIntervalle(LocalDate jour, Granularite granularite) {
