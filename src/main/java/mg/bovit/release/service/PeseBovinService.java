@@ -61,7 +61,7 @@ public class PeseBovinService {
         return peseBovinRepository.findAll(PeseSpecification.fromForm(form), pageable);
     }
 
-    // ✅ NOUVELLE MÉTHODE : Récupérer toutes les pesées d'un bovin triées par date
+    //  Récupération toutes les pesées d'un bovin triées par date
     public List<PeseBovin> findByBovinIdOrderByDatePeseAsc(Long bovinId) {
         return peseBovinRepository.findByBovinIdOrderByDatePeseAsc(bovinId);
     }

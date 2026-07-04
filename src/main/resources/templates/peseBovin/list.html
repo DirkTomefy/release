@@ -256,7 +256,6 @@
                     <td th:text="${#dates.format(peseBovin.date_pese, 'dd/MM/yyyy')}">-</td>
                     <td th:text="${#numbers.formatDecimal(peseBovin.poids_apres, 0, 2)}">-</td>
                     <td class="text-end">
-                        <!-- ✅ BOUTON STATISTIQUES AJOUTÉ -->
                         <a th:href="@{'/peseBovin/detail/' + ${peseBovin.bovin.id}}" 
                            class="btn btn-soft-success btn-sm me-1" 
                            title="Voir les statistiques d'évolution">

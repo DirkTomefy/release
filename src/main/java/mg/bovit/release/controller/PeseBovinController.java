@@ -79,7 +79,6 @@ public class PeseBovinController {
         return "peseBovin/form";
     }
 
-    // ✅ NOUVELLE MÉTHODE : Statistiques d'évolution de poids
     @GetMapping("/detail/{id}")
     public String showPeseDetail(
         @PathVariable("id") Long bovinId,
