@@ -73,14 +73,14 @@ public class CaisseService {
         // de la semaine, ou 1er du mois), ce qui garantit un ordre chronologique
         // correct des barres même quand on regroupe par semaine/mois.
         Map<LocalDate, double[]> aggregation = new TreeMap<LocalDate, double[]>();
-        
+
         // get data for map
         getMap4Stats(mouvements, granularite, aggregation);
 
         CaisseStatDTO stats = new CaisseStatDTO();
-        List<String> labels = new java.util.ArrayList<>();
-        List<Double> entrees = new java.util.ArrayList<>();
-        List<Double> sorties = new java.util.ArrayList<>();
+        List<String> labels = new java.util.ArrayList<String>();
+        List<Double> entrees = new java.util.ArrayList<Double>();
+        List<Double> sorties = new java.util.ArrayList<Double>();
 
         double totalEntree = 0.0;
         double totalSortie = 0.0;
