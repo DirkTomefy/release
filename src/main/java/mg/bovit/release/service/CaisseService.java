@@ -2,6 +2,7 @@ package mg.bovit.release.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 
 import java.sql.Date;
 import java.time.DayOfWeek;
@@ -71,20 +72,10 @@ public class CaisseService {
         // TreeMap<LocalDate,...> : la clé est le début de l'intervalle (jour, lundi
         // de la semaine, ou 1er du mois), ce qui garantit un ordre chronologique
         // correct des barres même quand on regroupe par semaine/mois.
-        Map<LocalDate, double[]> aggregation = new TreeMap<>();
-
-        for (MvtCaisse mvt : mouvements) {
-            LocalDate jour = mvt.getDate().toLocalDate();
-            LocalDate cle = cleIntervalle(jour, granularite);
-
-            double[] valeurs = aggregation.computeIfAbsent(cle, k -> new double[2]);
-            double montant = mvt.getMontant() != null ? mvt.getMontant() : 0.0;
-            if (montant >= 0) {
-                valeurs[0] += montant;      // entrée
-            } else {
-                valeurs[1] += -montant;     // sortie (valeur absolue)
-            }
-        }
+        Map<LocalDate, double[]> aggregation = new TreeMap<LocalDate, double[]>();
+        
+        // get data for map
+        getMap4Stats(mouvements, granularite, aggregation);
 
         CaisseStatDTO stats = new CaisseStatDTO();
         List<String> labels = new java.util.ArrayList<>();
@@ -113,6 +104,24 @@ public class CaisseService {
 
         return stats;
     }
+
+    // function to get Map for stats
+    public void getMap4Stats(List<MvtCaisse> mvtCaisses, Granularite granularite, Map<LocalDate, double[]> aggregation) {
+        // loop of mvtCaisses
+        for (MvtCaisse mvt : mvtCaisses) {
+            LocalDate jour = mvt.getDate().toLocalDate();
+            LocalDate key = cleIntervalle(jour, granularite);
+
+            double[] values = aggregation.computeIfAbsent(key, k -> new double[2]);
+            double montant = mvt.getMontant() != null ? mvt.getMontant() : 0.0;
+            if (montant >= 0) {
+                values[0] = values[0] + montant; // entree
+            }
+            else {
+                values[1] = values[1] - montant; // sortie
+            }
+        }
+    } 
 
     // function to get granularite by nbJours
     private Granularite getGranulariteByDays(Long days) {
