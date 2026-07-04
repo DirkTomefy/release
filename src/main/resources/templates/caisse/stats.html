@@ -139,7 +139,10 @@
             return;
         }
 
-        const params = new URLSearchParams({ dateDebut, dateFin });
+        const params = new URLSearchParams();
+        params.set("dateDebut", dateDebut);
+        params.set("dateFin", dateFin);
+
         if (caisseId) {
             params.set('caisseId', caisseId);
         }
