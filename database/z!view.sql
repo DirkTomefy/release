@@ -1,3 +1,4 @@
+-- Active: 1781599410280@@127.0.0.1@5432@bovin_db
 CREATE VIEW v_bovin_poids_actuel AS
 SELECT 
     b.id,
