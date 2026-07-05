@@ -3,6 +3,7 @@ package mg.bovit.release.controller;
 import mg.bovit.release.dto.ControllerMessage;
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.dto.VenteInsertDto;
+import mg.bovit.release.dto.VenteStatsDTO;
 import mg.bovit.release.model.Client;
 import mg.bovit.release.model.Race;
 import mg.bovit.release.model.sqlview.BovinWithPoids;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -39,7 +41,7 @@ public class VenteController {
     // Page d'insertion d'une vente : liste des clients (dropdown + recherche)
     // et liste des bovins disponibles, filtrable via le multicritère déjà existant
     // (on réutilise MultiCriteriaFormBovinList / BovinService.searchBovinsWithPoids
-    //  sans toucher au code Bovin existant).
+    // sans toucher au code Bovin existant).
     @GetMapping("/new")
     public String showInsertForm(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria, Model model) {
         if (criteria == null) {
@@ -84,4 +86,21 @@ public class VenteController {
         }
         return response;
     }
+
+    @GetMapping("/stats/data")
+    @ResponseBody
+    public VenteStatsDTO getStatsData(@RequestParam(required = false) String dateDebut,
+            @RequestParam(required = false) String dateFin,
+            @RequestParam(required = false) Long raceId) {
+        LocalDate debut = dateDebut != null && !dateDebut.isEmpty() ? LocalDate.parse(dateDebut) : null;
+        LocalDate fin = dateFin != null && !dateFin.isEmpty() ? LocalDate.parse(dateFin) : null;
+        return venteService.getVenteStats(debut, fin, raceId);
+    }
+
+    @GetMapping("/stats")
+    public String statsPage(Model model) {
+        model.addAttribute("races", raceService.findAll());
+        return "vente/stats";
+    }
+
 }

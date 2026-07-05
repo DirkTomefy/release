@@ -1,6 +1,8 @@
 package mg.bovit.release.service;
 
 import java.sql.Date;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import mg.bovit.release.dto.BuyBovinRequest.CaissePaymentDTO;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
 import mg.bovit.release.dto.VenteInsertDto;
+import mg.bovit.release.dto.VenteStatsDTO;
 
 @Service
 public class VenteService {
@@ -134,4 +137,40 @@ public class VenteService {
                     totalPaiements, totalVente));
         }
     }
+
+    public VenteStatsDTO getVenteStats(LocalDate dateDebut, LocalDate dateFin, Long raceId) {
+    Long totalVentes = venteBovinRepository.countVentesWithFilters(dateDebut, dateFin);
+
+    List<Object[]> grouped = bovinRepository.findVenteStatsGroupedByMonth(dateDebut, dateFin, raceId);
+
+    List<String> labels = new ArrayList<>();
+    List<Double> montants = new ArrayList<>();
+    List<Long> counts = new ArrayList<>();
+
+    Double montantTotal = 0.0;
+    Long totalBovins = 0L;
+
+    for (Object[] row : grouped) {
+        String mois = (String) row[0];        // déjà formaté en "YYYY-MM"
+        Double montant = (Double) row[1];
+        Long count = (Long) row[2];
+
+        labels.add(mois);
+        montants.add(montant);
+        counts.add(count);
+
+        montantTotal += montant;
+        totalBovins += count;
+    }
+
+    VenteStatsDTO dto = new VenteStatsDTO();
+    dto.setTotalVentes(totalVentes);
+    dto.setTotalBovinsVendus(totalBovins);
+    dto.setMontantTotal(montantTotal);
+    dto.setLabels(labels);
+    dto.setMontants(montants);
+    dto.setCounts(counts);
+
+    return dto;
+}
 }

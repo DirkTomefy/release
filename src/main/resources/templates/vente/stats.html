@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques des ventes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #f9f7f4; color: #3e3e3b; }
+        .navbar { background-color: #fff; border-bottom: 1px solid #e2ddd6; }
+        .navbar-brand { font-weight: 600; color: #5b4b3a !important; }
+        .card { border: 1px solid #e7e0d8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .form-control, .form-select { border-color: #e0d8cf; border-radius: 8px; padding: 0.6rem 1rem; }
+        .form-control:focus, .form-select:focus { border-color: #b6a88e; box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15); }
+        .btn-soft-primary { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; font-weight: 500; padding: 0.6rem 1rem;}
+        .btn-soft-primary:hover { background-color: #dde8d1; color: #3a562c; }
+        .summary-card { border-radius: 12px; padding: 1.1rem 1.3rem; }
+        .summary-card .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+        .summary-card .value { font-size: 1.5rem; font-weight: 600; }
+        .summary-ventes { background-color: #e8f0fe; }
+        .summary-ventes .label { color: #2a4b7a; }
+        .summary-ventes .value { color: #1a3a5a; }
+        .summary-bovins { background-color: #eef6ec; }
+        .summary-bovins .label { color: #4a6b3a; }
+        .summary-bovins .value { color: #2f5024; }
+        .summary-montant { background-color: #fdf6e3; }
+        .summary-montant .label { color: #8a6d2f; }
+        .summary-montant .value { color: #6b4f1a; }
+        #chartEmptyState { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
+        </a>
+    </div>
+</nav>
+
+<div class="container py-4">
+
+    <div class="d-flex align-items-center mb-4">
+        <h4 class="mb-0"><i class="bi bi-bar-chart-fill me-2" style="color:#7a9e5a;"></i>Statistiques des ventes</h4>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card p-3 p-md-4 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Date début</label>
+                <input type="date" id="dateDebut" class="form-control">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Date fin</label>
+                <input type="date" id="dateFin" class="form-control">
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Race</label>
+                <select id="raceId" class="form-select">
+                    <option value="">Toutes les races</option>
+                    <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+                <button id="btnFiltrer" type="button" class="btn btn-soft-primary">
+                    <i class="bi bi-funnel-fill me-1"></i>Filtrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de synthèse -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-ventes">
+                <div class="label"><i class="bi bi-receipt me-1"></i>Nombre de ventes</div>
+                <div class="value" id="totalVentes">–</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-bovins">
+                <div class="label"><i class="bi bi-tree me-1"></i>Bovins vendus</div>
+                <div class="value" id="totalBovins">–</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-montant">
+                <div class="label"><i class="bi bi-wallet2 me-1"></i>Montant total</div>
+                <div class="value" id="montantTotal">–</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histogramme -->
+    <div class="card p-3 p-md-4">
+        <div id="chartEmptyState" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            Aucune vente sur cette période.
+        </div>
+        <div id="chartWrapper" style="position: relative; height: 380px;">
+            <canvas id="venteChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    const dateDebutInput = document.getElementById('dateDebut');
+    const dateFinInput = document.getElementById('dateFin');
+    const raceSelect = document.getElementById('raceId');
+    const btnFiltrer = document.getElementById('btnFiltrer');
+
+    const totalVentesEl = document.getElementById('totalVentes');
+    const totalBovinsEl = document.getElementById('totalBovins');
+    const montantTotalEl = document.getElementById('montantTotal');
+    const chartWrapper = document.getElementById('chartWrapper');
+    const chartEmptyState = document.getElementById('chartEmptyState');
+
+    let venteChart = null;
+
+    function formaterMontant(valeur) {
+        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(valeur || 0) + ' Ar';
+    }
+
+    function chargerStatistiques() {
+        const dateDebut = dateDebutInput.value;
+        const dateFin = dateFinInput.value;
+        const raceId = raceSelect.value;
+
+        const params = new URLSearchParams();
+        if (dateDebut) params.set('dateDebut', dateDebut);
+        if (dateFin) params.set('dateFin', dateFin);
+        if (raceId) params.set('raceId', raceId);
+
+        fetch('/vente/stats/data?' + params.toString())
+            .then(res => res.json())
+            .then(data => {
+                afficherResultats(data);
+            })
+            .catch(() => alert("Impossible de charger les statistiques de ventes."));
+    }
+
+    function afficherResultats(data) {
+        totalVentesEl.textContent = data.totalVentes || 0;
+        totalBovinsEl.textContent = data.totalBovinsVendus || 0;
+        montantTotalEl.textContent = formaterMontant(data.montantTotal);
+
+        const labels = data.labels || [];
+
+        if (labels.length === 0) {
+            chartWrapper.style.display = 'none';
+            chartEmptyState.style.display = 'block';
+            return;
+        }
+        chartWrapper.style.display = 'block';
+        chartEmptyState.style.display = 'none';
+
+        const ctx = document.getElementById('venteChart').getContext('2d');
+
+        if (venteChart) {
+            venteChart.destroy();
+        }
+
+        venteChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Montant (Ar)',
+                        data: data.montants,
+                        backgroundColor: '#7a9e5a',
+                        borderRadius: 4,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Nombre de bovins',
+                        data: data.counts,
+                        backgroundColor: '#4a7a9e',
+                        borderRadius: 4,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                if (context.dataset.label === 'Montant (Ar)') {
+                                    return 'Montant : ' + formaterMontant(context.raw);
+                                } else {
+                                    return 'Nb bovins : ' + context.raw;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        ticks: { callback: (value) => formaterMontant(value) }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: (value) => value }
+                    }
+                }
+            }
+        });
+    }
+
+    btnFiltrer.addEventListener('click', chargerStatistiques);
+
+    // Chargement initial sans filtres (toutes les ventes)
+    chargerStatistiques();
+</script>
+
+</body>
+</html>
