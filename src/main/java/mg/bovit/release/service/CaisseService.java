@@ -2,7 +2,6 @@ package mg.bovit.release.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 
 import java.sql.Date;
 import java.time.DayOfWeek;
