@@ -6,6 +6,31 @@
     <title>Liste des matériaux</title>
 </head>
 <body>
-    
+    <h1>Liste des matériaux</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Type de matériel</th>
+                <th>Libelle</th>
+                <th>Type de gestion</th>
+                <th>Quantité</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="materiel : ${materielStockDtos}">
+                <td th:text="${materiel.getMateriel().getId()}"></td>
+                <td th:text="${materiel.getMateriel().getType().getLibelle()}"></td>
+                <td th:text="${materiel.getMateriel().getLibelle()}"></td>
+                <td th:text="${materiel.getMateriel().getTypeGestion()}"></td>
+                <td th:text="${materiel.getQuantiteRestant()}"></td>
+                <td>
+                    <a th:href="@{/materiel/{id}(id=${materiel.getMateriel().getId()})}" class="btn btn-info">Voir Details</a>
+                    <a th:href="@{/inventaire/{id}(id=${materiel.getMateriel().getId()})}" class="btn btn-primary">Faire inventaire</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </body>
 </html>
