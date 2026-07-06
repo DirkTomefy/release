@@ -49,10 +49,6 @@ CREATE TABLE mvt_stock_entree (
         REFERENCES materiel(id)
 );
 
--- SELECT SUM(qte_restant) AS total_qte_restant
--- FROM mvt_stock_entree
--- WHERE id_materiel = 2;
-
 CREATE TABLE mvt_stock_entree_paiement (
     id SERIAL PRIMARY KEY,
     id_mvt_stock_entree INTEGER NOT NULL,

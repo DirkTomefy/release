@@ -69,3 +69,4 @@ si qte_reelle > qte_restant, on fait une entree
 
 on creer la page avec les champs necessaires pour faire l'inventaire
 materiel, qte_reelle, qte_restant, date_inventaire
+bla bla bla fini...
