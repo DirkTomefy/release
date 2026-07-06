@@ -42,8 +42,8 @@ public class MouvementStockEntreePaiementService {
             // save la sortie de caisse
             MouvementCaisse mouvementCaisse = new MouvementCaisse();
             mouvementCaisse.setCaisse(mouvementPaiement.getCaisse());
-            mouvementCaisse.setTypeMouvement("SORTIE");
-            mouvementCaisse.setMontant(mouvementPaiement.getMontant());
+            // mouvementCaisse.setTypeMouvement("SORTIE");
+            mouvementCaisse.setMontant(-1 * mouvementPaiement.getMontant());
             mouvementCaisse.setDate(mouvementStockEntreeSaved.getDateEntree());
             mouvementCaisseService.save(mouvementCaisse);
 

@@ -55,3 +55,8 @@ on fait les 2 services
 on fait le service de transaction qui fait les 2 precedents en meme temps
 |truc chiant| = gerer la diminution si fifo ou lifo
 on fait un peu de front-end maintenant
+
+## conflit de base
+on va corriger la table nvt_caisse pour supprimer le type_mouvement
+on corrige le modele
+on corrige le service

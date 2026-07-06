@@ -20,7 +20,6 @@ public class MouvementCaisse {
     @JoinColumn(name = "id_caisse")
     private Caisse caisse;
 
-    private String typeMouvement; // ENTREE ou SORTIE
     private Double montant;
     private Date date;
 
@@ -38,14 +37,6 @@ public class MouvementCaisse {
 
     public void setCaisse(Caisse caisse) {
         this.caisse = caisse;
-    }
-
-    public String getTypeMouvement() {
-        return typeMouvement;
-    }
-
-    public void setTypeMouvement(String typeMouvement) {
-        this.typeMouvement = typeMouvement;
     }
 
     public Double getMontant() {
