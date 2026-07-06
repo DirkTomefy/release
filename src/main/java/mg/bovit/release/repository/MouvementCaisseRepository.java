@@ -1,12 +1,8 @@
 package mg.bovit.release.repository;
 
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import mg.bovit.release.dto.MouvementCaisseSoldeDto;
 import mg.bovit.release.model.MouvementCaisse;
 
 @Repository

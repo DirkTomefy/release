@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import mg.bovit.release.dto.MouvementCaisseSoldeDto;
 import mg.bovit.release.dto.MouvementEntreePaiementPayload;
 import mg.bovit.release.dto.MouvementEntreePayload;
 import mg.bovit.release.model.Caisse;
