@@ -19,7 +19,7 @@ public interface MouvementStockEntreeRepository extends JpaRepository<MouvementS
                 "WHERE mse.materiel.id = :materielId")
     public Double getQuantiteRestantByIdMateriel(@Param("materielId") Long materielId);
 
-    @Query("SELECT mse FROM MouvementStockEntree mse WHERE mse.materiel.id = :materielId")
+    @Query("SELECT mse FROM MouvementStockEntree mse WHERE mse.materiel.id = :materielId ORDER BY mse.dateEntree ASC")
     public List<MouvementStockEntree> findAllByIdMateriel(@Param("materielId") Long materielId);
     
     @Query("SELECT new mg.bovit.release.dto.MaterielStockDto(mse.materiel, SUM(mse.qteRestant)) " +
@@ -32,4 +32,6 @@ public interface MouvementStockEntreeRepository extends JpaRepository<MouvementS
             "WHERE mse.materiel.id = :materielId " +
             "GROUP BY mse.materiel")
     public MaterielStockDto findMaterielStockRestantById(Long materielId);
+
+    // public MouvementStockEntree findAllByMaterielId(Long id);
 }

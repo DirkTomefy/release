@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import mg.bovit.release.dto.MaterielStockDto;
 import mg.bovit.release.model.Materiel;
+import mg.bovit.release.model.MouvementStockEntree;
 import mg.bovit.release.repository.MaterielRepository;
 import mg.bovit.release.repository.MouvementStockEntreeRepository;
 
@@ -33,5 +34,9 @@ public class MaterielService {
 
     public MaterielStockDto findMaterielStockRestantById(Long materielId) {
         return mouvementStockEntreeRepository.findMaterielStockRestantById(materielId);
+    }
+
+    public List<MouvementStockEntree> findDetailsMaterielById(Long id) {
+        return mouvementStockEntreeRepository.findAllByIdMateriel(id);
     }
 }

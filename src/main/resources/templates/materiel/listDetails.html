@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Details du materiel</title>
+</head>
+<body>
+    <h1>Details du materiel: <span th:text="${materielStock.getMateriel().getLibelle()}"></span></h1>
+    <p>Type de matériel: <span th:text="${materielStock.getMateriel().getType().getLibelle()}"></span></p>
+    <p>Type de gestion: <span th:text="${materielStock.getMateriel().getTypeGestion()}"></span></p>
+    <p>Quantité restante: <span th:text="${materielStock.getQuantiteRestant()}"></span></p>
+
+    <p>Vue detaille des mouvements:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Prix unitaire</th>
+                <th>Quantité initial</th>
+                <th>Quantité restante</th>
+                <th>Date d'entrée</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="mvt : ${mouvementStockEntrees}">
+                <td th:text="${mvt.getId()}"></td>
+                <td th:text="${mvt.getPrixUnitaire()}"></td>
+                <td th:text="${mvt.getQte()}"></td>
+                <td th:text="${mvt.getQteRestant()}"></td>
+                <td th:text="${#dates.format(mvt.getDateEntree(), 'dd/MM/yyyy')}"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
