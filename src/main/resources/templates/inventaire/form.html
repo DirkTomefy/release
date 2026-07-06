@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventaire</title>
+</head>
+<body>
+    <form id="inventaireForm" onsubmit="return false;">
+        <label for="materielType">Type de materiel:</label>
+        <input type="text" id="materielType" name="materielType" required>
+
+        <label for="materielId">Materiel:</label>
+        <input type="text" id="materielId" name="materielId" required>
+
+        <label for="qte_reelle">Quantité réelle:</label>
+        <input type="number" id="qte_reelle" name="qte_reelle" readonly>
+
+        <label for="qte_restant">Quantité restante:</label>
+        <input type="number" id="qte_restant" name="qte_restant" required>
+
+        <label for="date_inventaire">Date d'inventaire:</label>
+        <input type="date" id="date_inventaire" name="date_inventaire" required>
+
+        <button type="submit">Enregistrer</button>
+    </form>
+</body>
+</html>

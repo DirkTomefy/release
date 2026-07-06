@@ -62,3 +62,10 @@ on corrige le modele
 on corrige le service
 
 la table caisse sert a prendre les soldes de caisse
+
+## gestion inventaire
+si qte_reelle < qte_restant, on fait une sortie
+si qte_reelle > qte_restant, on fait une entree
+
+on creer la page avec les champs necessaires pour faire l'inventaire
+materiel, qte_reelle, qte_restant, date_inventaire
