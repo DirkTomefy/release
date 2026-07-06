@@ -26,4 +26,10 @@ public interface MouvementStockEntreeRepository extends JpaRepository<MouvementS
             "FROM MouvementStockEntree mse " +
             "GROUP BY mse.materiel")
     public List<MaterielStockDto> findAllMaterielStockRestant();
+
+    @Query("SELECT new mg.bovit.release.dto.MaterielStockDto(mse.materiel, SUM(mse.qteRestant)) " +
+            "FROM MouvementStockEntree mse " +
+            "WHERE mse.materiel.id = :materielId " +
+            "GROUP BY mse.materiel")
+    public MaterielStockDto findMaterielStockRestantById(Long materielId);
 }
