@@ -60,3 +60,5 @@ on fait un peu de front-end maintenant
 on va corriger la table nvt_caisse pour supprimer le type_mouvement
 on corrige le modele
 on corrige le service
+
+la table caisse sert a prendre les soldes de caisse
