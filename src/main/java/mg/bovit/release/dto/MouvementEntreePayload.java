@@ -9,6 +9,9 @@ public class MouvementEntreePayload {
     private String dateMouvement;
     private List<MouvementEntreePaiementPayload> payments;
 
+    public MouvementEntreePayload() {
+    }
+
     public MouvementEntreePayload(Long materielId, Double prixUnitaire, Double quantite, String dateMouvement, List<MouvementEntreePaiementPayload> payments) {
         this.materielId = materielId;
         this.prixUnitaire = prixUnitaire;

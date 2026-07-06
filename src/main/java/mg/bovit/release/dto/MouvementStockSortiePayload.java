@@ -11,6 +11,9 @@ public class MouvementStockSortiePayload {
         this.dateMouvement = dateMouvement;
     }
 
+    public MouvementStockSortiePayload() {
+    }
+
     public Long getMaterielId() {
         return materielId;
     }

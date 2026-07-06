@@ -7,11 +7,11 @@
 </head>
 <body>
     <th:block th:if="${materielStock == null}">
-        <p>Le materiel sélectionné n'a encore aucune entrée en stock</p>
+        <p>Le materiel sélectionné n'a encore aucune entrée en stock.</p>
     </th:block>
     <th:block th:if="${materielStock != null}">
         <h1>Inventaire pour le matériel: <span th:text="${materielStock.getMateriel().getLibelle()}"></span></h1>
-        <form id="inventaireForm" th:action="@{/inventaire/save}" method="post">
+        <form id="inventaireForm" th:action="@{/inventaire/{id}(id=${materielStock.getMateriel().getId()})}" method="post">
             <label for="materielId">Materiel:</label>
             <input type="text" id="materielId" name="materielId" required readonly th:value="${materielStock.getMateriel().getLibelle()}">
     
