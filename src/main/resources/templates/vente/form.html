@@ -317,6 +317,7 @@
 <script th:inline="javascript">
 (function () {
     var STORAGE_KEY = 'venteCart';
+    var isSubmitting = false;
 
     // Données clients injectées par Thymeleaf (nécessite Jackson, déjà présent pour vos endpoints REST)
     var clientsData = /*[[${clients}]]*/ [];
@@ -618,13 +619,26 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    document.getElementById('submitVenteBtn').addEventListener('click', function () {
+    var submitVenteBtn = document.getElementById('submitVenteBtn');
+
+    submitVenteBtn.addEventListener('click', function () {
+        if (isSubmitting) {
+            return;
+        }
+
+        isSubmitting = true;
+        submitVenteBtn.disabled = true;
+
         var ids = Object.keys(cart.lignes || {});
         if (!cart.clientId) {
+            isSubmitting = false;
+            submitVenteBtn.disabled = false;
             showAlert('danger', 'Veuillez sélectionner un client.');
             return;
         }
         if (ids.length === 0) {
+            isSubmitting = false;
+            submitVenteBtn.disabled = false;
             showAlert('danger', 'Sélectionnez au moins un bovin à vendre.');
             return;
         }
@@ -640,6 +654,8 @@
         });
 
         if (payments.length === 0) {
+            isSubmitting = false;
+            submitVenteBtn.disabled = false;
             showAlert('danger', 'Ajoutez au moins un paiement avec un montant supérieur à 0.');
             return;
         }
@@ -647,6 +663,8 @@
         var totalPaiements = payments.reduce(function (sum, p) { return sum + p.montant; }, 0);
         var cartTotal = getCartTotal();
         if (Math.abs(totalPaiements - cartTotal) > 0.01) {
+            isSubmitting = false;
+            submitVenteBtn.disabled = false;
             showAlert('danger', 'Le total des paiements (' + totalPaiements.toLocaleString('fr-FR') + ') ne correspond pas au total de la vente (' + cartTotal.toLocaleString('fr-FR') + ').');
             return;
         }
@@ -676,10 +694,14 @@
                     showAlert('success', data.message + ' Redirection...');
                     setTimeout(function () { window.location.href = '/vente/new'; }, 1200);
                 } else {
+                    isSubmitting = false;
+                    submitVenteBtn.disabled = false;
                     showAlert('danger', data.message || 'Erreur lors de l\'enregistrement de la vente.');
                 }
             })
             .catch(function () {
+                isSubmitting = false;
+                submitVenteBtn.disabled = false;
                 showAlert('danger', 'Erreur réseau lors de l\'enregistrement de la vente.');
             });
     });
