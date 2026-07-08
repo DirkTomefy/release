@@ -814,31 +814,29 @@
               salaireInput.setAttribute("data-raw-value", data.salaire);
               resteDuInput.setAttribute("data-raw-value", data.resteDu);
 
-              if (data.dejaPaye) {
+              // MODIFICATION : Un mois est bloqué uniquement si le reste dû est inférieur ou égal à 0
+              if (data.resteDu <= 0) {
                 moisDejaPaye = true;
                 moisPayeBox.classList.add("show");
-                // On ne bloque le bouton que si le type sélectionné est "Salaire" :
-                // une avance ou une sanction reste possible même si le salaire
-                // du mois est déjà réglé.
+                moisPayeBox.querySelector("span").textContent = "Le salaire de ce mois a été intégralement réglé.";
                 validerBtn.disabled = typeSelectionneEstSalaire();
-              } else if (typeSelectionneEstSalaire()) {
-                // Pré-remplit le montant à verser avec le reste dû
-                montantInput.value = data.resteDu;
+              } else {
+                moisDejaPaye = false;
+                moisPayeBox.classList.remove("show");
+                validerBtn.disabled = false;
+                if (typeSelectionneEstSalaire()) {
+                  // Remplit automatiquement avec le reliquat / reste dû
+                  montantInput.value = data.resteDu;
+                }
               }
 
               if (data.totalAvance > 0) {
                 avanceBox.querySelector("span").textContent =
-                  `Avance(s) déjà enregistrée(s) ce mois : ${formatAr(
-                    data.totalAvance
-                  )} — affichée à titre indicatif uniquement, non déduite du reste dû.`;
+                  `Avance(s) déjà enregistrée(s) ce mois : ${formatAr(data.totalAvance)} — non déduite du reste dû automatiquement.`;
                 avanceBox.classList.add("show");
               }
 
               if (data.totalSanction > 0) {
-                sanctionBox.querySelector("span").textContent =
-                  `Sanction(s) enregistrée(s) ce mois : ${formatAr(
-                    data.totalSanction
-                  )} (information uniquement).`;
                 sanctionBox.classList.add("show");
               }
             })

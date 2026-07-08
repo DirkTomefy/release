@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class EmployeeController {
@@ -33,9 +35,16 @@ public class EmployeeController {
     }
 
     @PostMapping("/employee/save")
-    public String saveEmployee(@ModelAttribute("employeeForm") EmployeeContratDTO formDto) {
-        employeeService.saveEmployeeWithContrat(formDto);
-        return "redirect:/employee/new";
+    public String saveEmployee(@ModelAttribute EmployeeContratDTO dto, RedirectAttributes redirectAttributes, Model model) {
+        try {
+            employeeService.saveEmployeeWithContrat(dto);
+            // Ajout du message de succès
+            redirectAttributes.addFlashAttribute("successMessage", "L'employé " + dto.getNom() + " " + dto.getPrenom() + " a été enregistré avec succès !");
+            return "redirect:/employee/list"; // Redirection vers la liste après succès
+        } catch (ResponseStatusException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getReason());
+            return "redirect:/employee/new"; // Redirige vers le formulaire en cas d'erreur
+        }
     }
 
     @GetMapping("/employee/paiement")
@@ -55,5 +64,10 @@ public class EmployeeController {
         model.addAttribute("preselectMois", mois);
 
         return "employee/paiement";
+    }
+    @GetMapping({"/employee", "/employee/list"})
+    public String listEmployee(Model model) {
+        model.addAttribute("employees", employeeService.findAllEmployees());
+        return "employee/list";
     }
 }
