@@ -1,4 +1,5 @@
 -- Active: 1779074118545@@127.0.0.1@5432@bovin_db
+DROP DATABASE IF EXISTS bovin_db;
 CREATE DATABASE bovin_db;
 \c bovin_db;
 

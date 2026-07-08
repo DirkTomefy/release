@@ -1,12 +1,24 @@
 package mg.bovit.release.controller;
 
+import java.io.IOException;
 import java.util.List;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Controller; 
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import jakarta.servlet.http.HttpServletResponse;
 import mg.bovit.release.dto.ControllerMessage;
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 import mg.bovit.release.dto.PeseBovinRequest;
@@ -25,7 +38,7 @@ import mg.bovit.release.service.BovinService;
 import mg.bovit.release.service.PeseBovinService;
 import mg.bovit.release.service.RaceService;
 
-@Controller 
+@Controller
 @RequestMapping("/peseBovin")
 public class PeseBovinController {
     @Autowired
@@ -34,6 +47,14 @@ public class PeseBovinController {
     private RaceService raceService;
     @Autowired
     BovinService bovinService;
+
+    // Permet à Spring d'accepter les paramètres date vides ("") sans lever
+    // une erreur de conversion, en les traitant comme null (allowEmpty = true)
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(java.sql.Date.class,
+            new CustomDateEditor(new java.text.SimpleDateFormat("yyyy-MM-dd"), true));
+    }
 
     @GetMapping("/list")
     public String listPeseBovin(@ModelAttribute("criteria") MulticriteriaListPeseBovin criteria, Model model) {
@@ -57,7 +78,7 @@ public class PeseBovinController {
 
         return "peseBovin/list";
     }
-    
+
     @GetMapping({"/form", "/form/{id}"})
     public String formPeseBovin(
         @PathVariable(name="id", required = false) Long id,
@@ -86,13 +107,13 @@ public class PeseBovinController {
         @RequestParam(required = false) String dateFin,
         Model model
     ) throws Exception {
-        
+
         // Récupérer les informations du bovin
         Bovin bovin = bovinService.findById(bovinId);
-        
+
         // Récupérer toutes les pesées du bovin
         List<PeseBovin> pesees = peseBovinService.findByBovinIdOrderByDatePeseAsc(bovinId);
-        
+
         // Si des dates de filtre sont fournies, filtrer les pesées
         if (dateDebut != null && !dateDebut.isEmpty()) {
             java.sql.Date debut = java.sql.Date.valueOf(dateDebut);
@@ -106,18 +127,18 @@ public class PeseBovinController {
                 .filter(p -> !p.getDate_pese().after(fin))
                 .collect(java.util.stream.Collectors.toList());
         }
-        
+
         // Calcul des statistiques
         double poidsActuel = 0;
         double gainTotal = 0;
         double gainMoyenJour = 0;
         int nbPesees = pesees.size();
-        
+
         if (!pesees.isEmpty()) {
             poidsActuel = pesees.get(pesees.size() - 1).getPoids_apres();
             double poidsInitial = pesees.get(0).getPoids_apres();
             gainTotal = poidsActuel - poidsInitial;
-            
+
             // Calcul du gain moyen par jour
             java.sql.Date firstDate = pesees.get(0).getDate_pese();
             java.sql.Date lastDate = pesees.get(pesees.size() - 1).getDate_pese();
@@ -127,7 +148,7 @@ public class PeseBovinController {
                 gainMoyenJour = gainTotal / diffInDays;
             }
         }
-        
+
         // Déterminer les dates min et max pour les filtres
         java.sql.Date dateDebutDefault = null;
         java.sql.Date dateFinDefault = null;
@@ -138,7 +159,7 @@ public class PeseBovinController {
             dateDebutDefault = new java.sql.Date(System.currentTimeMillis());
             dateFinDefault = new java.sql.Date(System.currentTimeMillis());
         }
-        
+
         // Ajouter les attributs au modèle
         model.addAttribute("bovinId", bovinId);
         model.addAttribute("raceNom", bovin.getRace().getNom());
@@ -151,7 +172,7 @@ public class PeseBovinController {
         model.addAttribute("pesees", pesees);
         model.addAttribute("dateDebut", dateDebut != null ? java.sql.Date.valueOf(dateDebut) : dateDebutDefault);
         model.addAttribute("dateFin", dateFin != null ? java.sql.Date.valueOf(dateFin) : dateFinDefault);
-        
+
         return "peseBovin/detail";
     }
 
@@ -166,10 +187,10 @@ public class PeseBovinController {
         try {
             // verify if bovin existe or not
             Bovin temp_bovin = bovinService.findById(peseBovinRequest.getBovinId());
-    
+
             // get latest pese by bovin
             PeseBovin latestPese = peseBovinService.getLatestPeseByBovin(temp_bovin.getId());
-    
+
             // verify if date comming is after date of latest pese
             if (latestPese != null && latestPese.getDate_pese().after(peseBovinRequest.getDatePese())) {
                 throw new Exception("la date de pesée doit être après la date de la dernière pesée");
@@ -212,5 +233,66 @@ public class PeseBovinController {
         }
 
         return response;
+    }
+
+    @GetMapping("/export")
+    public void exportExcel(
+        @ModelAttribute("criteria") MulticriteriaListPeseBovin criteria,
+        HttpServletResponse response
+    ) throws IOException {
+
+        if (criteria == null) {
+            criteria = new MulticriteriaListPeseBovin();
+        }
+        criteria.setSize(Integer.MAX_VALUE);
+
+        Page<PeseBovin> pesePage = peseBovinService.searchPeseBovins(criteria);
+        List<PeseBovin> pesees = pesePage.getContent();
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=pesees_bovins.xlsx");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Pesées");
+
+            // Style entête
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"ID", "ID Bovin", "Race", "Date de pesée", "Poids (kg)"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Style date
+            CellStyle dateStyle = workbook.createCellStyle();
+            CreationHelper createHelper = workbook.getCreationHelper();
+            dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/mm/yyyy"));
+
+            int rowIdx = 1;
+            for (PeseBovin p : pesees) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(p.getId());
+                row.createCell(1).setCellValue(p.getBovin().getId());
+                row.createCell(2).setCellValue(p.getBovin().getRace().getNom());
+
+                Cell dateCell = row.createCell(3);
+                dateCell.setCellValue(p.getDate_pese());
+                dateCell.setCellStyle(dateStyle);
+
+                row.createCell(4).setCellValue(p.getPoids_apres());
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(response.getOutputStream());
+        }
     }
 }

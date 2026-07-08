@@ -74,6 +74,24 @@
                     <i class="bi bi-funnel-fill me-1"></i>Filtrer
                 </button>
             </div>
+            <div class="col-12 col-md-2 d-grid">
+            <button id="btnExportExcel" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel"></i> Exporter
+            </button>
+            </div>
+            <script>
+            document.getElementById('btnExportExcel').addEventListener('click', function () 
+            {
+                const dateDebut = document.getElementById('dateDebut').value; 
+                const dateFin = document.getElementById('dateFin').value;
+                const caisseId = document.getElementById('caisseId').value;
+            
+                let url = `/caisse/stats/export/excel?dateDebut=${dateDebut}&dateFin=${dateFin}`;
+                if (caisseId) url += `&caisseId=${caisseId}`;
+            
+                window.location.href = url;
+            });
+            </script>
         </div>
     </div>
 

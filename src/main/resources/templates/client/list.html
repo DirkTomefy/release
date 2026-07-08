@@ -56,6 +56,11 @@
         <a href="/clients/form" class="btn btn-soft-primary">
             <i class="bi bi-plus-circle me-1"></i> Nouveau client
         </a>
+
+        <a th:href="@{/clients/export/excel(search=${criteria.search}, nom=${criteria.nom}, contact=${criteria.contact}, sort=${criteria.sort})}"
+   class="btn btn-success">
+    <i class="bi bi-file-earmark-excel"></i> Exporter Excel
+</a>
     </div>
 
     <!-- Messages -->
