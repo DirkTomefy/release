@@ -1,16 +1,19 @@
 package mg.bovit.release.service;
 
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
 import mg.bovit.release.specification.PeseSpecification;
-import mg.bovit.release.repository.*;
-import mg.bovit.release.model.*;
+
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
+import mg.bovit.release.model.PeseBovin;
+import mg.bovit.release.repository.PeseBovinRepository;
 
 @Service
 public class PeseBovinService {
@@ -37,7 +40,7 @@ public class PeseBovinService {
         return peseBovinRepository.findAll();
     }
 
-     public Page<PeseBovin> searchPeseBovins(MulticriteriaListPeseBovin form) {
+    public Page<PeseBovin> searchPeseBovins(MulticriteriaListPeseBovin form) {
         // Construction du tri
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
@@ -57,5 +60,10 @@ public class PeseBovinService {
         );
 
         return peseBovinRepository.findAll(PeseSpecification.fromForm(form), pageable);
+    }
+
+    //  Récupération toutes les pesées d'un bovin triées par date
+    public List<PeseBovin> findByBovinIdOrderByDatePeseAsc(Long bovinId) {
+        return peseBovinRepository.findByBovinIdOrderByDatePeseAsc(bovinId);
     }
 }

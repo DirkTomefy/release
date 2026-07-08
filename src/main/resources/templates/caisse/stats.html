@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caisse · Statistiques entrées / sorties</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #f9f7f4; color: #3e3e3b; }
+        .navbar { background-color: #fff; border-bottom: 1px solid #e2ddd6; }
+        .navbar-brand { font-weight: 600; color: #5b4b3a !important; }
+        .card { border: 1px solid #e7e0d8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .form-control, .form-select { border-color: #e0d8cf; border-radius: 8px; padding: 0.6rem 1rem; }
+        .form-control:focus, .form-select:focus { border-color: #b6a88e; box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15); }
+        .btn-soft-primary { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; font-weight: 500; padding: 0.6rem 1rem;}
+        .btn-soft-primary:hover { background-color: #dde8d1; color: #3a562c; }
+        .summary-card { border-radius: 12px; padding: 1.1rem 1.3rem; }
+        .summary-card .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+        .summary-card .value { font-size: 1.5rem; font-weight: 600; }
+        .summary-entree { background-color: #eef6ec; }
+        .summary-entree .label { color: #4a6b3a; }
+        .summary-entree .value { color: #2f5024; }
+        .summary-sortie { background-color: #fdeeee; }
+        .summary-sortie .label { color: #a13d3d; }
+        .summary-sortie .value { color: #8a2f2f; }
+        .summary-solde { background-color: #f1f0fb; }
+        .summary-solde .label { color: #4b4a8a; }
+        .summary-solde .value { color: #37356b; }
+        #chartEmptyState { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
+        </a>
+    </div>
+</nav>
+
+<div class="container py-4">
+
+    <div class="d-flex align-items-center mb-4">
+        <h4 class="mb-0"><i class="bi bi-bar-chart-fill me-2" style="color:#7a9e5a;"></i>Statistiques de caisse</h4>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card p-3 p-md-4 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Date début</label>
+                <input type="date" id="dateDebut" class="form-control" th:value="${dateDebutDefaut}">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Date fin</label>
+                <input type="date" id="dateFin" class="form-control" th:value="${dateFinDefaut}">
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Caisse</label>
+                <select id="caisseId" class="form-select">
+                    <option value="">Toutes les caisses</option>
+                    <option th:each="caisse : ${caisses}"
+                            th:value="${caisse.id}"
+                            th:text="${caisse.libelle}"></option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+                <button id="btnFiltrer" type="button" class="btn btn-soft-primary">
+                    <i class="bi bi-funnel-fill me-1"></i>Filtrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de synthèse -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-entree">
+                <div class="label"><i class="bi bi-arrow-down-circle-fill me-1"></i>Total entrées</div>
+                <div class="value" id="totalEntree">–</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-sortie">
+                <div class="label"><i class="bi bi-arrow-up-circle-fill me-1"></i>Total sorties</div>
+                <div class="value" id="totalSortie">–</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-solde">
+                <div class="label"><i class="bi bi-wallet-fill me-1"></i>Solde net</div>
+                <div class="value" id="totalSolde">–</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histogramme -->
+    <div class="card p-3 p-md-4">
+        <div id="chartEmptyState" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            Aucun mouvement de caisse sur cette période.
+        </div>
+        <div id="chartWrapper" style="position: relative; height: 380px;">
+            <canvas id="caisseChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    const dateDebutInput = document.getElementById('dateDebut');
+    const dateFinInput = document.getElementById('dateFin');
+    const caisseSelect = document.getElementById('caisseId');
+    const btnFiltrer = document.getElementById('btnFiltrer');
+
+    const totalEntreeEl = document.getElementById('totalEntree');
+    const totalSortieEl = document.getElementById('totalSortie');
+    const totalSoldeEl = document.getElementById('totalSolde');
+    const chartWrapper = document.getElementById('chartWrapper');
+    const chartEmptyState = document.getElementById('chartEmptyState');
+
+    let caisseChart = null;
+
+    function formaterMontant(valeur) {
+        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(valeur || 0) + ' Ar';
+    }
+
+    function chargerStatistiques() {
+        const dateDebut = dateDebutInput.value;
+        const dateFin = dateFinInput.value;
+        const caisseId = caisseSelect.value;
+
+        if (!dateDebut || !dateFin) {
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.set("dateDebut", dateDebut);
+        params.set("dateFin", dateFin);
+
+        if (caisseId) {
+            params.set('caisseId', caisseId);
+        }
+
+        fetch('/caisse/stats/data?' + params.toString())
+            .then(res => res.json())
+            .then(data => {
+                if (data.erreur) {
+                    alert(data.erreur);
+                    return;
+                }
+                afficherResultats(data);
+            })
+            .catch(() => alert("Impossible de charger les statistiques de caisse."));
+    }
+
+    function afficherResultats(data) {
+        totalEntreeEl.textContent = formaterMontant(data.totalEntree);
+        totalSortieEl.textContent = formaterMontant(data.totalSortie);
+        totalSoldeEl.textContent = formaterMontant(data.solde);
+
+        const labels = data.labels || [];
+
+        if (labels.length === 0) {
+            chartWrapper.style.display = 'none';
+            chartEmptyState.style.display = 'block';
+            return;
+        }
+        chartWrapper.style.display = 'block';
+        chartEmptyState.style.display = 'none';
+
+        const ctx = document.getElementById('caisseChart').getContext('2d');
+
+        if (caisseChart) {
+            caisseChart.destroy();
+        }
+
+        caisseChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Entrées',
+                        data: data.entrees,
+                        backgroundColor: '#7a9e5a',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Sorties',
+                        data: data.sorties,
+                        backgroundColor: '#d97a7a',
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => context.dataset.label + ' : ' + formaterMontant(context.raw)
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: (value) => formaterMontant(value) }
+                    }
+                }
+            }
+        });
+    }
+
+    btnFiltrer.addEventListener('click', chargerStatistiques);
+
+    // Chargement initial avec les dates par défaut (30 derniers jours)
+    chargerStatistiques();
+</script>
+
+</body>
+</html>

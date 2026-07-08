@@ -1,10 +1,12 @@
 package mg.bovit.release.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -119,12 +121,21 @@ public class PayementEmployeeService {
             mvtCaisseRepository.save(mvt);
         }
 
-        // 4. Calculer le reste dû (uniquement significatif pour le type "Salaire")
-        BigDecimal restePaye = BigDecimal.ZERO;
+        // 4. Calculer le reste dû, en tenant compte du salaire du mois et des avances/sanctions déjà enregistrées
+        BigDecimal salaireMois = getSalaireActif(emp, mois);
+        List<PayementEmployee> paiementsDuMois = payementEmployeeRepository.findByEmployeeAndMois(emp, mois);
+        BigDecimal totalSalairePaye = sommeParType(paiementsDuMois, LIBELLE_SALAIRE);
+        BigDecimal totalAvance = sommeParType(paiementsDuMois, LIBELLE_AVANCE);
+        BigDecimal totalSanction = sommeParType(paiementsDuMois, LIBELLE_SANCTION);
+        BigDecimal resteDu = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
+
         if (estSalaire) {
-            BigDecimal salaireContrat = getSalaireActif(emp);
-            restePaye = salaireContrat.subtract(montantTotal).max(BigDecimal.ZERO);
+            if (montantTotal.compareTo(resteDu) > 0) {
+                throw new RuntimeException("Le montant saisi dépasse le reste dû du mois pour cet employé.");
+            }
         }
+
+        BigDecimal restePaye = resteDu.subtract(montantTotal).max(BigDecimal.ZERO);
 
         // 5. Enregistrer le paiement de l'employé
         PayementEmployee payement = new PayementEmployee();
@@ -148,16 +159,15 @@ public class PayementEmployeeService {
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
         Date mois = firstDayOfMonth(moisStr);
 
-        BigDecimal salaire = getSalaireActif(emp);
+        BigDecimal salaire = getSalaireActif(emp, mois);
         List<PayementEmployee> paiementsDuMois = payementEmployeeRepository.findByEmployeeAndMois(emp, mois);
 
-        boolean dejaPaye = paiementsDuMois.stream()
-                .anyMatch(p -> isSalaire(p.getTypePayementEmployee()));
-
+        BigDecimal totalSalairePaye = sommeParType(paiementsDuMois, LIBELLE_SALAIRE);
         BigDecimal totalAvance = sommeParType(paiementsDuMois, LIBELLE_AVANCE);
         BigDecimal totalSanction = sommeParType(paiementsDuMois, LIBELLE_SANCTION);
 
-        BigDecimal resteDu = dejaPaye ? BigDecimal.ZERO : salaire;
+        boolean dejaPaye = totalSalairePaye.compareTo(BigDecimal.ZERO) > 0;
+        BigDecimal resteDu = salaire.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
 
         Map<String, Object> resultat = new HashMap<>();
         resultat.put("salaire", salaire);
@@ -240,23 +250,46 @@ public class PayementEmployeeService {
     }
 
     /**
-     * Salaire du contrat actif de l'employé (contrat en cours à la date du
-     * jour). À défaut de contrat strictement "actif", on retient le contrat
-     * le plus récent (par date_debut) pour ne pas bloquer l'affichage.
+     * Salaire du contrat actif pour un mois donné, proratisé si le contrat
+     * commence ou se termine au cours du mois.
      */
-    private BigDecimal getSalaireActif(Employee employee) {
+    public BigDecimal calculerSalairePourMois(Contrat contrat, YearMonth mois) {
+        if (contrat == null || contrat.getDateDebut() == null || contrat.getSalaire() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        LocalDate debutContrat = contrat.getDateDebut().toLocalDate();
+        LocalDate finContrat = contrat.getDateFin() != null ? contrat.getDateFin().toLocalDate() : null;
+        LocalDate debutMois = mois.atDay(1);
+        LocalDate finMois = mois.atEndOfMonth();
+
+        LocalDate debutEffectif = debutContrat.isAfter(debutMois) ? debutContrat : debutMois;
+        LocalDate finEffectif = finContrat != null && finContrat.isBefore(finMois) ? finContrat : finMois;
+        if (debutEffectif.isAfter(finEffectif)) {
+            return BigDecimal.ZERO;
+        }
+
+        long joursTravail = ChronoUnit.DAYS.between(debutEffectif, finEffectif) + 1;
+        long joursMois = ChronoUnit.DAYS.between(debutMois, finMois) + 1;
+        BigDecimal salaireMensuel = contrat.getSalaire();
+        return salaireMensuel.multiply(BigDecimal.valueOf(joursTravail))
+                .divide(BigDecimal.valueOf(joursMois), 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getSalaireActif(Employee employee, Date mois) {
         List<Contrat> contrats = contratRepository.findByEmployeeOrderByDateDebutDesc(employee);
         if (contrats.isEmpty()) {
             return BigDecimal.ZERO;
         }
 
-        LocalDate aujourdHui = LocalDate.now();
+        YearMonth moisCible = YearMonth.from(mois.toLocalDate());
         return contrats.stream()
-                .filter(c -> !c.getDateDebut().toLocalDate().isAfter(aujourdHui))
-                .filter(c -> c.getDateFin() == null || !c.getDateFin().toLocalDate().isBefore(aujourdHui))
+                .filter(c -> c.getDateDebut() != null)
+                .filter(c -> !c.getDateDebut().toLocalDate().isAfter(moisCible.atEndOfMonth()))
+                .filter(c -> c.getDateFin() == null || !c.getDateFin().toLocalDate().isBefore(moisCible.atDay(1)))
                 .findFirst()
-                .map(Contrat::getSalaire)
-                .orElse(contrats.get(0).getSalaire());
+                .map(c -> calculerSalairePourMois(c, moisCible))
+                .orElse(BigDecimal.ZERO);
     }
 
     private Date firstDayOfMonth(String moisStr) {

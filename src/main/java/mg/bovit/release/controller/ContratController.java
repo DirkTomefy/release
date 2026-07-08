@@ -23,19 +23,40 @@ public class ContratController {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @GetMapping({"/contrat", "/contrat/list"})
+    public String listContrats(Model model) {
+        model.addAttribute("contrats", contratService.findAllContrats());
+        model.addAttribute("employees", employeeRepository.findAll());
+        model.addAttribute("contrat", new Contrat());
+        return "contrat/form";
+    }
+
     @GetMapping("/contrat/new")
     public String showContratForm(Model model) {
         List<Employee> employees = employeeRepository.findAll();
-        
+
         model.addAttribute("contrat", new Contrat());
         model.addAttribute("employees", employees);
-        
-        return "contrat/form"; 
+        model.addAttribute("contrats", contratService.findAllContrats());
+
+        return "contrat/form";
     }
-    // Traiter la soumission du formulaire
+
     @PostMapping("/contrat/save")
-    public String saveContrat(@ModelAttribute("contrat") Contrat contrat, @RequestParam("employeeId") Long employeeId) {
-        contratService.saveContratWithEmployee(contrat, employeeId);
-        return "redirect:/contrat/new"; // Ou rediriger vers une liste de contrats si elle existe
+    public String saveContrat(@ModelAttribute("contrat") Contrat contrat,
+                              @RequestParam("employeeId") Long employeeId,
+                              Model model) {
+        try {
+            contratService.saveContratWithEmployee(contrat, employeeId);
+            return "redirect:/contrat/list";
+        } catch (Exception ex) {
+            List<Employee> employees = employeeRepository.findAll();
+            model.addAttribute("contrat", contrat);
+            model.addAttribute("employees", employees);
+            model.addAttribute("contrats", contratService.findAllContrats());
+            model.addAttribute("selectedEmployeeId", employeeId);
+            model.addAttribute("errorMessage", ex.getMessage() != null ? ex.getMessage() : "Une erreur est survenue lors de l'enregistrement du contrat.");
+            return "contrat/form";
+        }
     }
 }
