@@ -13,7 +13,7 @@ import mg.bovit.release.service.RaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller; // ← remplacer RestController par Controller
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,8 +33,7 @@ public class BovinController {
     @Autowired
     private CaisseService caisseService;
 
-    // Méthode pour la liste – retourne une vue
-     @GetMapping
+    @GetMapping
     public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
             Model model) throws Exception {
         if (criteria == null) {
@@ -58,7 +57,6 @@ public class BovinController {
         return "bovin/list";
     }
 
-    // Méthode pour afficher le formulaire d'achat – retourne une vue
     @GetMapping("/achat/form")
     public String showBuyForm(Model model) throws Exception {
         List<Race> races = raceService.findAll();
@@ -66,16 +64,15 @@ public class BovinController {
         model.addAttribute("races", races);
         model.addAttribute("caisses", caisses);
         model.addAttribute("buyRequest", new BuyBovinRequest());
-        return "bovin/form"; // Vue Thymeleaf
+        return "bovin/form";
     }
 
-   @PostMapping("/achat")
-@ResponseBody
-public ResponseEntity<?> buyBovin(@RequestBody BuyBovinRequest request) {
-    try {
-        Bovin bovin = new Bovin();
-        bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
-        bovin.setPoids_achat(request.getPoidsAchat());
+    @PostMapping("/achat")
+    @ResponseBody
+    public ResponseEntity<?> buyBovin(@RequestBody BuyBovinRequest request) {
+        try {
+            Bovin bovin = new Bovin();
+            bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
 
         Race race = new Race();
         race.setId(request.getRaceId());
