@@ -66,6 +66,10 @@
         <a href="/bovins/achat/form" class="btn btn-soft-primary">
             <i class="bi bi-plus-circle me-1"></i> Nouvel animal
         </a>
+        <a th:href="@{/bovins/export/excel(raceId=${criteria.raceId}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax}, poidsMin=${criteria.poidsMin}, poidsMax=${criteria.poidsMax}, sort=${criteria.sort})}"
+        class="btn btn-success">
+         <i class="bi bi-file-earmark-excel"></i> Exporter Excel
+     </a>
     </div>
 
     <!-- Formulaire de recherche / filtres -->
