@@ -21,7 +21,4 @@ public class MouvementCaisseService {
         return mouvementCaisseRepository.findAll();
     }
 
-    // public List<MouvementCaisseSoldeDto> getAllSoldeByCaisse() {
-    //     return mouvementCaisseRepository.getAllSoldeByCaisse();
-    // }
 }

@@ -15,21 +15,19 @@ import mg.bovit.release.service.MaterielService;
 @RequestMapping("/api")
 public class APIController {
 
-    // 1. Utiliser l'injection par constructeur (recommandé plutôt que @Autowired)
     private final MaterielService materielService;
 
     public APIController(MaterielService materielService) {
         this.materielService = materielService;
     }
 
-    // 2. Utiliser @GetMapping au lieu de @RequestMapping
-    // 3. Spécifier le type de retour (ex: List<MaterielDTO> ou List<Materiel>)
+
     @GetMapping("/materiels/type/{typeId}")
     public ResponseEntity<List<Materiel>> getMaterielsByType(@PathVariable Long typeId) {
         List<Materiel> materiels = materielService.findMaterielByTypeId(typeId);
         
         if (materiels.isEmpty()) {
-            return ResponseEntity.noContent().build(); // Devrait idéalement renvoyer un 204 ou 404 si le type n'existe pas
+            return ResponseEntity.noContent().build();
         }
         
         return ResponseEntity.ok(materiels); // Retourne un JSON propre avec un statut 200 OK

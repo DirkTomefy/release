@@ -33,6 +33,7 @@ public class MouvementStockEntreeService {
 
     public MouvementStockEntree saveFromPayloadAndReturn(MouvementEntreePayload payload) {
         MouvementStockEntree mouvement = new MouvementStockEntree();
+
         // on creer une copie de l'objet materiel à partir de l'id du payload
         Materiel materiel = materielRepository.getReferenceById(payload.getMaterielId());
         mouvement.setMateriel(materiel);
@@ -40,8 +41,7 @@ public class MouvementStockEntreeService {
         mouvement.setQte(payload.getQuantite());
         mouvement.setQteRestant(payload.getQuantite());
         mouvement.setDateEntree(Date.valueOf(payload.getDateMouvement()));
-        return mouvementStockEntreeRepository.save(mouvement); // c'est correct pour sauvegarder l'entité et retourner
-                                                               // l'objet sauvegardé ? -> Oui
+        return mouvementStockEntreeRepository.save(mouvement); // sauvegarder l'entite et retourner
     }
 
     @Transactional

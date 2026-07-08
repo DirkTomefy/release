@@ -33,5 +33,4 @@ public interface MouvementStockEntreeRepository extends JpaRepository<MouvementS
             "GROUP BY mse.materiel")
     public MaterielStockDto findMaterielStockRestantById(Long materielId);
 
-    // public MouvementStockEntree findAllByMaterielId(Long id);
 }

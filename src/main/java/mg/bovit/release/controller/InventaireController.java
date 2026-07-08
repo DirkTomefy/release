@@ -33,10 +33,11 @@ public class InventaireController {
     public String updateInventaire(@PathVariable Long id, @RequestParam("qte_reelle") Double qteReelle, @RequestParam("date_inventaire") String dateInventaire) {
         MaterielStockDto materielStockDto = materielService.findMaterielStockRestantById(id);
         if (materielStockDto != null) {
-            inventaireService.faireInventaire(materielStockDto, qteReelle, dateInventaire); // Call the service method to handle the inventory update
+            // elle gere si c'est entree ou sortie selon la quantite reelle et la quantite restante
+            inventaireService.faireInventaire(materielStockDto, qteReelle, dateInventaire);
         }
 
-        return "redirect:/inventaire/" + id; // Redirect back to the same page after updating
+        return "redirect:/inventaire/" + id;
     }
     
 }

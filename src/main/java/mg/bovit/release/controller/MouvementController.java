@@ -50,11 +50,9 @@ public class MouvementController {
         List<Materiel> materiels = materielService.findAll();
         List<Caisse> caisses = caisseService.findAll();
 
-        // List<String> typeMouvement = List.of("ENTREE", "SORTIE");
         model.addAttribute("materielTypes", materielTypes);
         model.addAttribute("materiels", materiels);
         model.addAttribute("caisses", caisses);
-        // model.addAttribute("typeMouvements", typeMouvement);
 
         return "mouvement/formEntree";
     }
@@ -90,9 +88,7 @@ public class MouvementController {
     public ResponseEntity<Map<String, String>> saveMouvementSortie(@RequestBody MouvementStockSortiePayload payload) {
         Map<String, String> response = new HashMap<>();
         try {
-            // ? ici on gere les 2 action qui sont ajout dans mvt_stock_sortie et update de
-            // mvt_stock_entree
-            // si l'un d'eux echoue, on annule TOUTTTTT
+            // insert mvt_stock_sortie et update mvt_stock_entree
             mouvementStockSortieService.transactionerEnregistrerMouvementSortieEtUpdateMouvementEntree(payload);
 
             response.put("status", "success");

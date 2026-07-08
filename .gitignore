@@ -32,3 +32,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### truc perso ###
+giovanni.md
+database/data.sql
+database/seed.sql
+database/z!caisse.sql
+database/z!stock.sql
