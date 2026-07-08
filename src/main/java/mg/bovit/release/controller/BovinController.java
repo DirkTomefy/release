@@ -5,6 +5,7 @@ import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Race;
+import mg.bovit.release.model.sqlview.BovinWithPoids;
 import mg.bovit.release.service.BovinService;
 import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.RaceService;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Controller  // ← important
+@Controller // ← important
 @RequestMapping("/bovins")
 public class BovinController {
 
@@ -34,7 +35,7 @@ public class BovinController {
 
     @GetMapping
     public String listBovins(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria,
-                             Model model) throws Exception {
+            Model model) throws Exception {
         if (criteria == null) {
             criteria = new MultiCriteriaFormBovinList();
         }
@@ -45,7 +46,8 @@ public class BovinController {
             criteria.setSize(1000);
         }
 
-        Page<Bovin> bovinPage = bovinService.searchBovins(criteria);
+        // Utilisation de la nouvelle méthode qui utilise la vue
+        Page<BovinWithPoids> bovinPage = bovinService.searchBovinsWithPoids(criteria);
         List<Race> races = raceService.findAll();
 
         model.addAttribute("bovinPage", bovinPage);
@@ -72,26 +74,35 @@ public class BovinController {
             Bovin bovin = new Bovin();
             bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
 
-            Race race = new Race();
-            race.setId(request.getRaceId());
-            bovin.setRace(race);
+        Race race = new Race();
+        race.setId(request.getRaceId());
+        bovin.setRace(race);
 
-            List<Caisse> caisses = new ArrayList<>();
-            if (request.getPayments() != null) {
-                for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
-                    Caisse caisse = new Caisse();
-                    caisse.setId(pDto.getCaisseId());
-                    caisse.setMontant_actuelle(pDto.getMontant());
-                    caisses.add(caisse);
-                }
-            }
-
-            bovinService.buyBovin(bovin, caisses, request.getQuantite());
-
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Achat enregistré avec succès !"));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
+        // Récupérer le prix unitaire du formulaire
+        Double prixUnitaire = request.getPrixUnitaire();
+        if (prixUnitaire == null || prixUnitaire <= 0) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "error", "message", "Le prix unitaire est obligatoire et doit être > 0")
+            );
         }
+
+        List<Caisse> caisses = new ArrayList<>();
+        if (request.getPayments() != null) {
+            for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
+                Caisse caisse = new Caisse();
+                caisse.setId(pDto.getCaisseId());
+                caisse.setMontant_actuelle(pDto.getMontant());
+                caisses.add(caisse);
+            }
+        }
+
+        // Passer le prix unitaire au service
+        bovinService.buyBovin(bovin, caisses, request.getQuantite(), prixUnitaire);
+
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Achat enregistré avec succès !"));
+
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
     }
+}
 }

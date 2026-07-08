@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · Gestion du troupeau</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #f9f7f4;
+            color: #3e3e3b;
+        }
+        .navbar {
+            background-color: #fff;
+            border-bottom: 1px solid #e2ddd6;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            color: #5b4b3a !important;
+        }
+        .nav-link {
+            color: #6b5e53 !important;
+            font-weight: 500;
+        }
+        .nav-link.active {
+            color: #4a6b3a !important;
+            border-bottom: 2px solid #7a9e5a;
+        }
+        .card {
+            border: 1px solid #e7e0d8;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .table thead th {
+            background-color: #faf8f5;
+            font-weight: 500;
+            color: #6b5e53;
+            border-bottom: 2px solid #e2ddd6;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+        }
+        .table tbody td {
+            vertical-align: middle;
+            border-bottom: 1px solid #f0ede8;
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+        }
+        .badge-actif {
+            background-color: #28a745;
+            color: #fff;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        .badge-vendu {
+            background-color: #fd7e14;
+            color: #fff;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        .badge-decede {
+            background-color: #dc3545;
+            color: #fff;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        .btn-soft-primary {
+            background-color: #eef3ea;
+            color: #4a6b3a;
+            border: 1px solid #d2ddc4;
+            font-weight: 500;
+        }
+        .btn-soft-primary:hover {
+            background-color: #dde8d1;
+            color: #3a562c;
+        }
+        .btn-soft-warning {
+            background-color: #fdf6e8;
+            color: #8a6d2e;
+            border: 1px solid #eddea4;
+            font-weight: 500;
+        }
+        .btn-soft-danger {
+            background-color: #fef1f1;
+            color: #b34040;
+            border: 1px solid #f5d2d2;
+            font-weight: 500;
+        }
+        .btn-soft-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+            font-weight: 500;
+        }
+        .btn-soft-success:hover {
+            background-color: #c8e6c9;
+            color: #1b5e20;
+        }
+        .form-control, .form-select {
+            border-color: #e0d8cf;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #b6a88e;
+            box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
+        }
+        .page-link {
+            color: #5b4b3a;
+            border: none;
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+        .page-item.active .page-link {
+            background-color: #7a9e5a;
+            border-color: #7a9e5a;
+            color: #fff;
+        }
+        .page-link:hover {
+            background-color: #f0ede8;
+            color: #3e3e3b;
+        }
+        .pagination .page-link {
+            min-width: 40px;
+            text-align: center;
+        }
+        .summary-bar {
+            background-color: #f8f6f2;
+            border-top: 1px solid #e7e0d8;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0 0 12px 12px;
+        }
+        .table-container {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" th:href="@{/bovins/list}">Animaux</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/peseBovin/list}">Pesées</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+            <i class="me-2" style="color:#c4a35a;"></i>Liste des pesées des bovins
+        </h1>
+        <a th:href="@{/peseBovin/form}" class="btn btn-soft-primary">
+            <i class="bi bi-plus-circle me-1"></i> Nouvelle pesée
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/peseBovin/list}" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="page" value="0" />
+                <input type="hidden" name="size" th:value="${criteria.size}" />
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Recherche (ID, Race)</label>
+                    <input type="text" name="search" class="form-control" placeholder="Rechercher..." th:value="${criteria.search}">
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date de pesée</label>
+                    <input type="date" name="dateRecherePese" class="form-control" th:value="${criteria.dateRecherePese}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date de pesée</label>
+                    <input type="date" name="dateRecherePese" class="form-control" th:value="${criteria.dateRecherePese}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="tous" th:selected="${criteria.statut == null || criteria.statut == 'tous'}">Tous</option>
+                        <option value="non_vendu" th:selected="${criteria.statut == 'non_vendu'}">Non vendu</option>
+                        <option value="vendu" th:selected="${criteria.statut == 'vendu'}">Vendu</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Prix Min</label>
+                    <input type="number" step="0.01" name="prixAchatMin" class="form-control" th:value="${criteria.prixAchatMin}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Prix Max</label>
+                    <input type="number" step="0.01" name="prixAchatMax" class="form-control" th:value="${criteria.prixAchatMax}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-soft-primary w-100" title="Filtrer">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="summary-bar d-flex flex-wrap align-items-center justify-content-between" th:if="${pesePage != null}">
+            <div class="text-muted small">
+                <span th:text="${pesePage.totalElements}">0</span> enregistrements
+                <span class="ms-2">| Page <span th:text="${pesePage.number + 1}">1</span> / <span th:text="${pesePage.totalPages}">1</span></span>
+            </div>
+            <div class="d-flex align-items-center">
+                <label class="form-label me-2 mb-0 small text-muted" for="pageSizeInput">Taille :</label>
+                <form th:action="@{/peseBovin/list}" method="get" class="d-inline-flex align-items-center">
+                    <input type="hidden" name="search" th:value="${criteria.search}" />
+                    <input type="hidden" name="raceId" th:value="${criteria.raceId}" />
+                    <input type="hidden" name="statut" th:value="${criteria.statut}" />
+                    <input type="hidden" name="prixAchatMin" th:value="${criteria.prixAchatMin}" />
+                    <input type="hidden" name="prixAchatMax" th:value="${criteria.prixAchatMax}" />
+                    <input type="hidden" name="page" value="0" />
+                    <input type="number" name="size" id="pageSizeInput" min="1" step="1"
+                           class="form-control form-control-sm d-inline-block me-2" style="width: 60px;" th:value="${criteria.size}" />
+                    <button type="submit" class="btn btn-sm btn-soft-primary">OK</button>
+                </form>
+            </div>
+        </div>
+    </div> 
+
+    <div class="card table-container">
+        <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+                <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ID Bovin</th>
+                    <th>Date de pesée</th>
+                    <th>Poids (kg)</th>
+                    <th class="text-end" style="width: 180px;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="peseBovin : ${pesesBovin}">
+                    <td class="text-muted" th:text="${peseBovin.id}">1</td>
+                    <td>
+                        <span class="fw-medium">Bovin #<span th:text="${peseBovin.bovin.id}"></span></span><br>
+                        <small class="text-muted" th:text="'Race : ' + ${peseBovin.bovin.race.nom}"></small>
+                    </td>
+                    <td th:text="${#dates.format(peseBovin.date_pese, 'dd/MM/yyyy')}">-</td>
+                    <td th:text="${#numbers.formatDecimal(peseBovin.poids_apres, 0, 2)}">-</td>
+                    <td class="text-end">
+                        <a th:href="@{'/peseBovin/detail/' + ${peseBovin.bovin.id}}" 
+                           class="btn btn-soft-success btn-sm me-1" 
+                           title="Voir les statistiques d'évolution">
+                            <i class="bi bi-graph-up"></i>
+                        </a>
+                        <a th:href="@{'/peseBovin/form/' + ${peseBovin.id}}" 
+                           class="btn btn-soft-warning btn-sm me-1" 
+                           title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${pesesBovin == null || pesesBovin.isEmpty()}">
+                    <td colspan="5" class="text-center text-muted py-4">Aucune pesée trouvée</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <nav class="mt-4" aria-label="Pagination" th:if="${pesePage != null && pesePage.totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${pesePage.first} ? 'disabled'">
+                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number - 1}, size=${criteria.size}, search=${criteria.search}, raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}">Précédent</a>
+            </li>
+            <li th:each="i : ${#numbers.sequence(0, pesePage.totalPages - 1)}" class="page-item" th:classappend="${i == pesePage.number} ? 'active'">
+                <a class="page-link" th:href="@{/peseBovin/list(page=${i}, size=${criteria.size}, search=${criteria.search}, raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}" th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${pesePage.last} ? 'disabled'">
+                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number + 1}, size=${criteria.size}, search=${criteria.search}, raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}">Suivant</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
