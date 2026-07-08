@@ -38,10 +38,12 @@ public class EmployeeController {
     public String saveEmployee(@ModelAttribute EmployeeContratDTO dto, RedirectAttributes redirectAttributes, Model model) {
         try {
             employeeService.saveEmployeeWithContrat(dto);
-            return "redirect:/employee/new";
-        }catch (ResponseStatusException e) {
+            // Ajout du message de succès
+            redirectAttributes.addFlashAttribute("successMessage", "L'employé " + dto.getNom() + " " + dto.getPrenom() + " a été enregistré avec succès !");
+            return "redirect:/employee/list"; // Redirection vers la liste après succès
+        } catch (ResponseStatusException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getReason());
-            return "redirect:/employee/new"; // Redirige vers le formulaire
+            return "redirect:/employee/new"; // Redirige vers le formulaire en cas d'erreur
         }
     }
 
@@ -62,5 +64,10 @@ public class EmployeeController {
         model.addAttribute("preselectMois", mois);
 
         return "employee/paiement";
+    }
+    @GetMapping({"/employee", "/employee/list"})
+    public String listEmployee(Model model) {
+        model.addAttribute("employees", employeeService.findAllEmployees());
+        return "employee/list";
     }
 }
