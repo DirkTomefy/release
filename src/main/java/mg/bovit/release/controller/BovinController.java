@@ -79,7 +79,6 @@ public class BovinController {
         return "bovin/form";
     }
 
-    // Export Excel – méthode indépendante, bien fermée
     @GetMapping("/export/excel")
     public ResponseEntity<byte[]> exportBovinsExcel(
             @ModelAttribute("criteria") MultiCriteriaFormBovinList criteria) throws Exception {
