@@ -66,9 +66,9 @@ public class MouvementStockEntreeService {
     }
 
     public void updateApresSortie(MouvementStockSortiePayload payload) {
-        double quantiteRestant = getQuantiteRestantByIdMateriel(payload.getMaterielId());
+        Double quantiteRestantDb = getQuantiteRestantByIdMateriel(payload.getMaterielId());
+        double quantiteRestant = (quantiteRestantDb == null ? 0d : quantiteRestantDb);
         double quantiteASortir = payload.getQuantite();
-        List<MouvementStockEntree> mouvements = findAllByIdMateriel(payload.getMaterielId());
         if (quantiteASortir > quantiteRestant)
             throw new RuntimeException(
                     "La quantité restante du matériel est insuffisante pour effectuer la sortie. Quantité restante: "
