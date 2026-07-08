@@ -27,6 +27,6 @@ public class AuthController {
 
     @GetMapping("/")
     public String home() {
-        return "redirect:/bovins/list";
+        return "redirect:/bovins";  
     }
 }

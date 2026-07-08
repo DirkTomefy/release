@@ -36,7 +36,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/bovins/list", true)
+                .defaultSuccessUrl("/bovins", true)  // ← MODIFIÉ : /bovins au lieu de /bovins/list
                 .failureUrl("/login?error=true")
                 .permitAll()
             )
