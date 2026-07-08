@@ -25,6 +25,8 @@ DROP TABLE IF EXISTS materiel CASCADE;
 DROP TABLE IF EXISTS mvt_stock_entree CASCADE;
 DROP TABLE IF EXISTS mvt_stock_entree_paiement CASCADE;
 DROP TABLE IF EXISTS mvt_stock_sortie CASCADE;
+DROP TABLE IF EXISTS inventaire_detail CASCADE;
+DROP TABLE IF EXISTS inventaire CASCADE;
 
 -- ============================================================
 -- 1. Création des tables (ordre des dépendances)
@@ -567,6 +569,26 @@ SELECT
     ) AS date_dernier_pese
 FROM bovin b
 JOIN race r ON b.id_race = r.id;
+
+-- ============================================================
+-- Tables : INVENTAIRE et INVENTAIRE_DETAIL
+-- ============================================================
+
+CREATE TABLE inventaire (
+    id SERIAL PRIMARY KEY,
+    date_inventaire DATE NOT NULL DEFAULT CURRENT_DATE,
+    libelle VARCHAR(100)
+);
+
+CREATE TABLE inventaire_detail (
+    id SERIAL PRIMARY KEY,
+    id_inventaire INTEGER NOT NULL,
+    id_bovin INTEGER NOT NULL,
+    quantite INTEGER NOT NULL DEFAULT 1,
+    observations TEXT,
+    CONSTRAINT fk_inventaire_detail_inventaire FOREIGN KEY (id_inventaire) REFERENCES inventaire(id) ON DELETE CASCADE,
+    CONSTRAINT fk_inventaire_detail_bovin FOREIGN KEY (id_bovin) REFERENCES bovin(id) ON DELETE RESTRICT
+);
 
 -- ============================================================
 -- Fin du script
