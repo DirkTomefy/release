@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS caisse CASCADE;
 DROP TABLE IF EXISTS type_materiel CASCADE;
 DROP TABLE IF EXISTS materiel CASCADE;
 DROP TABLE IF EXISTS mvt_stock_entree CASCADE;
-DROP TABLE IF EXISTS mvt_stock_entree_payement CASCADE;
+DROP TABLE IF EXISTS mvt_stock_entree_paiement CASCADE;
 DROP TABLE IF EXISTS mvt_stock_sortie CASCADE;
 
 -- ============================================================
