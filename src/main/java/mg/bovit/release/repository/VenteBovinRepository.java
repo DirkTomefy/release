@@ -1,21 +1,23 @@
 package mg.bovit.release.repository;
 
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.time.LocalDate;
 
-import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
-import mg.bovit.release.model.*;
 
-@Repository
+import mg.bovit.release.model.VenteBovin;
+
 public interface VenteBovinRepository extends JpaRepository<VenteBovin, Long>, JpaSpecificationExecutor<VenteBovin> {
+	List<VenteBovin> findByClient_Id(Long clientId);
  @Query(value = "SELECT COUNT(*) FROM vente_bovin v " +
        "WHERE (CAST(:dateDebut AS DATE) IS NULL OR v.date_vente >= CAST(:dateDebut AS DATE)) " +
        "AND (CAST(:dateFin AS DATE) IS NULL OR v.date_vente <= CAST(:dateFin AS DATE))",

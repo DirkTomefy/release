@@ -1,6 +1,5 @@
 package mg.bovit.release.dto;
 
-import java.sql.Date;
 import java.time.LocalDate;
 
 public class VenteListItem {

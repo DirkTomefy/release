@@ -1,3 +1,4 @@
+-- Active: 1781977160392@@127.0.0.1@5432@bovin_db
 -- ============================================================
 -- Script combiné pour l'initialisation complète de la base bovin_db
 -- Exécuter sur une base vide (ou avec DROP en tête).
@@ -85,6 +86,8 @@ CREATE TABLE type_payement_employee (
     libelle VARCHAR(50) NOT NULL
 );
 
+-- Table payement_employee modifiée pour inclure les champs mois et montant
+-- (initialement ajoutés par la migration)
 CREATE TABLE payement_employee (
     id SERIAL PRIMARY KEY,
     id_employee INT NOT NULL,
@@ -252,6 +255,7 @@ INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente, poid
     (7, '2022-04-22', NULL, 1100.00, NULL, 94, NULL),
     (8, '2020-07-08', '2022-11-20', 1400.00, 1900.00, 108, NULL);
 
+-- Clients (initDbVenteData.sql)
 -- Clients
 INSERT INTO client (nom, prenom, contact) VALUES
     ('Rakotondrazaka', 'Hery', '0341203345'),
@@ -289,6 +293,8 @@ INSERT INTO vente_detail (id_vente, id_bovin) VALUES
     (7, 5),
     (8, 10);
 
+-- ============================================================
+-- 3. Vue : poids actuel des bovins (z!view.sql)
 -- Types de matériel
 INSERT INTO type_materiel (libelle) VALUES 
     ('Aliment'),

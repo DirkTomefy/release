@@ -1,23 +1,34 @@
 package mg.bovit.release.service;
 
 import java.sql.Date;
-import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import mg.bovit.release.dto.BuyBovinRequest.CaissePaymentDTO;
-import mg.bovit.release.repository.*;
-import mg.bovit.release.model.*;
 import mg.bovit.release.dto.VenteInsertDto;
+import mg.bovit.release.model.Bovin;
+import mg.bovit.release.model.Caisse;
+import mg.bovit.release.model.Client;
+import mg.bovit.release.model.MvtCaisse;
+import mg.bovit.release.model.VenteBovin;
+import mg.bovit.release.model.VenteDetail;
+import mg.bovit.release.repository.BovinRepository;
+import mg.bovit.release.repository.CaisseRepository;
+import mg.bovit.release.repository.ClientRepository;
+import mg.bovit.release.repository.MvtCaisseRepository;
+import mg.bovit.release.repository.VenteBovinRepository;
+import mg.bovit.release.repository.VenteDetailRepository;
 import mg.bovit.release.dto.VenteListItem;
 import mg.bovit.release.dto.VenteSearchCriteria;
 import mg.bovit.release.dto.VenteStatsDTO;
@@ -25,27 +36,35 @@ import mg.bovit.release.dto.VenteStatsDTO;
 @Service
 public class VenteService {
     @Autowired
-    private VenteBovinRepository venteBovinRepository;
-
+    private final VenteBovinRepository venteBovinRepository;
     @Autowired
-    private VenteDetailRepository venteDetailRepository;
-
+    private final VenteDetailRepository venteDetailRepository;
     @Autowired
-    private ClientRepository clientRepository;
-
+    private final ClientRepository clientRepository;
     @Autowired
-    private CaisseRepository caisseRepository;
-
+    private final CaisseRepository caisseRepository;
     @Autowired
-    private MvtCaisseRepository mvtCaisseRepository;
+    private final MvtCaisseRepository mvtCaisseRepository;
 
-    @Autowired
-    private FactureService factureService;
-
+ 
     // On réutilise le BovinRepository existant sans le modifier :
     // il possède déjà date_vente / prix_vente sur l'entité Bovin.
-    @Autowired
-    private BovinRepository bovinRepository;
+    private final BovinRepository bovinRepository;
+
+    public VenteService(
+            VenteBovinRepository venteBovinRepository,
+            VenteDetailRepository venteDetailRepository,
+            ClientRepository clientRepository,
+            CaisseRepository caisseRepository,
+            MvtCaisseRepository mvtCaisseRepository,
+            BovinRepository bovinRepository) {
+        this.venteBovinRepository = venteBovinRepository;
+        this.venteDetailRepository = venteDetailRepository;
+        this.clientRepository = clientRepository;
+        this.caisseRepository = caisseRepository;
+        this.mvtCaisseRepository = mvtCaisseRepository;
+        this.bovinRepository = bovinRepository;
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public VenteBovin insertVente(VenteInsertDto dto) throws Exception {
@@ -72,6 +91,21 @@ public class VenteService {
 
         Double totalVente = 0.0;
 
+        Set<Long> bovinIds = new HashSet<>();
+        for (VenteInsertDto.LigneVenteDto ligne : lignes) {
+            if (ligne.getBovinId() == null) {
+                throw new Exception("Un bovin de la ligne de vente est manquant");
+            }
+
+            if (!bovinIds.add(ligne.getBovinId())) {
+                throw new Exception("Un bovin ne peut apparaître qu'une seule fois dans la même vente");
+            }
+
+            if (ligne.getPrixVente() == null || ligne.getPrixVente() <= 0) {
+                throw new Exception("Le prix de vente d'un bovin doit être supérieur à 0");
+            }
+        }
+
         // Création de l'entête de vente
         VenteBovin vente = new VenteBovin();
         vente.setClient(client);
@@ -81,19 +115,11 @@ public class VenteService {
 
         // Détail : un bovin ne peut être vendu qu'une seule fois
         for (VenteInsertDto.LigneVenteDto ligne : lignes) {
-            if (ligne.getBovinId() == null) {
-                throw new Exception("Un bovin de la ligne de vente est manquant");
-            }
-
             Bovin bovin = bovinRepository.findById(ligne.getBovinId())
                     .orElseThrow(() -> new Exception("Bovin introuvable : " + ligne.getBovinId()));
 
             if (bovin.getDate_vente() != null) {
                 throw new Exception("Le bovin #" + bovin.getId() + " a déjà été vendu");
-            }
-
-            if (ligne.getPrixVente() == null || ligne.getPrixVente() <= 0) {
-                throw new Exception("Le prix de vente du bovin #" + bovin.getId() + " doit être supérieur à 0");
             }
 
             totalVente += ligne.getPrixVente();
@@ -113,6 +139,11 @@ public class VenteService {
         registerPaiementsCaisse(dto.getPayments(), totalVente);
 
         return vente;
+    }
+
+    @Transactional(readOnly = true)
+    public List<VenteBovin> findAllVentes() {
+        return venteBovinRepository.findAll();
     }
 
     private void registerPaiementsCaisse(List<CaissePaymentDTO> payments, Double totalVente) throws Exception {
