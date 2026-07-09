@@ -13,12 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import mg.bovit.release.dto.InventairePayload;
 import mg.bovit.release.dto.MaterielStockDto;
-import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Inventaire;
 import mg.bovit.release.model.InventaireDetail;
 import mg.bovit.release.model.Materiel;

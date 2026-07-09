@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import mg.bovit.release.dto.InventaireDetailPayload;
 import mg.bovit.release.dto.InventairePayload;
-import mg.bovit.release.dto.MaterielStockDto;
 import mg.bovit.release.dto.MouvementPaiementPayload;
 import mg.bovit.release.dto.MouvementStockPayload;
 import mg.bovit.release.model.Inventaire;
@@ -33,7 +32,7 @@ public class InventaireService {
 
     @Transactional
     public void faireInventaireMultiple(InventairePayload payload) {
-        // 1. Sauvegarde du parent 'inventaire'
+        // sauvegarde du parent 'inventaire'
         Inventaire inventaire = new Inventaire();
         inventaire.setDateInventaire(java.sql.Date.valueOf(payload.getDateInventaire()));
         inventaire.setLibelle(payload.getLibelle() != null && !payload.getLibelle().isEmpty() 
@@ -41,7 +40,7 @@ public class InventaireService {
             : "Inventaire global de regularisation");
         inventaire = inventaireRepository.save(inventaire);
 
-        // 2. Traitement de chaque ligne de detail
+        // sauvegarde de chaque ligne d'inventaire et generation des mouvements de stock
         for (InventaireDetailPayload detailPayload : payload.getDetails()) {
             Double qteInitiale = detailPayload.getQuantiteInitiale() != null ? detailPayload.getQuantiteInitiale() : 0.0;
             Double qteFinale = detailPayload.getQuantiteFinale() != null ? detailPayload.getQuantiteFinale() : 0.0;
