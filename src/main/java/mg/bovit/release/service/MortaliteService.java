@@ -1,0 +1,129 @@
+package mg.bovit.release.service;
+
+import java.sql.Date;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import mg.bovit.release.dto.MortaliteCriteria;
+import mg.bovit.release.dto.MortaliteStatsDTO;
+import mg.bovit.release.model.Bovin;
+import mg.bovit.release.model.Mortalite;
+import mg.bovit.release.model.PeseBovin;
+import mg.bovit.release.repository.BovinRepository;
+import mg.bovit.release.repository.MortaliteRepository;
+import mg.bovit.release.repository.PeseBovinRepository;
+import mg.bovit.release.specification.MortaliteSpecification;
+
+@Service
+public class MortaliteService {
+
+    @Autowired
+    private MortaliteRepository mortaliteRepository;
+
+    @Autowired
+    private BovinRepository bovinRepository;
+
+    @Autowired
+    private PeseBovinRepository peseBovinRepository;
+
+    /**
+     * Déclare la mortalité d'un bovin (identifié par son id) : on conserve
+     * un instantané de ses infos (race, prix d'achat, poids au moment du
+     * décès) dans la table mortalite, puis on supprime le bovin de la
+     * table bovin (ainsi que ses pesées liées, pour respecter la
+     * contrainte de clé étrangère fk_bovin_poids).
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void declareMortalite(Long bovinId, LocalDate date) throws Exception {
+        if (bovinId == null) {
+            throw new Exception("L'identifiant du bovin est obligatoire.");
+        }
+        if (date == null) {
+            throw new Exception("La date est obligatoire.");
+        }
+
+        Bovin bovin = bovinRepository.findById(bovinId)
+                .orElseThrow(() -> new Exception("Aucun bovin trouvé avec l'id " + bovinId));
+
+        // Poids au moment du décès = dernière pesée connue, sinon poids d'achat
+        PeseBovin dernierePese = peseBovinRepository.getLatestPeseByBovin(bovinId);
+        Double poidsMort = (dernierePese != null) ? dernierePese.getPoids_apres() : bovin.getPoids_achat();
+
+        Mortalite mortalite = new Mortalite();
+        mortalite.setRace(bovin.getRace());
+        mortalite.setPrix_achat(bovin.getPrix_achat());
+        mortalite.setPoids_mort(poidsMort);
+        mortalite.setDate(Date.valueOf(date));
+        mortaliteRepository.save(mortalite);
+
+        // Suppression des pesées liées, sinon la suppression du bovin
+        // échouerait à cause de la contrainte fk_bovin_poids.
+        peseBovinRepository.deleteByBovin_Id(bovinId);
+
+        try {
+            bovinRepository.delete(bovin);
+        } catch (Exception e) {
+            throw new Exception(
+                "Impossible de supprimer le bovin #" + bovinId
+                + " (il est probablement lié à une vente existante) : " + e.getMessage());
+        }
+    }
+
+    /**
+     * Déclare la mortalité de plusieurs bovins (par leurs id) pour une
+     * même date (page d'insertion multiple).
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void declareMortaliteMultiple(List<Long> bovinIds, LocalDate date) throws Exception {
+        if (bovinIds == null || bovinIds.isEmpty()) {
+            throw new Exception("Veuillez saisir au moins un identifiant de bovin.");
+        }
+        if (date == null) {
+            throw new Exception("La date est obligatoire.");
+        }
+
+        for (Long bovinId : bovinIds) {
+            declareMortalite(bovinId, date);
+        }
+    }
+
+    public Page<Mortalite> findPaginated(MortaliteCriteria criteria) {
+        Specification<Mortalite> spec = MortaliteSpecification.fromCriteria(criteria);
+        Pageable pageable = PageRequest.of(
+                criteria.getPage(),
+                criteria.getSize(),
+                Sort.by(Sort.Direction.DESC, "date"));
+        return mortaliteRepository.findAll(spec, pageable);
+    }
+
+    public MortaliteStatsDTO getStats(LocalDate dateDebut, LocalDate dateFin, Long raceId) {
+        Long total = mortaliteRepository.countMortalitesWithFilters(dateDebut, dateFin, raceId);
+        List<Object[]> grouped = mortaliteRepository.findMortaliteStatsGroupedByMonth(dateDebut, dateFin, raceId);
+
+        List<String> labels = new ArrayList<>();
+        List<Long> counts = new ArrayList<>();
+
+        for (Object[] row : grouped) {
+            String mois = (String) row[0];
+            Long count = ((Number) row[1]).longValue();
+            labels.add(mois);
+            counts.add(count);
+        }
+
+        MortaliteStatsDTO dto = new MortaliteStatsDTO();
+        dto.setTotalMortalites(total != null ? total : 0L);
+        dto.setLabels(labels);
+        dto.setCounts(counts);
+        return dto;
+    }
+}

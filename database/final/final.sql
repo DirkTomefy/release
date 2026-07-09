@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS type_payement_employee CASCADE;
 DROP TABLE IF EXISTS contrat CASCADE;
 DROP TABLE IF EXISTS employee CASCADE;
 DROP TABLE IF EXISTS pese_bovin CASCADE;
+DROP TABLE IF EXISTS mortalite CASCADE;
 DROP TABLE IF EXISTS bovin CASCADE;
 DROP TABLE IF EXISTS race CASCADE;
 DROP TABLE IF EXISTS caisse CASCADE;
@@ -62,6 +63,15 @@ CREATE TABLE pese_bovin (
     date_pese DATE NOT NULL,
     poids_apres DOUBLE PRECISION NOT NULL,
     CONSTRAINT fk_bovin_poids FOREIGN KEY (id_bovin) REFERENCES bovin(id)
+);
+
+CREATE TABLE mortalite (
+    id SERIAL PRIMARY KEY,
+    id_race INTEGER NOT NULL,
+    prix_achat DOUBLE PRECISION NOT NULL,
+    poids_mort DOUBLE PRECISION NOT NULL,
+    date DATE NOT NULL,
+    CONSTRAINT fk_mortalite_race FOREIGN KEY (id_race) REFERENCES race(id)
 );
 
 CREATE TABLE employee (
@@ -344,6 +354,7 @@ DROP TABLE IF EXISTS type_payement_employee CASCADE;
 DROP TABLE IF EXISTS contrat CASCADE;
 DROP TABLE IF EXISTS employee CASCADE;
 DROP TABLE IF EXISTS pese_bovin CASCADE;
+DROP TABLE IF EXISTS mortalite CASCADE;
 DROP TABLE IF EXISTS bovin CASCADE;
 DROP TABLE IF EXISTS race CASCADE;
 DROP TABLE IF EXISTS caisse CASCADE;
@@ -382,6 +393,15 @@ CREATE TABLE pese_bovin (
     date_pese DATE NOT NULL,
     poids_apres DOUBLE PRECISION NOT NULL,
     CONSTRAINT fk_bovin_poids FOREIGN KEY (id_bovin) REFERENCES bovin(id)
+);
+
+CREATE TABLE mortalite (
+    id SERIAL PRIMARY KEY,
+    id_race INTEGER NOT NULL,
+    prix_achat DOUBLE PRECISION NOT NULL,
+    poids_mort DOUBLE PRECISION NOT NULL,
+    date DATE NOT NULL,
+    CONSTRAINT fk_mortalite_race FOREIGN KEY (id_race) REFERENCES race(id)
 );
 
 CREATE TABLE employee (
