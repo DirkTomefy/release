@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventaire</title>
+  <title>Inventaire Global</title>
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -21,19 +21,14 @@
       background: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
-    .form-control {
+    .form-control, .form-select {
       border-color: #e0d8cf;
       background-color: #fff;
       border-radius: 8px;
-      padding: 0.6rem 1rem;
     }
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
       border-color: #b6a88e;
       box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
-    }
-    .form-control[readonly] {
-      background-color: #faf8f5 !important;
-      border-color: #e2ddd6;
     }
     .btn-soft-primary {
       background-color: #eef3ea;
@@ -42,94 +37,250 @@
       font-weight: 500;
       padding: 0.6rem 1.2rem;
       border-radius: 8px;
-      transition: all 0.2s;
     }
     .btn-soft-primary:hover {
       background-color: #dde8d1;
       color: #3a562c;
     }
-    .alert-custom {
-      background-color: #fdf6e8;
-      color: #8a6d2e;
-      border: 1px solid #eddea4;
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
+    .btn-soft-danger {
+      background-color: #fde8e8;
+      color: #813838;
+      border: 1px solid #f5d2d2;
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
     }
+    .btn-soft-danger:hover {
+      background-color: #eeb9b9;
+    }
+    .toast-message {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #3d5a2e;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      display: none;
+      z-index: 1050;
+      min-width: 300px;
+    }
+    .toast-message.error { background-color: #813838; }
+    .toast-message.show { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
 
   <div class="container py-5">
     
-    <th:block th:if="${materielStock == null}">
-      <div class="alert-custom d-flex align-items-center" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
-        <div>
-          Le matériel sélectionné n'a encore aucune entrée en stock.
-        </div>
-      </div>
-    </th:block>
+    <div class="mb-4">
+      <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
+        <i class="bi bi-boxes me-2" style="color:#7a9e5a;"></i>Inventaire global du matériel
+      </h1>
+      <p class="text-muted small mb-0">Sélectionnez les matériels à ajuster et validez l'ensemble.</p>
+    </div>
 
-    <th:block th:if="${materielStock != null}">
-      
-      <div class="mb-4">
-        <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
-          <i class="bi bi-boxes me-2" style="color:#7a9e5a;"></i>Inventaire du matériel
-        </h1>
-        <p class="text-muted small mb-0">
-          Ajustement des quantités pour : <span class="fw-medium text-dark" th:text="${materielStock.getMateriel().getLibelle()}">Nom du matériel</span>
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-body p-4">
-          <form id="inventaireForm" th:action="@{/inventaire/{id}(id=${materielStock.getMateriel().getId()})}" method="post">
-              
-            <div class="row g-3 mb-3">
-              <div class="col-md-12">
-                <label for="materielId" class="form-label small text-muted fw-medium">Matériel</label>
-                <input type="text" id="materielId" name="materielId" class="form-control" required readonly th:value="${materielStock.getMateriel().getLibelle()}">
-              </div>
+    <div class="card">
+      <div class="card-body p-4">
+        <form id="globalInventaireForm">
+            
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="libelle" class="form-label small text-muted fw-medium">Libellé / Référence inventaire</label>
+              <input type="text" id="libelle" name="libelle" class="form-control" placeholder="Ex: Regularisation de stock">
             </div>
-
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label for="qte_restant" class="form-label small text-muted fw-medium">Quantité restante (en stock)</label>
-                <input type="number" id="qte_restant" name="qte_restant" class="form-control" th:value="${materielStock.getQuantiteRestant()}" required readonly>
-              </div>
-
-              <div class="col-md-6">
-                <label for="qte_reelle" class="form-label small text-muted fw-medium">Quantité réelle constatée</label>
-                <input type="number" id="qte_reelle" name="qte_reelle" class="form-control" placeholder="Ex: 12">
-              </div>
+            <div class="col-md-6">
+              <label for="date_inventaire" class="form-label small text-muted fw-medium">Date d'inventaire</label>
+              <input type="date" id="date_inventaire" name="date_inventaire" class="form-control" required>
             </div>
+          </div>
 
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label for="date_inventaire" class="form-label small text-muted fw-medium">Date d'inventaire</label>
-                <input type="date" id="date_inventaire" name="date_inventaire" class="form-control" required>
-              </div>
+          <div class="row g-2 align-items-end bg-light p-3 rounded-3 mb-4 border border-light-subtle">
+            <div class="col-md-8">
+              <label for="selectMateriel" class="form-label small text-muted fw-medium">Choisir un matériel à ajouter</label>
+              <select id="selectMateriel" class="form-select">
+                <option value="">-- Sélectionner un matériel --</option>
+                <option th:each="stock : ${stocks}" 
+                        th:value="${stock.getMateriel().getId()}" 
+                        th:data-stock="${stock.getQuantiteRestant()}"
+                        th:text="${stock.getMateriel().getLibelle()}">Matériel</option>
+              </select>
             </div>
-
-            <div class="text-end border-top pt-3">
-              <button type="submit" class="btn btn-soft-primary">
-                <i class="bi bi-check-circle me-1"></i> Enregistrer l'inventaire
+            <div class="col-md-4">
+              <button type="button" id="addMaterielBtn" class="btn btn-soft-primary w-100">
+                <i class="bi bi-plus-circle me-1"></i> Ajouter au tableau
               </button>
             </div>
-            
-          </form>
-        </div>
-      </div>
-    </th:block>
+          </div>
 
+          <div class="table-responsive mb-4">
+            <table class="table align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Matériel</th>
+                  <th style="width: 160px;">Qté en Stock</th>
+                  <th style="width: 180px;">Qté Réelle Constatée</th>
+                  <th>Observations / Notes</th>
+                  <th style="width: 60px;"></th>
+                </tr>
+              </thead>
+              <tbody id="inventaireRows">
+                </tbody>
+            </table>
+          </div>
+
+          <div class="text-end border-top pt-3">
+            <button type="button" id="validerBtn" class="btn btn-soft-primary">
+              <i class="bi bi-check-circle me-1"></i> Valider l'inventaire global
+            </button>
+          </div>
+          
+        </form>
+      </div>
+    </div>
   </div>
 
+  <div id="toast" class="toast-message"></div>
+
   <script th:inline="javascript">
-    // Initialiser automatiquement la date du jour si elle est vide
     document.addEventListener('DOMContentLoaded', function() {
       const dateInput = document.getElementById('date_inventaire');
+      const validerBtn = document.getElementById('validerBtn');
+      const addMaterielBtn = document.getElementById('addMaterielBtn');
+      const selectMateriel = document.getElementById('selectMateriel');
+      const inventaireRows = document.getElementById('inventaireRows');
+      const toast = document.getElementById('toast');
+
       if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
+      }
+
+      // Ajouter un materiel dans le tableau
+      addMaterielBtn.addEventListener('click', function() {
+        const selectedOption = selectMateriel.options[selectMateriel.selectedIndex];
+        const id = selectedOption.value;
+        const libelle = selectedOption.text;
+        const stockActuel = selectedOption.getAttribute('data-stock') || 0.0;
+
+        if (!id) {
+          showToast('Veuillez selectionner un materiel valide.', 'error');
+          return;
+        }
+
+        // Verification si le materiel est deja present dans le tableau
+        if (document.querySelector(`.materiel-row[data-id="${id}"]`)) {
+          showToast('Ce materiel est deja present dans la liste.', 'error');
+          return;
+        }
+
+        // Creation dynamique de la ligne de tableau
+        const row = document.createElement('tr');
+        row.className = 'materiel-row';
+        row.setAttribute('data-id', id);
+        row.style.animation = 'fadeIn 0.25s ease';
+        
+        row.innerHTML = `
+          <td><span class="fw-medium text-dark">${libelle}</span></td>
+          <td><input type="number" class="form-control qte-initiale" value="${stockActuel}" readonly></td>
+          <td><input type="number" class="form-control qte-finale" placeholder="Ex: 12" step="0.01" required></td>
+          <td><input type="text" class="form-control observation-row" placeholder="R.A.S."></td>
+          <td>
+            <button type="button" class="btn btn-soft-danger btn-remove-row">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+
+        inventaireRows.appendChild(row);
+
+        // Evenement de suppression pour la nouvelle ligne
+        row.querySelector('.btn-remove-row').addEventListener('click', function() {
+          row.remove();
+        });
+
+        // Reinitialisation de la selection
+        selectMateriel.value = '';
+      });
+
+      // Validation finale du payload JSON
+      validerBtn.addEventListener('click', function() {
+        const dateInventaire = dateInput.value;
+        const libelle = document.getElementById('libelle').value;
+
+        if (!dateInventaire) {
+          showToast('Veuillez specifier la date de l\'inventaire.', 'error');
+          return;
+        }
+
+        const payload = {
+          dateInventaire: dateInventaire,
+          libelle: libelle,
+          details: []
+        };
+
+        const rows = document.querySelectorAll('.materiel-row');
+        let validationError = false;
+
+        rows.forEach(row => {
+          const materielId = parseInt(row.dataset.id);
+          const qteInitiale = parseFloat(row.querySelector('.qte-initiale').value) || 0.0;
+          const qteFinaleVal = row.querySelector('.qte-finale').value;
+
+          if (qteFinaleVal === '') {
+            validationError = true;
+            row.querySelector('.qte-finale').classList.add('is-invalid');
+          } else {
+            row.querySelector('.qte-finale').classList.remove('is-invalid');
+            const qteFinale = parseFloat(qteFinaleVal);
+            const observations = row.querySelector('.observation-row').value;
+
+            payload.details.push({
+              materielId: materielId,
+              quantiteInitiale: qteInitiale,
+              quantiteFinale: qteFinale,
+              observations: observations
+            });
+          }
+        });
+
+        if (validationError) {
+          showToast('Veuillez renseigner toutes les quantites reelles constatees.', 'error');
+          return;
+        }
+
+        if (payload.details.length === 0) {
+          showToast('Ajoutez au moins un materiel au tableau avant de valider.', 'error');
+          return;
+        }
+
+        fetch('/inventaire/form/valider', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            showToast(data.message, 'success');
+            
+            // Reinitialisation complete du formulaire et du tableau apres reussite
+            inventaireRows.innerHTML = '';
+            document.getElementById('libelle').value = '';
+            dateInput.value = new Date().toISOString().split('T')[0];
+          } else {
+            showToast('Erreur : ' + data.message, 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Erreur reseau :', error);
+          showToast('Erreur de communication avec le serveur.', 'error');
+        });
+      });
+
+      function showToast(message, type) {
+        toast.textContent = message;
+        toast.className = 'toast-message show' + (type === 'error' ? ' error' : '');
+        setTimeout(() => { toast.classList.remove('show'); }, 6000);
       }
     });
   </script>

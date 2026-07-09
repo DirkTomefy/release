@@ -1,16 +1,22 @@
 package mg.bovit.release.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import mg.bovit.release.dto.InventairePayload;
 import mg.bovit.release.dto.MaterielStockDto;
 import mg.bovit.release.model.Inventaire;
 import mg.bovit.release.model.InventaireDetail;
@@ -25,23 +31,37 @@ public class InventaireController {
     @Autowired
     private InventaireService inventaireService;
 
-    @GetMapping("/{id}")
-    public String getInventaire(@PathVariable Long id, Model model) {
-        MaterielStockDto materielStockDto = materielService.findMaterielStockRestantById(id);
-        model.addAttribute("materielStock", materielStockDto);
-
+    @GetMapping("/form")
+    public String getInventaireForm(Model model) {
+        // Recupere tous les materiels avec leur stock actuel pour initialiser le tableau
+        List<MaterielStockDto> stocks = materielService.findAllMaterielStockRestant(); 
+        model.addAttribute("stocks", stocks);
         return "inventaire/form";
     }
 
-    @PostMapping("/{id}")
-    public String updateInventaire(@PathVariable Long id, @RequestParam("qte_reelle") Double qteReelle, @RequestParam("date_inventaire") String dateInventaire) {
-        MaterielStockDto materielStockDto = materielService.findMaterielStockRestantById(id);
-        if (materielStockDto != null) {
-            // elle gere si c'est entree ou sortie selon la quantite reelle et la quantite restante
-            inventaireService.faireInventaire(materielStockDto, qteReelle, dateInventaire);
-        }
+    @PostMapping("/form/valider")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> validerMultipleInventaire(@RequestBody InventairePayload payload) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            if (payload.getDetails() == null || payload.getDetails().isEmpty()) {
+                response.put("status", "error");
+                response.put("message", "Aucun materiel n'a ete ajoute a l'inventaire.");
+                return ResponseEntity.badRequest().body(response);
+            }
 
-        return "redirect:/inventaire/" + id;
+            // Traite l'inventaire complet en base et ajuste les mouvements de stock
+            inventaireService.faireInventaireMultiple(payload);
+
+            response.put("status", "success");
+            response.put("message", "L'inventaire global a ete enregistre et le stock de chaque materiel a ete ajuste.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Erreur lors de la validation globale : " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
     @GetMapping("/liste")
