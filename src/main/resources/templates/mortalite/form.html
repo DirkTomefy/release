@@ -68,13 +68,17 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-medium">Date de la mortalité</label>
-                    <input type="date" id="dateMortalite" class="form-control" required>
+                    <div class="form-control-plaintext text-muted">La date du jour sera utilisée automatiquement.</div>
                 </div>
 
-                <label class="form-label fw-medium">Bovins concernés (ID)</label>
+                <label class="form-label fw-medium">Bovins concernés</label>
+                <div class="form-text mb-2">Sélectionnez les bovins encore vivants et non vendus.</div>
                 <div id="bovinRows">
                     <div class="row-bovin d-flex align-items-center gap-2">
-                        <input type="number" min="1" class="form-control bovin-id-input" placeholder="ID Bovin (ex: 4)">
+                        <select class="form-select bovin-id-select" required>
+                            <option value="">Choisir un bovin</option>
+                            <option th:each="bovin : ${bovinPage.content}" th:value="${bovin.id}" th:text="${bovin.id + ' - ' + bovin.raceNom + ' (' + #numbers.formatDecimal(bovin.poidsActuel, 0, 1) + ' kg)'}"></option>
+                        </select>
                         <button type="button" class="btn btn-soft-danger btn-sm btn-remove-row" title="Retirer">
                             <i class="bi bi-x-lg"></i>
                         </button>
@@ -120,7 +124,7 @@
                             </td>
                         </tr>
                         <tr th:if="${bovinPage.content.isEmpty()}">
-                            <td colspan="3" class="text-center text-muted py-3">Aucun bovin actif</td>
+                            <td colspan="3" class="text-center text-muted py-3">Aucun bovin éligible</td>
                         </tr>
                         </tbody>
                     </table>
@@ -135,14 +139,16 @@
     const bovinRows = document.getElementById('bovinRows');
     const btnAddRow = document.getElementById('btnAddRow');
     const btnSubmit = document.getElementById('btnSubmit');
-    const dateInput = document.getElementById('dateMortalite');
     const alertBox = document.getElementById('alertBox');
 
     function nouvelleLigne() {
         const div = document.createElement('div');
         div.className = 'row-bovin d-flex align-items-center gap-2';
         div.innerHTML = `
-            <input type="number" min="1" class="form-control bovin-id-input" placeholder="ID Bovin (ex: 4)">
+            <select class="form-select bovin-id-select" required>
+                <option value="">Choisir un bovin</option>
+                ${Array.from(document.querySelectorAll('.bovin-id-select option:not([value=""])')).map(option => `<option value="${option.value}">${option.textContent}</option>`).join('')}
+            </select>
             <button type="button" class="btn btn-soft-danger btn-sm btn-remove-row" title="Retirer">
                 <i class="bi bi-x-lg"></i>
             </button>`;
@@ -158,7 +164,7 @@
         if (rows.length > 1) {
             btn.closest('.row-bovin').remove();
         } else {
-            btn.closest('.row-bovin').querySelector('.bovin-id-input').value = '';
+            btn.closest('.row-bovin').querySelector('.bovin-id-select').value = '';
         }
     });
 
@@ -169,14 +175,8 @@
     }
 
     btnSubmit.addEventListener('click', () => {
-        const date = dateInput.value;
-        if (!date) {
-            afficherAlerte('error', "Veuillez saisir la date de la mortalité.");
-            return;
-        }
-
-        const ids = Array.from(document.querySelectorAll('.bovin-id-input'))
-            .map(input => input.value.trim())
+        const ids = Array.from(document.querySelectorAll('.bovin-id-select'))
+            .map(select => select.value.trim())
             .filter(v => v !== '')
             .map(v => parseInt(v, 10));
 
@@ -191,7 +191,7 @@
         fetch('/mortalite/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: date, bovinIds: ids })
+            body: JSON.stringify({ bovinIds: ids })
         })
         .then(res => res.json())
         .then(data => {

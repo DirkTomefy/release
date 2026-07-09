@@ -1,9 +1,13 @@
 package mg.bovit.release.specification;
 
-import mg.bovit.release.model.sqlview.BovinWithPoids;
-import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import org.springframework.data.jpa.domain.Specification;
-import jakarta.persistence.criteria.*;
+
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+import mg.bovit.release.model.VenteDetail;
+import mg.bovit.release.model.sqlview.BovinWithPoids;
 
 public class BovinSpecification {
 
@@ -64,6 +68,16 @@ public class BovinSpecification {
                             cb.isNull(root.get("dateVente")));
                 }
                 // "tous" => pas de filtre
+            }
+
+            if ("non_vendu".equalsIgnoreCase(statut)) {
+                Subquery<VenteDetail> venteSubquery = query.subquery(VenteDetail.class);
+                Root<VenteDetail> venteRoot = venteSubquery.from(VenteDetail.class);
+                venteSubquery.select(venteRoot);
+                venteSubquery.where(cb.equal(venteRoot.get("bovin").get("id"), root.get("id")));
+
+                predicate = cb.and(predicate,
+                        cb.not(cb.exists(venteSubquery)));
             }
 
             return predicate;

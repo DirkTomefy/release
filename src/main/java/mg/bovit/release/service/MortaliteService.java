@@ -22,6 +22,7 @@ import mg.bovit.release.model.PeseBovin;
 import mg.bovit.release.repository.BovinRepository;
 import mg.bovit.release.repository.MortaliteRepository;
 import mg.bovit.release.repository.PeseBovinRepository;
+import mg.bovit.release.repository.VenteDetailRepository;
 import mg.bovit.release.specification.MortaliteSpecification;
 
 @Service
@@ -34,7 +35,13 @@ public class MortaliteService {
     private BovinRepository bovinRepository;
 
     @Autowired
+    private PeseBovinService peseBovinService;
+
+    @Autowired
     private PeseBovinRepository peseBovinRepository;
+
+    @Autowired
+    private VenteDetailRepository venteDetailRepository;
 
     /**
      * Déclare la mortalité d'un bovin (identifié par son id) : on conserve
@@ -55,8 +62,13 @@ public class MortaliteService {
         Bovin bovin = bovinRepository.findById(bovinId)
                 .orElseThrow(() -> new Exception("Aucun bovin trouvé avec l'id " + bovinId));
 
-        // Poids au moment du décès = dernière pesée connue, sinon poids d'achat
-        PeseBovin dernierePese = peseBovinRepository.getLatestPeseByBovin(bovinId);
+        if (venteDetailRepository.existsByBovin_Id(bovinId)) {
+            throw new Exception("Impossible de déclarer la mortalité du bovin #" + bovinId
+                    + " car il est encore associé à une vente.");
+        }
+
+        // Poids au moment du décès = poids actuel connu, en créant une pesée initiale si nécessaire
+        PeseBovin dernierePese = peseBovinService.getOrCreateLatestPeseByBovin(bovinId);
         Double poidsMort = (dernierePese != null) ? dernierePese.getPoids_apres() : bovin.getPoids_achat();
 
         Mortalite mortalite = new Mortalite();

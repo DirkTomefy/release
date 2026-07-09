@@ -178,6 +178,16 @@
                         data: counts,
                         backgroundColor: '#c0392b',
                         borderRadius: 4,
+                        borderSkipped: false,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Prix total',
+                        data: prixTotals,
+                        backgroundColor: '#2e86de',
+                        borderRadius: 4,
+                        borderSkipped: false,
+                        yAxisID: 'y1'
                     }
                 ]
             },
@@ -188,10 +198,12 @@
                     legend: { position: 'top' },
                     tooltip: {
                         callbacks: {
-                            label: (context) => [
-                                'Nb mortalités : ' + context.raw,
-                                'Prix total : ' + formatCurrency(prixTotals[context.dataIndex])
-                            ]
+                            label: (context) => {
+                                if (context.datasetIndex === 0) {
+                                    return 'Nb mortalités : ' + context.raw;
+                                }
+                                return 'Prix total : ' + formatCurrency(context.raw);
+                            }
                         }
                     },
                     valueLabels: {
@@ -203,10 +215,14 @@
                             ctx.fillStyle = '#3e3e3b';
                             ctx.textAlign = 'center';
 
-                            chart.getDatasetMeta(0).data.forEach((bar, index) => {
-                                const xPos = bar.x;
-                                const yPos = bar.y - 8;
-                                ctx.fillText(`${counts[index]} / ${formatCurrency(prixTotals[index])}`, xPos, yPos);
+                            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                                const meta = chart.getDatasetMeta(datasetIndex);
+                                meta.data.forEach((bar, index) => {
+                                    const xPos = bar.x;
+                                    const yPos = bar.y - (datasetIndex === 0 ? 8 : 18);
+                                    const value = datasetIndex === 0 ? counts[index] : formatCurrency(prixTotals[index]);
+                                    ctx.fillText(value, xPos, yPos);
+                                });
                             });
 
                             ctx.restore();
@@ -218,6 +234,14 @@
                     y: {
                         beginAtZero: true,
                         ticks: { precision: 0 }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            callback: (value) => formatCurrency(value)
+                        }
                     }
                 }
             }
