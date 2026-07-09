@@ -136,20 +136,20 @@
             </tr>
           </thead>
           <tbody>
-            <tr th:each="mvt : ${mouvementStockEntrees}">
+            <tr th:each="mvt : ${mouvementStocks}">
               <td class="text-muted ps-4" th:text="${mvt.getId()}">1</td>
               
               <td>
-                <span class="fw-medium" th:text="${mvt.getPrixUnitaire() + ' Ar'}">1 250.00 Ar</span>
+                <span class="fw-medium" th:text="${mvt.getPrixUnitaire() + ' Ar'}"></span>
               </td>
               
-              <td th:text="${mvt.getQte()}">50</td>
+              <td th:text="${mvt.getQuantite()}"></td>
               
               <td>
-                <span class="fw-semibold text-dark" th:text="${mvt.getQteRestant()}">25</span>
+                <span class="fw-semibold text-dark" th:text="${mvt.getQteRestant()}"></span>
               </td>
               
-              <td class="text-muted pe-4" th:text="${#dates.format(mvt.getDateEntree(), 'dd/MM/yyyy')}">12/03/2026</td>
+              <td class="text-muted pe-4" th:text="${#dates.format(mvt.getDateMouvement(), 'dd/MM/yyyy')}">12/03/2026</td>
             </tr>
           </tbody>
         </table>

@@ -1,10 +1,13 @@
 package mg.bovit.release.dto;
 
-public class MouvementEntreePaiementPayload {
+public class MouvementPaiementPayload {
     private Long caisseId;
     private Double montant;
 
-    public MouvementEntreePaiementPayload(Long caisseId, Double montant) {
+    public MouvementPaiementPayload() {
+    }
+
+    public MouvementPaiementPayload(Long caisseId, Double montant) {
         this.caisseId = caisseId;
         this.montant = montant;
     }

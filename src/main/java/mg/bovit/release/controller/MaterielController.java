@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import mg.bovit.release.dto.MaterielStockDto;
-import mg.bovit.release.model.MouvementStockEntree;
+import mg.bovit.release.model.MouvementStock;
 import mg.bovit.release.service.MaterielService;
 
 @Controller
@@ -31,8 +31,8 @@ public class MaterielController {
     public String getMaterielDetails(@PathVariable Long id, Model model) {
         MaterielStockDto materielStockDto = materielService.findMaterielStockRestantById(id);
         model.addAttribute("materielStock", materielStockDto);
-        List<MouvementStockEntree> mouvementStockEntrees = materielService.findDetailsMaterielById(id);
-        model.addAttribute("mouvementStockEntrees", mouvementStockEntrees);
+        List<MouvementStock> mouvementStocks = materielService.findDetailsMaterielById(id);
+        model.addAttribute("mouvementStocks", mouvementStocks);
 
         return "materiel/listDetails";
     }
