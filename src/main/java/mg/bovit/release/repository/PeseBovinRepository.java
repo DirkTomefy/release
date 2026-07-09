@@ -19,4 +19,8 @@ public interface PeseBovinRepository extends JpaRepository<PeseBovin, Long>, Jpa
 
     @Query("SELECT p FROM PeseBovin p WHERE p.bovin.id = :bovinId ORDER BY p.date_pese ASC")
     List<PeseBovin> findByBovinIdOrderByDatePeseAsc(@Param("bovinId") Long bovinId);
+
+    // Suppression des pesées d'un bovin (nécessaire avant suppression du bovin lui-même,
+    // à cause de la contrainte de clé étrangère fk_bovin_poids)
+    void deleteByBovin_Id(Long bovinId);
 }

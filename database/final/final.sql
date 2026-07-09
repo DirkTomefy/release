@@ -23,6 +23,7 @@ DROP TABLE IF EXISTS type_payement_employee CASCADE;
 DROP TABLE IF EXISTS contrat CASCADE;
 DROP TABLE IF EXISTS employee CASCADE;
 DROP TABLE IF EXISTS pese_bovin CASCADE;
+DROP TABLE IF EXISTS mortalite CASCADE;
 DROP TABLE IF EXISTS bovin CASCADE;
 DROP TABLE IF EXISTS race CASCADE;
 DROP TABLE IF EXISTS caisse CASCADE;
@@ -61,6 +62,15 @@ CREATE TABLE pese_bovin (
     date_pese DATE NOT NULL,
     poids_apres DOUBLE PRECISION NOT NULL,
     CONSTRAINT fk_bovin_poids FOREIGN KEY (id_bovin) REFERENCES bovin(id)
+);
+
+CREATE TABLE mortalite (
+    id SERIAL PRIMARY KEY,
+    id_race INTEGER NOT NULL,
+    prix_achat DOUBLE PRECISION NOT NULL,
+    poids_mort DOUBLE PRECISION NOT NULL,
+    date DATE NOT NULL,
+    CONSTRAINT fk_mortalite_race FOREIGN KEY (id_race) REFERENCES race(id)
 );
 
 CREATE TABLE employee (
@@ -341,6 +351,55 @@ SELECT
     ) AS date_dernier_pese
 FROM bovin b
 JOIN race r ON b.id_race = r.id;
+
+-- ============================================================
+-- Tables : INVENTAIRE et INVENTAIRE_DETAIL
+-- ============================================================
+
+CREATE TABLE inventaire (
+    id SERIAL PRIMARY KEY,
+    date_inventaire DATE NOT NULL DEFAULT CURRENT_DATE,
+    libelle VARCHAR(100)
+);
+
+CREATE TABLE inventaire_detail (
+    id SERIAL PRIMARY KEY,
+    id_inventaire INTEGER NOT NULL,
+    id_bovin INTEGER NOT NULL,
+    quantite INTEGER NOT NULL DEFAULT 1,
+    observations TEXT,
+    CONSTRAINT fk_inventaire_detail_inventaire FOREIGN KEY (id_inventaire) REFERENCES inventaire(id) ON DELETE CASCADE,
+    CONSTRAINT fk_inventaire_detail_bovin FOREIGN KEY (id_bovin) REFERENCES bovin(id) ON DELETE RESTRICT
+);
+
+
+-- Table facture modifiée
+CREATE TABLE facture (
+    id SERIAL PRIMARY KEY,
+    id_vente INT NOT NULL UNIQUE,
+    numero_facture VARCHAR(50) NOT NULL,   -- peut être conservé comme numéro séquentiel simple
+    code_facture VARCHAR(50) NOT NULL UNIQUE, -- format : fact_MM_AAAA_XXX_IDVENTE
+    date_facture DATE NOT NULL DEFAULT CURRENT_DATE,
+    montant_total DOUBLE PRECISION NOT NULL,
+    CONSTRAINT fk_facture_vente FOREIGN KEY (id_vente) REFERENCES vente_bovin(id)
+);
+
+CREATE INDEX idx_facture_code ON facture(code_facture);
+
+-- Table facture_detail inchangée
+CREATE TABLE facture_detail (
+    id SERIAL PRIMARY KEY,
+    id_facture INT NOT NULL,
+    id_vente_detail INT NOT NULL UNIQUE,
+    prix_unitaire DOUBLE PRECISION NOT NULL,
+    quantite INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_facture_detail_facture FOREIGN KEY (id_facture) REFERENCES facture(id),
+    CONSTRAINT fk_facture_detail_vente_detail FOREIGN KEY (id_vente_detail) REFERENCES vente_detail(id)
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_mortalite_date ON mortalite(date);
+CREATE INDEX IF NOT EXISTS idx_mortalite_id_race ON mortalite(id_race);
 
 -- ============================================================
 -- Fin du script

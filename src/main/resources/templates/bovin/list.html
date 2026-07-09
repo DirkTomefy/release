@@ -47,10 +47,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link active" href="#">Tableau de bord</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Animaux</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Troupeaux</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Santé</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/bovins">Animaux</a></li>
+                <li class="nav-item"><a class="nav-link" href="/races">Races</a></li>
+                <li class="nav-item"><a class="nav-link" href="/vente/new">Ventes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/mortalite">Mortalité</a></li>
             </ul>
         </div>
     </div>
@@ -67,6 +67,11 @@
             <i class="bi bi-plus-circle me-1"></i> Nouvel animal
         </a>
     </div>
+
+    <!-- Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
 
     <!-- Formulaire de recherche / filtres -->
     <div class="card mb-4">
@@ -173,9 +178,12 @@
                         <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <a href="#" class="btn btn-soft-danger btn-sm" title="Supprimer">
-                            <i class="bi bi-trash"></i>
-                        </a>
+                        <form th:action="@{/bovins/delete/{id}(id=${bovin.id})}" method="post" class="d-inline"
+                              onsubmit="return confirm('Déclarer ce bovin comme décédé ? Il sera supprimé du registre et ajouté à la mortalité.');">
+                            <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer (mortalité)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 <tr th:if="${bovinPage.content.isEmpty()}">

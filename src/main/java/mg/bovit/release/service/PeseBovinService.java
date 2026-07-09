@@ -9,16 +9,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import mg.bovit.release.specification.PeseSpecification;
-
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
+import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.PeseBovin;
+import mg.bovit.release.repository.BovinRepository;
 import mg.bovit.release.repository.PeseBovinRepository;
+import mg.bovit.release.specification.PeseSpecification;
 
 @Service
 public class PeseBovinService {
     @Autowired 
     PeseBovinRepository peseBovinRepository;
+
+    @Autowired
+    private BovinRepository bovinRepository;
 
     // function to find peseBovin by id
     public PeseBovin findById(Long id_peseBovin) {
@@ -28,6 +32,24 @@ public class PeseBovinService {
     // function to get latest pese by bovin
     public PeseBovin getLatestPeseByBovin(Long id_bovin) {
         return peseBovinRepository.getLatestPeseByBovin(id_bovin);
+    }
+
+    public PeseBovin getOrCreateLatestPeseByBovin(Long id_bovin) {
+        PeseBovin latest = getLatestPeseByBovin(id_bovin);
+        if (latest != null) {
+            return latest;
+        }
+
+        Bovin bovin = bovinRepository.findById(id_bovin).orElse(null);
+        if (bovin == null) {
+            return null;
+        }
+
+        PeseBovin newPeseBovin = new PeseBovin();
+        newPeseBovin.setBovin(bovin);
+        newPeseBovin.setDate_pese(bovin.getDate_achat());
+        newPeseBovin.setPoids_apres(bovin.getPoids_achat());
+        return peseBovinRepository.save(newPeseBovin);
     }
 
     // function to save pese_bovin
