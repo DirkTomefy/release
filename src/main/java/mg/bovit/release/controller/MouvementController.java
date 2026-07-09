@@ -52,7 +52,7 @@ public class MouvementController {
         model.addAttribute("materiels", materiels);
         model.addAttribute("caisses", caisses);
 
-        return "mouvement/mouvement-form"; // Nom de ton nouveau fichier HTML unique
+        return "mouvement/form"; // Nom de ton nouveau fichier HTML unique
     }
 
     // Endpoint de validation unique pour ENTREE et SORTIE

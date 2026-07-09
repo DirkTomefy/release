@@ -18,10 +18,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import mg.bovit.release.dto.InventairePayload;
 import mg.bovit.release.dto.MaterielStockDto;
+import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Inventaire;
 import mg.bovit.release.model.InventaireDetail;
+import mg.bovit.release.model.Materiel;
+import mg.bovit.release.model.MaterielType;
 import mg.bovit.release.service.InventaireService;
 import mg.bovit.release.service.MaterielService;
+import mg.bovit.release.service.MaterielTypeService;
 
 @Controller
 @RequestMapping("/inventaire")
@@ -31,11 +35,21 @@ public class InventaireController {
     @Autowired
     private InventaireService inventaireService;
 
+    @Autowired
+    private MaterielTypeService materielTypeService; // Ajoute l'injection en haut du controleur
+
     @GetMapping("/form")
     public String getInventaireForm(Model model) {
-        // Recupere tous les materiels avec leur stock actuel pour initialiser le tableau
-        List<MaterielStockDto> stocks = materielService.findAllMaterielStockRestant(); 
+        // Recupere tous les materiels avec leur stock actuel pour initialiser le
+        // tableau
+        List<MaterielStockDto> stocks = materielService.findAllMaterielStockRestant();
+        List<MaterielType> materielTypes = materielTypeService.findAll();
+        List<Materiel> materiels = materielService.findAll();
+
+        model.addAttribute("materielTypes", materielTypes);
+        model.addAttribute("materiels", materiels);
         model.addAttribute("stocks", stocks);
+
         return "inventaire/form";
     }
 
@@ -54,7 +68,8 @@ public class InventaireController {
             inventaireService.faireInventaireMultiple(payload);
 
             response.put("status", "success");
-            response.put("message", "L'inventaire global a ete enregistre et le stock de chaque materiel a ete ajuste.");
+            response.put("message",
+                    "L'inventaire global a ete enregistre et le stock de chaque materiel a ete ajuste.");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

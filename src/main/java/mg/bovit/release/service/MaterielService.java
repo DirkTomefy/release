@@ -37,4 +37,8 @@ public class MaterielService {
     public List<MouvementStock> findDetailsMaterielById(Long id) {
         return mouvementStockRepository.findAllEntreesDisponiblesByIdMateriel(id);
     }
+
+    public List<MaterielStockDto> findByTypeIdWithStock(Long typeId) {
+        return mouvementStockRepository.findMaterielStockRestantByTypeId(typeId);
+    }
 }

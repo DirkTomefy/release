@@ -96,19 +96,28 @@
           </div>
 
           <div class="row g-2 align-items-end bg-light p-3 rounded-3 mb-4 border border-light-subtle">
-            <div class="col-md-8">
-              <label for="selectMateriel" class="form-label small text-muted fw-medium">Choisir un matériel à ajouter</label>
-              <select id="selectMateriel" class="form-select">
-                <option value="">-- Sélectionner un matériel --</option>
-                <option th:each="stock : ${stocks}" 
-                        th:value="${stock.getMateriel().getId()}" 
-                        th:data-stock="${stock.getQuantiteRestant()}"
-                        th:text="${stock.getMateriel().getLibelle()}">Matériel</option>
+            <div class="col-md-4">
+              <label for="materielTypeId" class="form-label small text-muted fw-medium">Type de matériel</label>
+              <select id="materielTypeId" class="form-select">
+                <option value="">-- Choisir un type --</option>
+                <option th:each="type : ${materielTypes}" 
+                        th:value="${type.id}" 
+                        th:text="${type.libelle}">Type</option>
               </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-5">
+              <label for="materielId" class="form-label small text-muted fw-medium">Choisir un matériel</label>
+              <select id="materielId" class="form-select">
+                <option value="">-- Sélectionner un matériel --</option>
+                <option th:each="stock : ${stocks}" 
+                        th:value="${stock.materiel.id}" 
+                        th:data-stock="${stock.quantiteRestant}"
+                        th:text="${stock.materiel.libelle}">Matériel</option>
+              </select>
+            </div>
+            <div class="col-md-3">
               <button type="button" id="addMaterielBtn" class="btn btn-soft-primary w-100">
-                <i class="bi bi-plus-circle me-1"></i> Ajouter au tableau
+                <i class="bi bi-plus-circle me-1"></i> Ajouter
               </button>
             </div>
           </div>
@@ -125,7 +134,7 @@
                 </tr>
               </thead>
               <tbody id="inventaireRows">
-                </tbody>
+              </tbody>
             </table>
           </div>
 
@@ -143,11 +152,58 @@
   <div id="toast" class="toast-message"></div>
 
   <script th:inline="javascript">
+    // 1. Script asynchrone pour mettre a jour les materiels selon le type selectionne
+    document.getElementById('materielTypeId').addEventListener('change', function () {
+        const typeId = this.value;
+        const materielSelect = document.getElementById('materielId');
+        
+        if (!typeId) {
+            // Si aucun type n'est selectionne, on affiche toutes les options initiales issues de stocks
+            resetMaterielOptions();
+            return;
+        }
+
+        fetch('/api/materiels/type/' + typeId)
+            .then(response => response.json())
+            .then(data => {
+                materielSelect.innerHTML = '<option value="">-- Sélectionner un matériel --</option>';
+                data.forEach(materiel => {
+                    const option = document.createElement('option');
+                    option.value = materiel.id;
+                    option.textContent = materiel.libelle;
+                    
+                    // On recupere la quantite exacte associee dans le DTO ou l'API
+                    const stockValue = (materiel.quantiteRestant !== undefined) ? materiel.quantiteRestant : 0.0;
+                    option.setAttribute('data-stock', stockValue);
+                    
+                    materielSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Erreur lors de la recuperation des materiels :', error));
+    });
+
+    // Sauvegarde des options du DTO generees par Thymeleaf pour pouvoir reinitialiser facilement
+    const initialStocks = /*[[${stocks}]]*/ [];
+
+    function resetMaterielOptions() {
+        const materielSelect = document.getElementById('materielId');
+        materielSelect.innerHTML = '<option value="">-- Sélectionner un matériel --</option>';
+        initialStocks.forEach(stock => {
+            const option = document.createElement('option');
+            option.value = stock.materiel.id;
+            option.textContent = stock.materiel.libelle;
+            option.setAttribute('data-stock', stock.quantiteRestant);
+            materielSelect.appendChild(option);
+        });
+    }
+
+    // 2. Gestion de l'ajout multiple et de la validation globale
     document.addEventListener('DOMContentLoaded', function() {
       const dateInput = document.getElementById('date_inventaire');
       const validerBtn = document.getElementById('validerBtn');
       const addMaterielBtn = document.getElementById('addMaterielBtn');
-      const selectMateriel = document.getElementById('selectMateriel');
+      const materielTypeId = document.getElementById('materielTypeId');
+      const materielSelect = document.getElementById('materielId');
       const inventaireRows = document.getElementById('inventaireRows');
       const toast = document.getElementById('toast');
 
@@ -157,23 +213,23 @@
 
       // Ajouter un materiel dans le tableau
       addMaterielBtn.addEventListener('click', function() {
-        const selectedOption = selectMateriel.options[selectMateriel.selectedIndex];
+        const selectedOption = materielSelect.options[materielSelect.selectedIndex];
+        if (!selectedOption) return;
+
         const id = selectedOption.value;
         const libelle = selectedOption.text;
         const stockActuel = selectedOption.getAttribute('data-stock') || 0.0;
 
-        if (!id) {
-          showToast('Veuillez selectionner un materiel valide.', 'error');
+        if (!id || id === "") {
+          showToast('Veuillez selectionner un matériel valide.', 'error');
           return;
         }
 
-        // Verification si le materiel est deja present dans le tableau
         if (document.querySelector(`.materiel-row[data-id="${id}"]`)) {
-          showToast('Ce materiel est deja present dans la liste.', 'error');
+          showToast('Ce matériel est déjà présent dans la liste.', 'error');
           return;
         }
 
-        // Creation dynamique de la ligne de tableau
         const row = document.createElement('tr');
         row.className = 'materiel-row';
         row.setAttribute('data-id', id);
@@ -193,13 +249,11 @@
 
         inventaireRows.appendChild(row);
 
-        // Evenement de suppression pour la nouvelle ligne
         row.querySelector('.btn-remove-row').addEventListener('click', function() {
           row.remove();
         });
 
-        // Reinitialisation de la selection
-        selectMateriel.value = '';
+        materielSelect.value = '';
       });
 
       // Validation finale du payload JSON
@@ -208,7 +262,7 @@
         const libelle = document.getElementById('libelle').value;
 
         if (!dateInventaire) {
-          showToast('Veuillez specifier la date de l\'inventaire.', 'error');
+          showToast('Veuillez spécifier la date de l\'inventaire.', 'error');
           return;
         }
 
@@ -244,12 +298,12 @@
         });
 
         if (validationError) {
-          showToast('Veuillez renseigner toutes les quantites reelles constatees.', 'error');
+          showToast('Veuillez renseigner toutes les quantités réelles constatées.', 'error');
           return;
         }
 
         if (payload.details.length === 0) {
-          showToast('Ajoutez au moins un materiel au tableau avant de valider.', 'error');
+          showToast('Ajoutez au moins un matériel au tableau avant de valider.', 'error');
           return;
         }
 
@@ -262,17 +316,17 @@
         .then(data => {
           if (data.status === 'success') {
             showToast(data.message, 'success');
-            
-            // Reinitialisation complete du formulaire et du tableau apres reussite
             inventaireRows.innerHTML = '';
             document.getElementById('libelle').value = '';
+            materielTypeId.value = '';
+            resetMaterielOptions();
             dateInput.value = new Date().toISOString().split('T')[0];
           } else {
             showToast('Erreur : ' + data.message, 'error');
           }
         })
         .catch(error => {
-          console.error('Erreur reseau :', error);
+          console.error('Erreur réseau :', error);
           showToast('Erreur de communication avec le serveur.', 'error');
         });
       });
