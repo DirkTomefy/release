@@ -635,6 +635,19 @@ CREATE TABLE facture_detail (
     CONSTRAINT fk_facture_detail_vente_detail FOREIGN KEY (id_vente_detail) REFERENCES vente_detail(id)
 );
 
+--mortalité
+CREATE TABLE IF NOT EXISTS mortalite (
+    id SERIAL PRIMARY KEY,
+    id_race INTEGER NOT NULL,
+    prix_achat DOUBLE PRECISION NOT NULL,
+    poids_mort DOUBLE PRECISION NOT NULL,
+    date DATE NOT NULL,
+    CONSTRAINT fk_mortalite_race FOREIGN KEY (id_race) REFERENCES race(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mortalite_date ON mortalite(date);
+CREATE INDEX IF NOT EXISTS idx_mortalite_id_race ON mortalite(id_race);
+
 -- ============================================================
 -- Fin du script
 -- ============================================================
