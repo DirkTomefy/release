@@ -2,21 +2,22 @@ package mg.bovit.release.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "mvt_stock_entree_paiement")
-public class MouvementStockEntreePaiement {
+@Table(name = "mvt_stock_paiement")
+public class MouvementStockPaiement {
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "id_mvt_stock_entree")
-    private MouvementStockEntree mouvementStockEntree;
+    @JoinColumn(name = "id_mouvement_stock")
+    private MouvementStock mouvementStock;
 
     @ManyToOne
     @JoinColumn(name = "id_caisse")
@@ -32,12 +33,12 @@ public class MouvementStockEntreePaiement {
         this.id = id;
     }
 
-    public MouvementStockEntree getMouvementStockEntree() {
-        return mouvementStockEntree;
+    public MouvementStock getMouvementStock() {
+        return mouvementStock;
     }
 
-    public void setMouvementStockEntree(MouvementStockEntree mouvementStockEntree) {
-        this.mouvementStockEntree = mouvementStockEntree;
+    public void setMouvementStock(MouvementStock mouvementStock) {
+        this.mouvementStock = mouvementStock;
     }
 
     public Caisse getCaisse() {

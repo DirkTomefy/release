@@ -174,11 +174,11 @@ CREATE TABLE inventaire (
 CREATE TABLE inventaire_detail (
     id SERIAL PRIMARY KEY,
     id_inventaire INTEGER NOT NULL,
-    id_bovin INTEGER NOT NULL,
-    quantite INTEGER NOT NULL DEFAULT 1,
+    id_materiel INTEGER NOT NULL,
+    quantite_initiale INTEGER NOT NULL,
+    quantite_finale INTEGER NOT NULL,
     observations TEXT,
-    CONSTRAINT fk_inventaire_detail_inventaire FOREIGN KEY (id_inventaire) REFERENCES inventaire(id) ON DELETE CASCADE,
-    CONSTRAINT fk_inventaire_detail_bovin FOREIGN KEY (id_bovin) REFERENCES bovin(id) ON DELETE RESTRICT
+    CONSTRAINT fk_inventaire_detail_inventaire FOREIGN KEY (id_inventaire) REFERENCES inventaire(id) ON DELETE CASCADE
 );
 
 -- ============================================================
