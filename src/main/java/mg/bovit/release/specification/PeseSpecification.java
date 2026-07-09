@@ -25,30 +25,6 @@ public class PeseSpecification {
                         cb.lessThanOrEqualTo(root.get("prix_achat"), form.getPrixAchatMax()));
             }
 
-            // Filtre sur le statut (vendu / non vendu)
-            String statut = form.getStatut();
-            if (statut != null) {
-                if ("vendu".equalsIgnoreCase(statut)) {
-                    predicate = cb.and(predicate,
-                            cb.isNotNull(root.get("date_vente")));
-                } else if ("non_vendu".equalsIgnoreCase(statut)) {
-                    predicate = cb.and(predicate,
-                            cb.isNull(root.get("date_vente")));
-                }
-                // "tous" => pas de filtre
-            }
-
-            // Recherche textuelle : on recherche dans l'ID (converti en string) et
-            // éventuellement dans race.nom
-            if (form.getSearch() != null && !form.getSearch().isEmpty()) {
-                String searchPattern = "%" + form.getSearch().toLowerCase() + "%";
-                Expression<String> bovinIdStr = cb.toString(root.get("bovin").get("id"));
-                Predicate searchPredicate = cb.or(
-                        cb.like(cb.lower(bovinIdStr), searchPattern),
-                        cb.like(cb.lower(root.get("bovin").get("race").get("nom")), searchPattern));
-                predicate = cb.and(predicate, searchPredicate);
-            }
-
             return predicate;
         };
     }

@@ -4,8 +4,7 @@ import java.sql.Date;
 
 public class MulticriteriaListPeseBovin {
 
-    // Filtres
-    private String search; // recherche textuelle sur l'ID (ou autre)
+  
     private Long raceId;
     private Date dateRecherePese;
     private Double prixAchatMin;
@@ -18,15 +17,7 @@ public class MulticriteriaListPeseBovin {
     private int size = 10;
     private String sort = "id,asc";
 
-    // Getters et setters
-    public String getSearch() {
-        return search;
-    }
-
-    public void setSearch(String search) {
-        this.search = search;
-    }
-
+    
     public Long getRaceId() {
         return raceId;
     }
