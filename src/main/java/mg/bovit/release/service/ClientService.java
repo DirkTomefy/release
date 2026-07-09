@@ -1,22 +1,30 @@
 package mg.bovit.release.service;
 
 import java.util.List;
+
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
-import mg.bovit.release.specification.ClientSpecification;
-import mg.bovit.release.repository.*;
-import mg.bovit.release.model.*;
 import mg.bovit.release.dto.MultiCriteriaFormClientList;
+import mg.bovit.release.model.Client;
+import mg.bovit.release.model.VenteBovin;
+import mg.bovit.release.repository.ClientRepository;
+import mg.bovit.release.repository.VenteBovinRepository;
+import mg.bovit.release.specification.ClientSpecification;
 
 @Service
 public class ClientService {
-    @Autowired
-    private ClientRepository clientRepository;
+    private final ClientRepository clientRepository;
+    private final VenteBovinRepository venteBovinRepository;
+
+    public ClientService(ClientRepository clientRepository, VenteBovinRepository venteBovinRepository) {
+        this.clientRepository = clientRepository;
+        this.venteBovinRepository = venteBovinRepository;
+    }
 
     // function to find client by id
     public Client findById(Long id_client) throws Exception {
@@ -25,6 +33,11 @@ public class ClientService {
 
     public List<Client> findAll() {
         return clientRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<VenteBovin> findVentesByClientId(Long clientId) {
+        return venteBovinRepository.findByClient_Id(clientId);
     }
 
     public Client save(Client client) throws Exception {
@@ -37,6 +50,38 @@ public class ClientService {
         if (client.getContact() == null || client.getContact().isBlank()) {
             throw new Exception("Le contact du client est obligatoire");
         }
+
+        String contact = client.getContact().trim();
+
+        boolean isEmail = contact.matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)*\\.[a-zA-Z]{2,}$");
+
+        // On tolère les espaces/tirets de saisie (034 12 345 67, 034-12-345-67...)
+        // et le format international (+261 à la place du 0 initial), en normalisant
+        // avant de tester le motif.
+        String normalizedPhone = contact.replaceAll("[\\s-]", "");
+        boolean isPhone = normalizedPhone.matches("^0[0-9]{9}$")
+                || normalizedPhone.matches("^\\+261[0-9]{9}$");
+
+        if (!isEmail && !isPhone) {
+            throw new Exception("Le contact doit être un email valide ou un numéro de téléphone "
+                    + "(0XXXXXXXXX ou +261XXXXXXXXX, espaces/tirets tolérés)");
+        }
+
+        // On stocke le téléphone sous forme normalisée (sans espaces/tirets),
+        // pour que la vérification de doublon détecte bien "034 12 345 67" == "0341234567"
+        if (isPhone) {
+            contact = normalizedPhone;
+        }
+        client.setContact(contact);
+
+        boolean duplicateContact = client.getId() == null
+                ? clientRepository.existsByContactIgnoreCase(contact)
+                : clientRepository.existsByContactIgnoreCaseAndIdNot(contact, client.getId());
+
+        if (duplicateContact) {
+            throw new Exception("Un client avec ce contact existe déjà");
+        }
+
         return clientRepository.save(client);
     }
 
@@ -44,6 +89,11 @@ public class ClientService {
         if (!clientRepository.existsById(id_client)) {
             throw new Exception("Client introuvable");
         }
+
+        if (!venteBovinRepository.findByClient_Id(id_client).isEmpty()) {
+            throw new Exception("Suppression impossible : ce client a des ventes associées");
+        }
+
         clientRepository.deleteById(id_client);
     }
 

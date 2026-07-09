@@ -14,28 +14,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import mg.bovit.release.dto.MouvementEntreePayload;
-import mg.bovit.release.dto.MouvementStockSortiePayload;
+import mg.bovit.release.dto.MouvementStockPayload;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Materiel;
 import mg.bovit.release.model.MaterielType;
 import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.MaterielService;
 import mg.bovit.release.service.MaterielTypeService;
-import mg.bovit.release.service.MouvementStockEntreeService;
-import mg.bovit.release.service.MouvementStockSortieService;
+import mg.bovit.release.service.MouvementStockService;
 
 @Controller
 @RequestMapping("/mouvement")
 public class MouvementController {
+
     @Autowired
     private MaterielService materielService;
     @Autowired
     private MaterielTypeService materielTypeService;
     @Autowired
-    private MouvementStockEntreeService mouvementStockEntreeService;
-    @Autowired
-    private MouvementStockSortieService mouvementStockSortieService;
+    private MouvementStockService mouvementStockService;
     @Autowired
     private CaisseService caisseService;
 
@@ -44,8 +41,8 @@ public class MouvementController {
         return "mouvement/list";
     }
 
-    @GetMapping("/form/entree")
-    public String showFormEntree(Model model) {
+    @GetMapping("/form")
+    public String showFormUnique(Model model) {
         List<MaterielType> materielTypes = materielTypeService.findAll();
         List<Materiel> materiels = materielService.findAll();
         List<Caisse> caisses = caisseService.findAll();
@@ -54,46 +51,17 @@ public class MouvementController {
         model.addAttribute("materiels", materiels);
         model.addAttribute("caisses", caisses);
 
-        return "mouvement/formEntree";
+        return "mouvement/form";
     }
 
-    @PostMapping("/form/entree")
-    public ResponseEntity<Map<String, String>> saveMouvementEntree(@RequestBody MouvementEntreePayload payload) {
+    @PostMapping("/form/valider")
+    public ResponseEntity<Map<String, String>> validerMouvement(@RequestBody MouvementStockPayload payload) {
         Map<String, String> response = new HashMap<>();
         try {
-            mouvementStockEntreeService.transactionerEnregistrerMouvementEntreeEtPaiements(payload);
+            mouvementStockService.traiterMouvementStock(payload);
 
             response.put("status", "success");
-            response.put("message", "Mouvement enregistré avec succès");
-
-            return ResponseEntity.ok(response);
-
-        } catch (RuntimeException e) {
-            response.put("status", "error");
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-
-    @GetMapping("/form/sortie")
-    public String showFormSortie(Model model) {
-        List<MaterielType> materielTypes = materielTypeService.findAll();
-        List<Materiel> materiels = materielService.findAll();
-        model.addAttribute("materielTypes", materielTypes);
-        model.addAttribute("materiels", materiels);
-        return "mouvement/formSortie";
-    }
-
-    @PostMapping("/form/sortie")
-    public ResponseEntity<Map<String, String>> saveMouvementSortie(@RequestBody MouvementStockSortiePayload payload) {
-        Map<String, String> response = new HashMap<>();
-        try {
-            // insert mvt_stock_sortie et update mvt_stock_entree
-            mouvementStockSortieService.transactionerEnregistrerMouvementSortieEtUpdateMouvementEntree(payload);
-
-            response.put("status", "success");
-            response.put("message", "Mouvement de sortie enregistré avec succès");
-
+            response.put("message", "Mouvement traite avec succes");
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {

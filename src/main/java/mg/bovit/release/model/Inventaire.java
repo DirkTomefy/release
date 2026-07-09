@@ -2,7 +2,6 @@ package mg.bovit.release.model;
 
 import jakarta.persistence.*;
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "inventaire")
@@ -16,8 +15,27 @@ public class Inventaire {
 
     private String libelle;
 
-    @OneToMany(mappedBy = "inventaire", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InventaireDetail> details;
+    public Long getId() {
+        return id;
+    }
 
-    // getters et setters
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Date getDateInventaire() {
+        return dateInventaire;
+    }
+
+    public void setDateInventaire(Date dateInventaire) {
+        this.dateInventaire = dateInventaire;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
 }

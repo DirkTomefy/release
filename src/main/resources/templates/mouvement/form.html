@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐄 Mouvement entrée de stock</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f9f7f4;
+            color: #3e3e3b;
+        }
+
+        /* Structure de la carte du template principal */
+        .card-modern {
+            border: 1px solid #e7e0d8;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        /* En-tête aligné sur le thème Élevage */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2ddd6;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header-section h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #4a4a44;
+            margin: 0;
+        }
+
+        .header-section h1 i {
+            color: #7a9e5a;
+            margin-right: 0.5rem;
+        }
+
+        /* Badge d'état */
+        .badge-engrais {
+            background-color: #e2f0da;
+            color: #3d5a2e;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        /* Grille responsive pour les champs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #6b5e53;
+            margin-bottom: 0.5rem;
+        }
+
+        .field-group label i {
+            color: #b6a88e;
+            margin-right: 4px;
+        }
+
+        /* Formulaires & Selects uniformes */
+        .form-grid input,
+        .form-grid select {
+            border: 1px solid #e0d8cf;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            color: #3e3e3b;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-grid input:focus,
+        .form-grid select:focus {
+            border-color: #b6a88e;
+            box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
+        }
+
+        /* Section Paiement */
+        .payment-section {
+            grid-column: 1 / -1;
+            /* Occupe toute la largeur */
+            background-color: #faf8f5;
+            border: 1px solid #e7e0d8;
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .payment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .payment-title {
+            font-weight: 600;
+            color: #5b4b3a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .payment-title i {
+            color: #7a9e5a;
+        }
+
+        .pay-count-badge {
+            font-size: 0.75rem;
+            background-color: #f0e6d3;
+            color: #6b4f2e;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+        }
+
+        /* Bouton pour ajouter une ligne */
+        .btn-add-payment {
+            background-color: #eef3ea;
+            color: #4a6b3a;
+            border: 1px solid #d2ddc4;
+            font-weight: 500;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-add-payment:hover {
+            background-color: #dde8d1;
+            color: #3a562c;
+        }
+
+        .payment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Lignes générées par le JS */
+        .payment-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .payment-row select,
+        .payment-row input {
+            border: 1px solid #e0d8cf;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        /* Bouton supprimer une ligne */
+        .btn-remove-pay {
+            background-color: #fef1f1;
+            color: #b34040;
+            border: 1px solid #f5d2d2;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-remove-pay:hover:not(:disabled) {
+            background-color: #fae3e3;
+            color: #962e2e;
+        }
+
+        .btn-remove-pay:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Conteneur dynamique "Total paiements" géré par updateGlobalDisplay() */
+        .total-highlight {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .total-value {
+            font-weight: 600;
+            font-size: 1.15rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        /* Zone des boutons d'actions en bas */
+        .actions-row {
+            margin-top: 2rem;
+            border-top: 1px solid #e2ddd6;
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-primary {
+            background-color: #7a9e5a !important;
+            border-color: #7a9e5a !important;
+            color: #fff !important;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: #638249 !important;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #6b5e53;
+            border: 1px solid #e0d8cf;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+        }
+
+        .btn-outline:hover {
+            background-color: #f0ede8;
+            color: #3e3e3b;
+        }
+
+        /* Styles pour l'affichage dynamique du Toast de notification */
+        .toast-message {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #4a6b3a;
+            color: #fff;
+            padding: 0.85rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: none;
+            z-index: 1050;
+            font-weight: 500;
+        }
+
+        .toast-message.show {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .toast-message.error {
+            background-color: #b34040;
+        }
+
+        /* Animations fluides pour l'ajout JS */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container pb-5">
+        <div class="card-modern">
+            <div class="header-section">
+                <h1><i class="fas fa-exchange-alt"></i> Gestion des mouvements de stock</h1>
+                <div class="badge-engrais" id="mvtBadge">
+                    <i class="fas fa-calendar-plus"></i> Nouveau mouvement
+                </div>
+            </div>
+
+            <form id="mouvementForm" onsubmit="return false;">
+                <div class="form-grid">
+
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label for="typeMouvement"><i class="fas fa-directions"></i> Type de mouvement</label>
+                        <select id="typeMouvement" name="typeMouvement"
+                            style="font-weight: 600; background-color: #fcfaf7;">
+                            <option value="ENTREE">ENTREE (Approvisionnement / Achat)</option>
+                            <option value="SORTIE">SORTIE (Utilisation / Consommation)</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="materielTypeId"><i class="fas fa-tag"></i> Type de matériel</label>
+                        <select id="materielTypeId" name="materielTypeId">
+                            <option th:each="type : ${materielTypes}" th:value="${type.id}" th:text="${type.libelle}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="materielId"><i class="fas fa-box"></i> Matériel</label>
+                        <select id="materielId" name="materielId">
+                            <option th:each="materiel : ${materiels}" th:value="${materiel.id}"
+                                th:text="${materiel.libelle}"></option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="dateMouvement"><i class="fas fa-calendar-day"></i> Date du mouvement</label>
+                        <input type="date" id="dateMouvement" name="dateMouvement" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label for="quantite"><i class="fas fa-hashtag"></i> Quantité</label>
+                        <input type="number" id="quantite" name="quantite" placeholder="ex: 5" min="1" value="3" />
+                    </div>
+
+                    <div class="field-group entry-only">
+                        <label for="pu"><i class="fas fa-dollar-sign"></i> P.U estimé (Ar)</label>
+                        <input type="number" id="pu" placeholder="ex: 1250" step="0.01" min="0" value="" />
+                    </div>
+
+                    <div class="field-group entry-only">
+                        <label for="total"><i class="fas fa-calculator"></i> Total entrée (est.)</label>
+                        <input type="text" id="total" readonly value="" />
+                    </div>
+
+                    <div class="payment-section entry-only" style="grid-column: span 2;">
+                        <div class="payment-header">
+                            <div class="payment-title">
+                                <i class="fas fa-hand-holding-dollar"></i>
+                                Modes de paiement
+                                <span class="pay-count-badge" id="payCountBadge">1 ligne</span>
+                            </div>
+                            <button type="button" class="btn-add-payment" id="addPaymentBtn">
+                                <i class="fas fa-plus-circle"></i> Ajouter ligne
+                            </button>
+                        </div>
+
+                        <div class="payment-list" id="paymentList">
+                            <div class="payment-row" data-row-id="1">
+                                <div class="pay-select">
+                                    <select class="pay-type">
+                                        <option th:each="caisse : ${caisses}" th:value="${caisse.id}"
+                                            th:text="${caisse.libelle}"></option>
+                                    </select>
+                                </div>
+                                <div class="pay-montant">
+                                    <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0"
+                                        value="1200" />
+                                </div>
+                                <button type="button" class="btn-remove-pay" disabled>
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.8rem; color:#6b5e53;">
+                            <span><i class="fas fa-info-circle text-muted"></i> Chaque ligne = un mode de
+                                paiement</span>
+                            <span><i class="fas fa-arrow-right text-muted"></i> Total = somme des montants</span>
+                        </div>
+                    </div>
+
+                    <div class="total-highlight entry-only" id="totalHighlightContainer" style="grid-column: span 2;">
+                        <span><i class="fas fa-coins"></i> Total paiements enregistrés</span>
+                        <span class="total-value" id="totalDisplay">1 200,00 Ar</span>
+                    </div>
+                </div>
+
+                <div class="actions-row">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" id="validerBtn">
+                            <i class="fas fa-check-circle"></i> Valider le mouvement
+                        </button>
+                        <button type="reset" class="btn btn-outline" id="resetBtn">
+                            <i class="fas fa-undo-alt"></i> Réinitialiser
+                        </button>
+                    </div>
+                    <span
+                        style="font-size:0.85rem; color:#5b4b3a; background:#f0e6d3; padding:0.4rem 1.2rem; border-radius:40px; font-weight: 500;">
+                        <i class="far fa-clock"></i> Prêt
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast-message"></div>
+
+    <script th:inline="javascript">
+        document.getElementById('materielTypeId').addEventListener('change', function () {
+            const typeId = this.value;
+            fetch('/api/materiels/type/' + typeId)
+                .then(response => response.json())
+                .then(data => {
+                    const materielSelect = document.getElementById('materielId');
+                    materielSelect.innerHTML = '';
+                    data.forEach(materiel => {
+                        const option = document.createElement('option');
+                        option.value = materiel.id;
+                        option.textContent = materiel.libelle;
+                        materielSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Erreur lors de la recuperation des materiels :', error));
+        });
+
+        (function () {
+            const caisses = /*[[${caisses}]]*/[];
+            const typeMouvementInput = document.getElementById('typeMouvement');
+            const mvtBadge = document.getElementById('mvtBadge');
+            const paymentList = document.getElementById('paymentList');
+            const addPaymentBtn = document.getElementById('addPaymentBtn');
+            const payCountBadge = document.getElementById('payCountBadge');
+            const totalDisplay = document.getElementById('totalDisplay');
+            const totalHighlightContainer = document.getElementById('totalHighlightContainer');
+            const totalInput = document.getElementById('total');
+            const puInput = document.getElementById('pu');
+            const qteInput = document.getElementById('quantite');
+            const dateInput = document.getElementById('dateMouvement');
+            const validerBtn = document.getElementById('validerBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const toast = document.getElementById('toast');
+            let rowCounter = 1;
+
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            // Gestion de la visibilite dynamique selon ENTREE ou SORTIE
+            function toggleFieldsByMovementType() {
+                const type = typeMouvementInput.value;
+                const entryElements = document.querySelectorAll('.entry-only');
+
+                if (type === 'SORTIE') {
+                    entryElements.forEach(el => el.style.display = 'none');
+                    mvtBadge.innerHTML = '<i class="fas fa-calendar-minus"></i> Nouvelle sortie';
+                    mvtBadge.className = 'badge-sortie'; // Assure-toi que cette classe CSS reste accessible
+                } else {
+                    entryElements.forEach(el => el.style.display = '');
+                    mvtBadge.innerHTML = '<i class="fas fa-calendar-plus"></i> Nouvelle entree';
+                    mvtBadge.className = 'badge-engrais';
+                    updateBovinTotal();
+                }
+            }
+
+            typeMouvementInput.addEventListener('change', toggleFieldsByMovementType);
+
+            function getPaymentRows() {
+                return paymentList.querySelectorAll('.payment-row');
+            }
+
+            function getPaymentTotal() {
+                let sum = 0;
+                getPaymentRows().forEach(row => {
+                    const amt = parseFloat(row.querySelector('.pay-amount').value) || 0;
+                    sum += amt;
+                });
+                return sum;
+            }
+
+            function updateBovinTotal() {
+                if (typeMouvementInput.value === 'SORTIE') return;
+                const pu = parseFloat(puInput.value) || 0;
+                const qte = parseFloat(qteInput.value) || 0;
+                const total = pu * qte;
+                totalInput.value = total.toFixed(2);
+                updateGlobalDisplay();
+            }
+
+            function updateGlobalDisplay() {
+                if (typeMouvementInput.value === 'SORTIE') return;
+                const sum = getPaymentTotal();
+                totalDisplay.textContent = sum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+
+                const bovinTotal = parseFloat(totalInput.value) || 0;
+
+                if (Math.abs(sum - bovinTotal) < 0.01 && bovinTotal > 0) {
+                    totalHighlightContainer.style.color = '#3d5a2e';
+                    totalHighlightContainer.style.backgroundColor = '#e2f0da';
+                    totalHighlightContainer.style.borderColor = '#d2ddc4';
+                } else {
+                    totalHighlightContainer.style.color = '#813838';
+                    totalHighlightContainer.style.backgroundColor = '#fde8e8';
+                    totalHighlightContainer.style.borderColor = '#f5d2d2';
+                }
+
+                const count = getPaymentRows().length;
+                payCountBadge.textContent = count + ' ligne' + (count > 1 ? 's' : '');
+            }
+
+            function createPaymentRow(rowId) {
+                const row = document.createElement('div');
+                row.className = 'payment-row';
+                row.dataset.rowId = rowId;
+                row.innerHTML = `
+            <div class="pay-select">
+              <select class="pay-type">
+                ${caisses.map(caisse => `<option value="${caisse.id}">${caisse.libelle}</option>`).join('')}
+              </select>
+            </div>
+            <div class="pay-montant">
+              <input type="number" class="pay-amount" placeholder="0.00" step="0.01" min="0" value="0">
+            </div>
+            <button type="button" class="btn-remove-pay">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          `;
+                return row;
+            }
+
+            function attachRowEvents(row) {
+                const amountInput = row.querySelector('.pay-amount');
+                amountInput.addEventListener('input', updateGlobalDisplay);
+
+                const removeBtn = row.querySelector('.btn-remove-pay');
+                removeBtn.addEventListener('click', function () {
+                    if (getPaymentRows().length <= 1) {
+                        alert('Il doit rester au moins une ligne de paiement.');
+                        return;
+                    }
+                    row.remove();
+                    updateGlobalDisplay();
+                    updateRemoveButtons();
+                });
+            }
+
+            function updateRemoveButtons() {
+                const rows = getPaymentRows();
+                rows.forEach((row) => {
+                    const btn = row.querySelector('.btn-remove-pay');
+                    btn.disabled = (rows.length <= 1);
+                });
+            }
+
+            addPaymentBtn.addEventListener('click', function () {
+                rowCounter++;
+                const newRow = createPaymentRow(rowCounter);
+                paymentList.appendChild(newRow);
+                attachRowEvents(newRow);
+                updateGlobalDisplay();
+                updateRemoveButtons();
+                newRow.style.animation = 'fadeIn 0.25s ease';
+            });
+
+            function initExistingRows() {
+                getPaymentRows().forEach(row => attachRowEvents(row));
+                updateRemoveButtons();
+                updateGlobalDisplay();
+            }
+
+            puInput.addEventListener('input', updateBovinTotal);
+            qteInput.addEventListener('input', updateBovinTotal);
+
+            resetBtn.addEventListener('click', function () {
+                setTimeout(() => {
+                    if (!dateInput.value) {
+                        dateInput.value = new Date().toISOString().split('T')[0];
+                    }
+                    toggleFieldsByMovementType();
+                }, 50);
+            });
+
+            validerBtn.addEventListener('click', function () {
+                const typeMouvement = typeMouvementInput.value;
+                const { value: matVal } = document.getElementById('materielId');
+                const mId = parseInt(matVal);
+                const quantite = parseInt(qteInput.value) || 0;
+                const dateMouvement = dateInput.value;
+
+                if (!dateMouvement) { alert('Veuillez saisir une date de mouvement.'); return; }
+                if (!mId || mId < 1) { alert('Veuillez selectionner un materiel valide.'); return; }
+                if (quantite <= 0) { alert('La quantite doit etre superieure a 0.'); return; }
+
+                // Construction conditionnelle du payload unique
+                const payload = {
+                    typeMouvement: typeMouvement,
+                    materielId: mId,
+                    quantite: quantite,
+                    dateMouvement: dateMouvement,
+                    prixUnitaire: null,
+                    payments: []
+                };
+
+                if (typeMouvement === 'ENTREE') {
+                    const pu = parseFloat(puInput.value) || 0;
+                    if (pu <= 0) { alert('Le prix unitaire doit etre superieur a 0 pour une entree.'); return; }
+                    payload.prixUnitaire = pu;
+
+                    const payments = [];
+                    getPaymentRows().forEach(row => {
+                        const caisseId = parseInt(row.querySelector('.pay-type').value);
+                        const montant = parseFloat(row.querySelector('.pay-amount').value) || 0;
+                        if (montant > 0) {
+                            payments.push({ caisseId, montant });
+                        }
+                    });
+
+                    if (payments.length === 0) { alert('Ajoutez au moins un paiement avec un montant > 0.'); return; }
+
+                    // Securite: Verifier la correspondance des sommes
+                    const totalEstime = pu * quantite;
+                    const totalPaye = getPaymentTotal();
+                    if (Math.abs(totalEstime - totalPaye) > 0.01) {
+                        alert('Le total des paiements doit correspondre exactement au total estime (' + totalEstime.toFixed(2) + ' Ar).');
+                        return;
+                    }
+
+                    payload.payments = payments;
+                }
+
+                // Endpoint unique pour le traitement des deux flux
+                fetch('/mouvement/form/valider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showToast(data.message, 'success');
+                            if (typeMouvement === 'ENTREE') {
+                                // Reinitialisation des paiements si succes
+                                paymentList.innerHTML = '';
+                                rowCounter = 1;
+                                paymentList.appendChild(createPaymentRow(rowCounter));
+                                initExistingRows();
+                            }
+                            document.getElementById('mouvementForm').reset();
+                            dateInput.value = new Date().toISOString().split('T')[0];
+                            toggleFieldsByMovementType();
+                        } else {
+                            showToast('Erreur : ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur reseau:', error);
+                        showToast('Erreur de communication avec le serveur.', 'error');
+                    });
+            });
+
+            function showToast(message, type) {
+                toast.textContent = message;
+                toast.className = 'toast-message show' + (type === 'error' ? ' error' : '');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 6000);
+            }
+
+            initExistingRows();
+            toggleFieldsByMovementType();
+        })();
+    </script>
+</body>
+
+</html>

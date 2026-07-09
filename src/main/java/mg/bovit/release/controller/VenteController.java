@@ -1,27 +1,43 @@
 package mg.bovit.release.controller;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import mg.bovit.release.dto.ControllerMessage;
+import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+import mg.bovit.release.dto.VenteInsertDto;
 import mg.bovit.release.dto.*;
 import mg.bovit.release.model.Client;
 import mg.bovit.release.model.Facture;
 import mg.bovit.release.model.Race;
 import mg.bovit.release.model.VenteBovin;
-import mg.bovit.release.model.VenteDetail;
 import mg.bovit.release.model.sqlview.BovinWithPoids;
+import mg.bovit.release.service.BovinService;
+import mg.bovit.release.service.CaisseService;
+import mg.bovit.release.service.ClientService;
+import mg.bovit.release.service.RaceService;
+import mg.bovit.release.service.VenteService;
+import mg.bovit.release.model.VenteDetail;
 import mg.bovit.release.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Controller
 @RequestMapping("/vente")
@@ -41,6 +57,19 @@ public class VenteController {
     private FactureService factureService;
     @Autowired
     private VenteDetailService venteDetailService; // Nouveau service à créer
+  
+   public VenteController(
+            VenteService venteService,
+            ClientService clientService,
+            BovinService bovinService,
+            RaceService raceService,
+            CaisseService caisseService) {
+        this.venteService = venteService;
+        this.clientService = clientService;
+        this.bovinService = bovinService;
+        this.raceService = raceService;
+        this.caisseService = caisseService;
+    }
 
     // Page d'insertion d'une vente
     @GetMapping("/new")
