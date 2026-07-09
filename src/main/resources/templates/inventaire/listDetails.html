@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Details d'inventaire</title>
+</head>
+
+<body>
+    <th:block th:if="${inventaireDetails.isEmpty()}">
+        <p>Aucun détail d'inventaire trouvé.</p>
+    </th:block>
+    <th:block th:unless="${inventaireDetails.isEmpty()}">
+        <p>Inventaire : <span th:text="${inventaireDetails[0].getId()}"></span></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type materiel</th>
+                    <th>Materiel</th>
+                    <th>Quantite initiale</th>
+                    <th>Quantite finale</th>
+                    <th>observation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Iterate over the inventaireDetails list -->
+                <tr th:each="inventaireDetail : ${inventaireDetails}">
+                    <td th:text="${inventaireDetail.getId()}"></td>
+                    <td th:text="${inventaireDetail.getMateriel().getType().getLibelle()}"></td>
+                    <td th:text="${inventaireDetail.getMateriel().getLibelle()}"></td>
+                    <td th:text="${inventaireDetail.getQuantiteInitiale()}"></td>
+                    <td th:text="${inventaireDetail.getQuantiteFinale()}"></td>
+                    <td th:text="${inventaireDetail.getObservation()}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </th:block>
+</body>
+
+</html>

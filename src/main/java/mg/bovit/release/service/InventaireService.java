@@ -7,11 +7,19 @@ import org.springframework.stereotype.Service;
 import mg.bovit.release.dto.MaterielStockDto;
 import mg.bovit.release.dto.MouvementPaiementPayload;
 import mg.bovit.release.dto.MouvementStockPayload;
+import mg.bovit.release.model.Inventaire;
+import mg.bovit.release.model.InventaireDetail;
+import mg.bovit.release.repository.InventaireDetailRepository;
+import mg.bovit.release.repository.InventaireRepository;
 
 @Service
 public class InventaireService {
     @Autowired
     private MouvementStockService mouvementStockService;
+    @Autowired
+    private InventaireRepository inventaireRepository;
+    @Autowired
+    private InventaireDetailRepository inventaireDetailRepository;
 
     public void faireInventaire(MaterielStockDto materielStockDto, Double quantiteReelle, String dateInventaire) {
         double quantiteRestanteFormate = (materielStockDto.getQuantiteRestant() != null) ? materielStockDto.getQuantiteRestant() : 0.0;
@@ -43,5 +51,13 @@ public class InventaireService {
             
             mouvementStockService.traiterMouvementStock(payload);
         }
+    }
+
+    public List<Inventaire> listerInventaires() {
+        return inventaireRepository.findAll();
+    }
+
+    public List<InventaireDetail> listerInventairesDetails() {
+        return inventaireDetailRepository.findAll();
     }
 }

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste d'inventaires</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Libelle</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Iterate over the inventaires list -->
+            <tr th:each="inventaire : ${inventaires}">
+                <td th:text="${inventaire.getId()}"></td>
+                <td th:text="${inventaire.getDateInventaire()}"></td>
+                <td th:text="${inventaire.getLibelle()}"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
