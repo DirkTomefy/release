@@ -58,23 +58,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg py-3">
-    <div class="container">
-        <a class="navbar-brand" href="#">
-            <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/bovins">Animaux</a></li>
-                <li class="nav-item"><a class="nav-link" href="/clients">Clients</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/vente/new">Ventes</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+    <th:block th:replace="~{fragments/common :: navbar('vente')}"></th:block>
 
 <div class="container py-4">
 

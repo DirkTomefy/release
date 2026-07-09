@@ -22,3 +22,29 @@
         .page-item.active .page-link { background-color: #7a9e5a; border-color: #7a9e5a; color: #fff; }
     </style>
 </div>
+
+<div th:fragment="navbar(activeSection='')">
+    <nav class="navbar navbar-expand-lg py-3">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/bovins}">
+                <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'bovins'} ? ' active' : ''" th:href="@{/bovins}">Animaux</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'clients'} ? ' active' : ''" th:href="@{/clients}">Clients</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'races'} ? ' active' : ''" th:href="@{/races}">Races</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'vente'} ? ' active' : ''" th:href="@{/vente/list}">Ventes</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'mortalite'} ? ' active' : ''" th:href="@{/mortalite}">Mortalité</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'inventaire'} ? ' active' : ''" th:href="@{/inventaire/liste}">Inventaire</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'materiel'} ? ' active' : ''" th:href="@{/materiel/liste}">Matériel</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'peseBovin'} ? ' active' : ''" th:href="@{/peseBovin/list}">Pesées</a></li>
+                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'caisse'} ? ' active' : ''" th:href="@{/caisse/stats}">Caisse</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
