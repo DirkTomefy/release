@@ -92,6 +92,12 @@
                 <div class="value" id="totalMortalites">–</div>
             </div>
         </div>
+        <div class="col-12 col-md-4">
+            <div class="summary-card" style="background-color: #eef5ff;">
+                <div class="label"><i class="bi bi-cash-stack me-1"></i>Prix total</div>
+                <div class="value" id="totalPrixMortalites">–</div>
+            </div>
+        </div>
     </div>
 
     <!-- Histogramme -->
@@ -114,10 +120,15 @@
     const btnFiltrer = document.getElementById('btnFiltrer');
 
     const totalMortalitesEl = document.getElementById('totalMortalites');
+    const totalPrixMortalitesEl = document.getElementById('totalPrixMortalites');
     const chartWrapper = document.getElementById('chartWrapper');
     const chartEmptyState = document.getElementById('chartEmptyState');
 
     let mortaliteChart = null;
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value || 0) + ' Ar';
+    }
 
     function chargerStatistiques() {
         const dateDebut = dateDebutInput.value;
@@ -137,8 +148,11 @@
 
     function afficherResultats(data) {
         totalMortalitesEl.textContent = data.totalMortalites || 0;
+        totalPrixMortalitesEl.textContent = formatCurrency(data.totalPrixMortalites);
 
         const labels = data.labels || [];
+        const counts = data.counts || [];
+        const prixTotals = data.prixTotals || [];
 
         if (labels.length === 0) {
             chartWrapper.style.display = 'none';
@@ -161,7 +175,7 @@
                 datasets: [
                     {
                         label: 'Nombre de mortalités',
-                        data: data.counts,
+                        data: counts,
                         backgroundColor: '#c0392b',
                         borderRadius: 4,
                     }
@@ -174,7 +188,28 @@
                     legend: { position: 'top' },
                     tooltip: {
                         callbacks: {
-                            label: (context) => 'Nb mortalités : ' + context.raw
+                            label: (context) => [
+                                'Nb mortalités : ' + context.raw,
+                                'Prix total : ' + formatCurrency(prixTotals[context.dataIndex])
+                            ]
+                        }
+                    },
+                    valueLabels: {
+                        id: 'valueLabels',
+                        afterDatasetsDraw(chart) {
+                            const { ctx } = chart;
+                            ctx.save();
+                            ctx.font = '12px Inter, sans-serif';
+                            ctx.fillStyle = '#3e3e3b';
+                            ctx.textAlign = 'center';
+
+                            chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                                const xPos = bar.x;
+                                const yPos = bar.y - 8;
+                                ctx.fillText(`${counts[index]} / ${formatCurrency(prixTotals[index])}`, xPos, yPos);
+                            });
+
+                            ctx.restore();
                         }
                     }
                 },

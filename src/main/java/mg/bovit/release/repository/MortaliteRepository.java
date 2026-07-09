@@ -23,7 +23,16 @@ public interface MortaliteRepository extends JpaRepository<Mortalite, Long>, Jpa
                                      @Param("dateFin") LocalDate dateFin,
                                      @Param("raceId") Long raceId);
 
-    @Query(value = "SELECT TO_CHAR(DATE_TRUNC('month', m.date), 'YYYY-MM') AS mois, COUNT(m.id) " +
+    @Query(value = "SELECT COALESCE(SUM(m.prix_achat), 0) FROM mortalite m " +
+            "WHERE (CAST(:dateDebut AS DATE) IS NULL OR m.date >= CAST(:dateDebut AS DATE)) " +
+            "AND (CAST(:dateFin AS DATE) IS NULL OR m.date <= CAST(:dateFin AS DATE)) " +
+            "AND (CAST(:raceId AS INTEGER) IS NULL OR m.id_race = CAST(:raceId AS INTEGER))",
+            nativeQuery = true)
+    Double sumPrixMortalitesWithFilters(@Param("dateDebut") LocalDate dateDebut,
+                                       @Param("dateFin") LocalDate dateFin,
+                                       @Param("raceId") Long raceId);
+
+    @Query(value = "SELECT TO_CHAR(DATE_TRUNC('month', m.date), 'YYYY-MM') AS mois, COUNT(m.id), COALESCE(SUM(m.prix_achat), 0) AS prix_total " +
             "FROM mortalite m " +
             "WHERE (CAST(:dateDebut AS DATE) IS NULL OR m.date >= CAST(:dateDebut AS DATE)) " +
             "AND (CAST(:dateFin AS DATE) IS NULL OR m.date <= CAST(:dateFin AS DATE)) " +

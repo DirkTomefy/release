@@ -108,22 +108,28 @@ public class MortaliteService {
 
     public MortaliteStatsDTO getStats(LocalDate dateDebut, LocalDate dateFin, Long raceId) {
         Long total = mortaliteRepository.countMortalitesWithFilters(dateDebut, dateFin, raceId);
+        Double totalPrix = mortaliteRepository.sumPrixMortalitesWithFilters(dateDebut, dateFin, raceId);
         List<Object[]> grouped = mortaliteRepository.findMortaliteStatsGroupedByMonth(dateDebut, dateFin, raceId);
 
         List<String> labels = new ArrayList<>();
         List<Long> counts = new ArrayList<>();
+        List<Double> prixTotals = new ArrayList<>();
 
         for (Object[] row : grouped) {
             String mois = (String) row[0];
             Long count = ((Number) row[1]).longValue();
+            Double prixTotal = ((Number) row[2]).doubleValue();
             labels.add(mois);
             counts.add(count);
+            prixTotals.add(prixTotal);
         }
 
         MortaliteStatsDTO dto = new MortaliteStatsDTO();
         dto.setTotalMortalites(total != null ? total : 0L);
+        dto.setTotalPrixMortalites(totalPrix != null ? totalPrix : 0D);
         dto.setLabels(labels);
         dto.setCounts(counts);
+        dto.setPrixTotals(prixTotals);
         return dto;
     }
 }
