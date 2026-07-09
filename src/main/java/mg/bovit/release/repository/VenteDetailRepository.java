@@ -12,4 +12,5 @@ public interface VenteDetailRepository extends JpaRepository<VenteDetail, Long> 
 
     // Utile plus tard pour afficher le détail d'une vente (liste des bovins vendus)
     List<VenteDetail> findByVenteBovin_Id(Long idVente);
+    
 }

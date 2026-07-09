@@ -4,14 +4,22 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import mg.bovit.release.dto.BuyBovinRequest.CaissePaymentDTO;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
 import mg.bovit.release.dto.VenteInsertDto;
+import mg.bovit.release.dto.VenteListItem;
+import mg.bovit.release.dto.VenteSearchCriteria;
 import mg.bovit.release.dto.VenteStatsDTO;
 
 @Service
@@ -30,6 +38,9 @@ public class VenteService {
 
     @Autowired
     private MvtCaisseRepository mvtCaisseRepository;
+
+    @Autowired
+    private FactureService factureService;
 
     // On réutilise le BovinRepository existant sans le modifier :
     // il possède déjà date_vente / prix_vente sur l'entité Bovin.
@@ -173,4 +184,37 @@ public class VenteService {
 
     return dto;
 }
+
+    public Optional<VenteBovin> findById(Long id){
+        return venteBovinRepository.findById(id);
+    }
+
+    public Page<VenteListItem> searchVentes(VenteSearchCriteria criteria, Pageable pageable) {
+        Page<Object[]> page = venteBovinRepository.searchVentePage(
+                criteria.getDateDebut(),
+                criteria.getDateFin(),
+                criteria.getClientId(),
+                criteria.getRaceId(),
+                pageable
+        );
+
+        return page.map(row -> {
+            VenteListItem item = new VenteListItem();
+            item.setId(((Number) row[0]).longValue());
+            Object dateValue = row[1];
+            if (dateValue instanceof java.sql.Date) {
+                item.setDateVente(((java.sql.Date) dateValue).toLocalDate());
+            } else if (dateValue instanceof java.time.LocalDate) {
+                item.setDateVente((java.time.LocalDate) dateValue);
+            }
+            item.setClientNom((String) row[2]);
+            item.setClientPrenom((String) row[3]);
+            item.setMontantTotal(row[4] != null ? ((Number) row[4]).doubleValue() : 0.0);
+            item.setNombreBovins(row[5] != null ? ((Number) row[5]).intValue() : 0);
+            item.setCodeFacture((String) row[6]);
+            item.setFactureId(row[7] != null ? ((Number) row[7]).longValue() : null);
+            item.setFactureExistante(row[6] != null);
+            return item;
+        });
+    }
 }
