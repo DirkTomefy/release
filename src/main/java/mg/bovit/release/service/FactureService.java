@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FactureService {
@@ -36,55 +37,74 @@ public class FactureService {
         this.venteDetailRepository = venteDetailRepository;
     }
 
-    /**
-     * Génère une facture à partir d'une vente existante.
-     * Calcule le code_facture unique, crée les détails, sauvegarde et retourne le PDF.
-     */
+    // Vérifie si une facture existe
+    public boolean existsByVenteId(Long idVente) {
+        return factureRepository.existsByVente_Id(idVente);
+    }
+
+    // Récupère une facture par ID de vente
+    public Optional<Facture> findByVenteId(Long idVente) {
+        return factureRepository.findByVente_Id(idVente);
+    }
+
+    // Récupère une facture par son code
+    public Optional<Facture> findByCodeFacture(String codeFacture) {
+        return factureRepository.findByCodeFacture(codeFacture);
+    }
+
+    // Télécharge le PDF d'une facture existante par son code
+    public byte[] telechargerPdf(String codeFacture) throws Exception {
+        Facture facture = factureRepository.findByCodeFacture(codeFacture)
+                .orElseThrow(() -> new RuntimeException("Facture non trouvée avec le code : " + codeFacture));
+        return generatePdf(facture);
+    }
+
+    // Télécharge le PDF d'une facture existante par son ID
+    public byte[] telechargerPdfById(Long idFacture) throws Exception {
+        Facture facture = factureRepository.findById(idFacture)
+                .orElseThrow(() -> new RuntimeException("Facture non trouvée avec l'ID : " + idFacture));
+        return generatePdf(facture);
+    }
+
+    // Génère une facture à partir d'une vente
     @Transactional
     public byte[] genererFacture(Long idVente) throws Exception {
-        // 1. Récupérer la vente
         VenteBovin vente = venteBovinRepository.findById(idVente)
                 .orElseThrow(() -> new RuntimeException("Vente non trouvée"));
 
-        // Vérifier si une facture existe déjà
-        if (factureRepository.findByVente(vente).isPresent()) {
+        if (factureRepository.existsByVente_Id(idVente)) {
             throw new RuntimeException("Une facture existe déjà pour cette vente");
         }
 
-        // 2. Récupérer les détails de la vente
         List<VenteDetail> detailsVente = venteDetailRepository.findByVenteBovin_Id(idVente);
         if (detailsVente.isEmpty()) {
             throw new RuntimeException("Aucun bovin associé à cette vente");
         }
 
-        // 3. Construire la facture
+        // Construction de la facture
         Facture facture = new Facture();
         facture.setVente(vente);
         facture.setDateFacture(LocalDate.now());
 
-        // Calcul du code_facture
+        // Génération du code facture
         String codeFacture = genererCodeFacture(vente.getId());
         facture.setCodeFacture(codeFacture);
+        facture.setNumeroFacture("FACT-" + System.currentTimeMillis());
 
-        // Numéro de facture séquentiel (simple) : on peut prendre un timestamp ou un incrément
-        String numero = "FACT-" + System.currentTimeMillis(); // à améliorer selon besoin
-        facture.setNumeroFacture(numero);
-
-        // Calcul du montant total (on suppose que le prix de vente est dans bovin.prixVente)
+        // Calcul du montant total
         double total = 0.0;
         for (VenteDetail vd : detailsVente) {
             Bovin bovin = vd.getBovin();
-            if (bovin.getPoids_vente() == null) {
+            if (bovin.getPrix_vente() == null) {
                 throw new RuntimeException("Le bovin " + bovin.getId() + " n'a pas de prix de vente défini");
             }
-            total += bovin.getPrix_vente(); // par défaut, quantite = 1
+            total += bovin.getPrix_vente();
         }
         facture.setMontantTotal(total);
 
-        // Sauvegarder la facture (pour avoir un ID)
         facture = factureRepository.save(facture);
 
-        // 4. Créer les détails de facture
+        // Création des détails
         for (VenteDetail vd : detailsVente) {
             FactureDetail fd = new FactureDetail();
             fd.setFacture(facture);
@@ -94,32 +114,24 @@ public class FactureService {
             factureDetailRepository.save(fd);
         }
 
-        // 5. Générer le PDF
-        return genererPdf(facture);
+        return generatePdf(facture);
     }
 
-    /**
-     * Génère le code_facture selon le format : fact_MM_AAAA_XXX_IDVENTE
-     * où XXX est le numéro d'apparition dans le mois (ordre croissant des factures du mois).
-     */
+    // Génération du code facture
     private String genererCodeFacture(Long idVente) {
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();
 
-        // Compter combien de factures ont déjà été créées dans ce mois-année
         Long count = factureRepository.countByMonthAndYear(month, year);
         long apparition = (count != null ? count : 0) + 1;
 
-        // Format : fact_MM_AAAA_XXX_IDVENTE
         return String.format("fact_%02d_%04d_%03d_%d",
                 month, year, apparition, idVente);
     }
 
-    /**
-     * Génère un PDF pour une facture donnée (retourne le tableau d'octets).
-     */
-    private byte[] genererPdf(Facture facture) throws Exception {
+    // Génération du PDF (méthode publique pour le téléchargement)
+    public byte[] generatePdf(Facture facture) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
         PdfDocument pdfDoc = new PdfDocument(writer);
@@ -129,7 +141,7 @@ public class FactureService {
         document.add(new Paragraph("FACTURE")
                 .setFontSize(20));
 
-        // Infos facture
+        // Informations
         document.add(new Paragraph("N° facture : " + facture.getNumeroFacture()));
         document.add(new Paragraph("Code : " + facture.getCodeFacture()));
         document.add(new Paragraph("Date : " + facture.getDateFacture().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
@@ -137,7 +149,7 @@ public class FactureService {
         document.add(new Paragraph("Contact : " + facture.getVente().getClient().getContact()));
         document.add(new Paragraph("\n"));
 
-        // Tableau des lignes
+        // Tableau
         Table table = new Table(4);
         table.addCell("N°");
         table.addCell("Bovin (race)");
@@ -152,7 +164,6 @@ public class FactureService {
             table.addCell(String.format("%.2f", fd.getPrixUnitaire() * fd.getQuantite()));
         }
 
-        // Ligne total
         table.addCell("");
         table.addCell("");
         table.addCell("Total général");
@@ -162,19 +173,5 @@ public class FactureService {
         document.close();
 
         return baos.toByteArray();
-    }
-
-    /**
-     * Télécharger le PDF d'une facture existante (par son code).
-     */
-    public byte[] telechargerPdf(String codeFacture) throws Exception {
-        Facture facture = factureRepository.findByCodeFacture(codeFacture)
-                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
-        return genererPdf(facture);
-    }
-
-    public Facture getFactureByCode(String codeFacture) {
-        return factureRepository.findByCodeFacture(codeFacture)
-                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
     }
 }

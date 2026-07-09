@@ -1,20 +1,21 @@
 package mg.bovit.release.controller;
 
-import mg.bovit.release.dto.ControllerMessage;
-import mg.bovit.release.dto.MultiCriteriaFormBovinList;
-import mg.bovit.release.dto.VenteInsertDto;
-import mg.bovit.release.dto.VenteStatsDTO;
+import mg.bovit.release.dto.*;
 import mg.bovit.release.model.Client;
+import mg.bovit.release.model.Facture;
 import mg.bovit.release.model.Race;
+import mg.bovit.release.model.VenteBovin;
+import mg.bovit.release.model.VenteDetail;
 import mg.bovit.release.model.sqlview.BovinWithPoids;
-import mg.bovit.release.service.BovinService;
-import mg.bovit.release.service.CaisseService;
-import mg.bovit.release.service.ClientService;
-import mg.bovit.release.service.RaceService;
-import mg.bovit.release.service.VenteService;
-
+import mg.bovit.release.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -34,20 +35,19 @@ public class VenteController {
     private BovinService bovinService;
     @Autowired
     private RaceService raceService;
-
     @Autowired
     private CaisseService caisseService;
+    @Autowired
+    private FactureService factureService;
+    @Autowired
+    private VenteDetailService venteDetailService; // Nouveau service à créer
 
-    // Page d'insertion d'une vente : liste des clients (dropdown + recherche)
-    // et liste des bovins disponibles, filtrable via le multicritère déjà existant
-    // (on réutilise MultiCriteriaFormBovinList / BovinService.searchBovinsWithPoids
-    // sans toucher au code Bovin existant).
+    // Page d'insertion d'une vente
     @GetMapping("/new")
     public String showInsertForm(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria, Model model) {
         if (criteria == null) {
             criteria = new MultiCriteriaFormBovinList();
         }
-        // Par défaut, on ne propose que les bovins pas encore vendus
         if (criteria.getStatut() == null || criteria.getStatut().isBlank()) {
             criteria.setStatut("non_vendu");
         }
@@ -87,20 +87,73 @@ public class VenteController {
         return response;
     }
 
-    @GetMapping("/stats/data")
-    @ResponseBody
-    public VenteStatsDTO getStatsData(@RequestParam(required = false) String dateDebut,
-            @RequestParam(required = false) String dateFin,
-            @RequestParam(required = false) Long raceId) {
-        LocalDate debut = dateDebut != null && !dateDebut.isEmpty() ? LocalDate.parse(dateDebut) : null;
-        LocalDate fin = dateFin != null && !dateFin.isEmpty() ? LocalDate.parse(dateFin) : null;
-        return venteService.getVenteStats(debut, fin, raceId);
+    // ==================== Liste des ventes ====================
+    @GetMapping("/list")
+    public String listVentes(Model model) {
+        model.addAttribute("clients", clientService.findAll());
+        model.addAttribute("races", raceService.findAll());
+        model.addAttribute("searchCriteria", new VenteSearchCriteria());
+        return "vente/list";
     }
 
+    @GetMapping("/list/data")
+    @ResponseBody
+    public Page<VenteListItem> getVentesList(VenteSearchCriteria criteria,
+                                             @RequestParam(defaultValue = "0") int page,
+                                             @RequestParam(defaultValue = "10") int size) {
+        criteria.setPage(page);
+        criteria.setSize(size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date_vente").descending());
+        return venteService.searchVentes(criteria, pageable);
+    }
+
+    // ==================== Détails d'une vente ====================
+    @GetMapping("/{id}/details")
+    public String venteDetails(@PathVariable Long id, Model model) {
+        VenteBovin vente = venteService.findById(id).orElseThrow();
+        List<VenteDetail> details = venteDetailService.findByVenteId(id);
+        Facture facture = factureService.findByVenteId(id).orElse(null);
+        model.addAttribute("vente", vente);
+        model.addAttribute("details", details);
+        model.addAttribute("facture", facture);
+        return "vente/details";
+    }
+
+    // ==================== Génération / téléchargement facture ====================
+    @PostMapping("/{id}/facture")
+    public ResponseEntity<byte[]> gererFacture(@PathVariable Long id) throws Exception {
+        // Vérifier si la facture existe déjà
+        if (factureService.existsByVenteId(id)) {
+            Facture facture = factureService.findByVenteId(id).get();
+            byte[] pdf = factureService.generatePdf(facture);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + facture.getCodeFacture() + ".pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } else {
+            // Générer la facture et la sauvegarder, retourner le PDF
+            byte[] pdf = factureService.genererFacture(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_" + id + ".pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        }
+    }
+
+    // ==================== Statistiques ====================
     @GetMapping("/stats")
     public String statsPage(Model model) {
         model.addAttribute("races", raceService.findAll());
         return "vente/stats";
     }
 
+    @GetMapping("/stats/data")
+    @ResponseBody
+    public VenteStatsDTO getStatsData(@RequestParam(required = false) String dateDebut,
+                                      @RequestParam(required = false) String dateFin,
+                                      @RequestParam(required = false) Long raceId) {
+        LocalDate debut = dateDebut != null && !dateDebut.isEmpty() ? LocalDate.parse(dateDebut) : null;
+        LocalDate fin = dateFin != null && !dateFin.isEmpty() ? LocalDate.parse(dateFin) : null;
+        return venteService.getVenteStats(debut, fin, raceId);
+    }
 }

@@ -17,7 +17,6 @@ public interface PeseBovinRepository extends JpaRepository<PeseBovin, Long>, Jpa
     @Query(value = "SELECT * FROM pese_bovin pb WHERE pb.id_bovin = :id_bovin ORDER BY pb.date_pese DESC, pb.id DESC LIMIT 1", nativeQuery = true)
     PeseBovin getLatestPeseByBovin(@Param("id_bovin") Long id_bovin);
 
-    // ✅ NOUVELLE MÉTHODE : Récupérer toutes les pesées d'un bovin triées par date croissante
     @Query("SELECT p FROM PeseBovin p WHERE p.bovin.id = :bovinId ORDER BY p.date_pese ASC")
     List<PeseBovin> findByBovinIdOrderByDatePeseAsc(@Param("bovinId") Long bovinId);
 }
