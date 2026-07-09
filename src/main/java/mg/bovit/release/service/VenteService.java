@@ -2,11 +2,9 @@ package mg.bovit.release.service;
 
 import java.sql.Date;
 import java.util.HashSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -98,7 +96,7 @@ public class VenteService {
         Double totalVente = 0.0;
 
         Set<Long> bovinIds = new HashSet<>();
-        
+
         // Création de l'entête de vente
         VenteBovin vente = new VenteBovin();
         vente.setClient(client);
