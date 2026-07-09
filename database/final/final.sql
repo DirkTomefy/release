@@ -590,6 +590,26 @@ CREATE TABLE inventaire_detail (
     CONSTRAINT fk_inventaire_detail_bovin FOREIGN KEY (id_bovin) REFERENCES bovin(id) ON DELETE RESTRICT
 );
 
+
+CREATE TABLE facture (
+    id SERIAL PRIMARY KEY,
+    id_vente INT NOT NULL UNIQUE, -- une facture par vente
+    numero_facture VARCHAR(50) NOT NULL,
+    date_facture DATE NOT NULL DEFAULT CURRENT_DATE,
+    montant_total DOUBLE PRECISION NOT NULL,
+    CONSTRAINT fk_facture_vente FOREIGN KEY (id_vente) REFERENCES vente_bovin(id)
+);
+
+CREATE TABLE facture_detail (
+    id SERIAL PRIMARY KEY,
+    id_facture INT NOT NULL,
+    id_vente_detail INT NOT NULL UNIQUE, -- un détail de vente correspond à une ligne de facture
+    prix_unitaire DOUBLE PRECISION NOT NULL,
+    quantite INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_facture_detail_facture FOREIGN KEY (id_facture) REFERENCES facture(id),
+    CONSTRAINT fk_facture_detail_vente_detail FOREIGN KEY (id_vente_detail) REFERENCES vente_detail(id)
+);
+
 -- ============================================================
 -- Fin du script
 -- ============================================================
