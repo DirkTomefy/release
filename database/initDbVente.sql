@@ -26,4 +26,8 @@ CREATE Table vente_detail (
     CONSTRAINT fk_vente_detail_bovin FOREIGN KEY (id_bovin)
     REFERENCES bovin(id),
     CONSTRAINT fk_vente_detail_bovin UNIQUE (id_bovin)
+<<<<<<< HEAD
 )
+=======
+)
+>>>>>>> feat-vente

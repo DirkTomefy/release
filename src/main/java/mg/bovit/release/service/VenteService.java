@@ -2,7 +2,10 @@ package mg.bovit.release.service;
 
 import java.sql.Date;
 import java.util.HashSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -36,17 +39,20 @@ import mg.bovit.release.dto.VenteStatsDTO;
 @Service
 public class VenteService {
     @Autowired
-    private final VenteBovinRepository venteBovinRepository;
-    @Autowired
-    private final VenteDetailRepository venteDetailRepository;
-    @Autowired
-    private final ClientRepository clientRepository;
-    @Autowired
-    private final CaisseRepository caisseRepository;
-    @Autowired
-    private final MvtCaisseRepository mvtCaisseRepository;
+    private VenteBovinRepository venteBovinRepository;
 
- 
+    @Autowired
+    private VenteDetailRepository venteDetailRepository;
+
+    @Autowired
+    private ClientRepository clientRepository;
+
+    @Autowired
+    private CaisseRepository caisseRepository;
+
+    @Autowired
+    private MvtCaisseRepository mvtCaisseRepository;
+
     // On réutilise le BovinRepository existant sans le modifier :
     // il possède déjà date_vente / prix_vente sur l'entité Bovin.
     private final BovinRepository bovinRepository;
@@ -92,20 +98,7 @@ public class VenteService {
         Double totalVente = 0.0;
 
         Set<Long> bovinIds = new HashSet<>();
-        for (VenteInsertDto.LigneVenteDto ligne : lignes) {
-            if (ligne.getBovinId() == null) {
-                throw new Exception("Un bovin de la ligne de vente est manquant");
-            }
-
-            if (!bovinIds.add(ligne.getBovinId())) {
-                throw new Exception("Un bovin ne peut apparaître qu'une seule fois dans la même vente");
-            }
-
-            if (ligne.getPrixVente() == null || ligne.getPrixVente() <= 0) {
-                throw new Exception("Le prix de vente d'un bovin doit être supérieur à 0");
-            }
-        }
-
+        
         // Création de l'entête de vente
         VenteBovin vente = new VenteBovin();
         vente.setClient(client);
