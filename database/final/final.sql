@@ -591,19 +591,24 @@ CREATE TABLE inventaire_detail (
 );
 
 
+-- Table facture modifiée
 CREATE TABLE facture (
     id SERIAL PRIMARY KEY,
-    id_vente INT NOT NULL UNIQUE, -- une facture par vente
-    numero_facture VARCHAR(50) NOT NULL,
+    id_vente INT NOT NULL UNIQUE,
+    numero_facture VARCHAR(50) NOT NULL,   -- peut être conservé comme numéro séquentiel simple
+    code_facture VARCHAR(50) NOT NULL UNIQUE, -- format : fact_MM_AAAA_XXX_IDVENTE
     date_facture DATE NOT NULL DEFAULT CURRENT_DATE,
     montant_total DOUBLE PRECISION NOT NULL,
     CONSTRAINT fk_facture_vente FOREIGN KEY (id_vente) REFERENCES vente_bovin(id)
 );
 
+CREATE INDEX idx_facture_code ON facture(code_facture);
+
+-- Table facture_detail inchangée
 CREATE TABLE facture_detail (
     id SERIAL PRIMARY KEY,
     id_facture INT NOT NULL,
-    id_vente_detail INT NOT NULL UNIQUE, -- un détail de vente correspond à une ligne de facture
+    id_vente_detail INT NOT NULL UNIQUE,
     prix_unitaire DOUBLE PRECISION NOT NULL,
     quantite INT NOT NULL DEFAULT 1,
     CONSTRAINT fk_facture_detail_facture FOREIGN KEY (id_facture) REFERENCES facture(id),

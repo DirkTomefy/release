@@ -60,7 +60,13 @@
     <artifactId>spring-boot-starter-thymeleaf</artifactId>
 </dependency>
 
-
+	 <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>itext-core</artifactId>
+        <version>9.0.0</version> <!-- Vérifiez la dernière version stable -->
+        <type>pom</type>
+    </dependency>
+	
 	</dependencies>
 
 	<build>
