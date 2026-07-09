@@ -1,5 +1,4 @@
 package mg.bovit.release.specification;
-import mg.bovit.release.model.VenteDetail;
 import mg.bovit.release.model.sqlview.PeseBovinWithDateVente;
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 
