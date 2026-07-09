@@ -52,6 +52,26 @@ public class ClientService {
         }
 
         String contact = client.getContact().trim();
+
+        boolean isEmail = contact.matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)*\\.[a-zA-Z]{2,}$");
+
+        // On tolère les espaces/tirets de saisie (034 12 345 67, 034-12-345-67...)
+        // et le format international (+261 à la place du 0 initial), en normalisant
+        // avant de tester le motif.
+        String normalizedPhone = contact.replaceAll("[\\s-]", "");
+        boolean isPhone = normalizedPhone.matches("^0[0-9]{9}$")
+                || normalizedPhone.matches("^\\+261[0-9]{9}$");
+
+        if (!isEmail && !isPhone) {
+            throw new Exception("Le contact doit être un email valide ou un numéro de téléphone "
+                    + "(0XXXXXXXXX ou +261XXXXXXXXX, espaces/tirets tolérés)");
+        }
+
+        // On stocke le téléphone sous forme normalisée (sans espaces/tirets),
+        // pour que la vérification de doublon détecte bien "034 12 345 67" == "0341234567"
+        if (isPhone) {
+            contact = normalizedPhone;
+        }
         client.setContact(contact);
 
         boolean duplicateContact = client.getId() == null

@@ -4,19 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Élevage · Fiche client</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: #f9f7f4; color: #3e3e3b; }
-        .navbar { background-color: #fff; border-bottom: 1px solid #e2ddd6; }
-        .navbar-brand { font-weight: 600; color: #5b4b3a !important; }
-        .card { border: 1px solid #e7e0d8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .btn-soft-primary { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; font-weight: 500; }
-        .btn-soft-primary:hover { background-color: #dde8d1; color: #3a562c; }
-        .form-control { border-color: #e0d8cf; border-radius: 8px; padding: 0.6rem 1rem; }
-        .form-control:focus { border-color: #b6a88e; box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15); }
-    </style>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
 </head>
 <body>
 
@@ -57,7 +45,11 @@
                 <div class="mb-3">
                     <label for="contact" class="form-label">Contact</label>
                     <input type="text" class="form-control" id="contact" th:field="*{contact}"
-                           placeholder="Téléphone ou email" required>
+                           placeholder="ex: jean@gmail.com ou 0341234567" required>
+                    <div class="form-text">
+                        Email valide (sous-domaines acceptés, ex: nom@mail.univ.mg) ou numéro malgache
+                        (0341234567 ou +261341234567 — espaces/tirets tolérés).
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">

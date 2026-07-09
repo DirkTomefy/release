@@ -1,4 +1,4 @@
--- Active: 1781599410280@@127.0.0.1@5432@bovin_db
+-- Active: 1781977160392@@127.0.0.1@5432@bovin_db
 -- ============================================================
 -- Script combiné pour l'initialisation complète de la base bovin_db
 -- Exécuter sur une base vide (ou avec DROP en tête).
