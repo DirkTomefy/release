@@ -36,12 +36,10 @@ public class InventaireController {
     private InventaireService inventaireService;
 
     @Autowired
-    private MaterielTypeService materielTypeService; // Ajoute l'injection en haut du controleur
+    private MaterielTypeService materielTypeService;
 
     @GetMapping("/form")
     public String getInventaireForm(Model model) {
-        // Recupere tous les materiels avec leur stock actuel pour initialiser le
-        // tableau
         List<MaterielStockDto> stocks = materielService.findAllMaterielStockRestant();
         List<MaterielType> materielTypes = materielTypeService.findAll();
         List<Materiel> materiels = materielService.findAll();
@@ -64,7 +62,6 @@ public class InventaireController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Traite l'inventaire complet en base et ajuste les mouvements de stock
             inventaireService.faireInventaireMultiple(payload);
 
             response.put("status", "success");
@@ -81,7 +78,6 @@ public class InventaireController {
 
     @GetMapping("/liste")
     public String listInventaires(Model model) {
-        // Implementation for listing inventaires
         List<Inventaire> inventaires = inventaireService.listerInventaires();
         model.addAttribute("inventaires", inventaires);
 
@@ -90,9 +86,10 @@ public class InventaireController {
 
     @GetMapping("/{id}/details")
     public String listInventaireDetails(@PathVariable Long id, Model model) {
-        List<InventaireDetail> inventaireDetails = inventaireService.listerInventairesDetails();
+        // Filtrer ou charger les détails specifiques a cet inventaire id
+        List<InventaireDetail> inventaireDetails = inventaireService.listerInventairesDetailsParId(id);
         model.addAttribute("inventaireDetails", inventaireDetails);
 
-        return "inventaire/details";
+        return "inventaire/listDetails";
     }
 }

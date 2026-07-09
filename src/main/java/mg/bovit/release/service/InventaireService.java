@@ -93,8 +93,10 @@ public class InventaireService {
         return inventaireRepository.findAll();
     }
 
-    public List<InventaireDetail> listerInventairesDetails() {
-        return inventaireDetailRepository.findAll();
+    public List<InventaireDetail> listerInventairesDetailsParId(Long id) {
+        return inventaireDetailRepository.findAll().stream()
+                .filter(detail -> detail.getInventaire() != null && detail.getInventaire().getId().equals(id))
+                .toList();
     }
 
     public Inventaire saveFromPaylod(InventairePayload payload) {

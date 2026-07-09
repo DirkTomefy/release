@@ -151,14 +151,13 @@
 
   <div id="toast" class="toast-message"></div>
 
-  <script th:inline="javascript">
-    // 1. Script asynchrone pour mettre a jour les materiels selon le type selectionne
+<script th:inline="javascript">
+    // script asynchrone pour mettre a jour les materiels selon le type selectionne
     document.getElementById('materielTypeId').addEventListener('change', function () {
         const typeId = this.value;
         const materielSelect = document.getElementById('materielId');
         
         if (!typeId) {
-            // Si aucun type n'est selectionne, on affiche toutes les options initiales issues de stocks
             resetMaterielOptions();
             return;
         }
@@ -166,23 +165,17 @@
         fetch('/api/materiels/type/' + typeId)
             .then(response => response.json())
             .then(data => {
-                materielSelect.innerHTML = '<option value="">-- Sélectionner un matériel --</option>';
+                materielSelect.innerHTML = '';
                 data.forEach(materiel => {
                     const option = document.createElement('option');
                     option.value = materiel.id;
                     option.textContent = materiel.libelle;
-                    
-                    // On recupere la quantite exacte associee dans le DTO ou l'API
-                    const stockValue = (materiel.quantiteRestant !== undefined) ? materiel.quantiteRestant : 0.0;
-                    option.setAttribute('data-stock', stockValue);
-                    
                     materielSelect.appendChild(option);
                 });
             })
             .catch(error => console.error('Erreur lors de la recuperation des materiels :', error));
     });
 
-    // Sauvegarde des options du DTO generees par Thymeleaf pour pouvoir reinitialiser facilement
     const initialStocks = /*[[${stocks}]]*/ [];
 
     function resetMaterielOptions() {
@@ -192,12 +185,11 @@
             const option = document.createElement('option');
             option.value = stock.materiel.id;
             option.textContent = stock.materiel.libelle;
-            option.setAttribute('data-stock', stock.quantiteRestant);
             materielSelect.appendChild(option);
         });
     }
 
-    // 2. Gestion de l'ajout multiple et de la validation globale
+    // gestion de l'ajout multiple et de la validation globale
     document.addEventListener('DOMContentLoaded', function() {
       const dateInput = document.getElementById('date_inventaire');
       const validerBtn = document.getElementById('validerBtn');
@@ -211,15 +203,14 @@
         dateInput.value = new Date().toISOString().split('T')[0];
       }
 
-      // Ajouter un materiel dans le tableau
+      // ajouter un materiel dans le tableau
       addMaterielBtn.addEventListener('click', function() {
         const selectedOption = materielSelect.options[materielSelect.selectedIndex];
         if (!selectedOption) return;
 
         const id = selectedOption.value;
         const libelle = selectedOption.text;
-        const stockActuel = selectedOption.getAttribute('data-stock') || 0.0;
-
+        
         if (!id || id === "") {
           showToast('Veuillez selectionner un matériel valide.', 'error');
           return;
@@ -229,6 +220,14 @@
           showToast('Ce matériel est déjà présent dans la liste.', 'error');
           return;
         }
+
+        let stockActuel = 0.0;
+        
+        initialStocks.forEach(stock => {
+          if (stock.materiel && stock.materiel.id == id) {
+            stockActuel = stock.quantiteRestant !== undefined && stock.quantiteRestant !== null ? stock.quantiteRestant : 0.0;
+          }          
+        });
 
         const row = document.createElement('tr');
         row.className = 'materiel-row';
@@ -256,7 +255,7 @@
         materielSelect.value = '';
       });
 
-      // Validation finale du payload JSON
+      // action de validation globale
       validerBtn.addEventListener('click', function() {
         const dateInventaire = dateInput.value;
         const libelle = document.getElementById('libelle').value;

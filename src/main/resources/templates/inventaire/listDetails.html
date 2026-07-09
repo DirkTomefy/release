@@ -1,42 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Details d'inventaire</title>
-</head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détails d'Inventaire</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600&display=swap" rel="stylesheet">
 
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f9f7f4;
+      color: #3e3e3b;
+    }
+    .card {
+      border: 1px solid #e7e0d8;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .table th {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7a7a72;
+      font-weight: 600;
+    }
+    .badge-type {
+      background-color: #f1ede7;
+      color: #5c5c56;
+      border: 1px solid #e2dac0;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+    }
+    .btn-soft-secondary {
+      background-color: #f1ede7;
+      color: #5c5c56;
+      border: 1px solid #e2dac0;
+      font-weight: 500;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+    }
+    .btn-soft-secondary:hover {
+      background-color: #e5ded4;
+    }
+    .badge-ecart {
+      font-size: 0.85rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .ecart-positif { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; }
+    .ecart-negatif { background-color: #fde8e8; color: #813838; border: 1px solid #f5d2d2; }
+    .ecart-nul { background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+  </style>
+</head>
 <body>
-    <th:block th:if="${inventaireDetails.isEmpty()}">
-        <p>Aucun détail d'inventaire trouvé.</p>
-    </th:block>
-    <th:block th:unless="${inventaireDetails.isEmpty()}">
-        <p>Inventaire : <span th:text="${inventaireDetails[0].getId()}"></span></p>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Type materiel</th>
-                    <th>Materiel</th>
-                    <th>Quantite initiale</th>
-                    <th>Quantite finale</th>
-                    <th>observation</th>
-                </tr>
+
+  <div class="container py-5">
+    
+    <div class="mb-4 d-flex justify-content-between align-items-end">
+      <div>
+        <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
+          <i class="bi bi-clipboard-check me-2" style="color:#7a9e5a;"></i>Détails de l'inventaire
+        </h1>
+        <p class="text-muted small mb-0" th:unless="${inventaireDetails.isEmpty()}">
+          Fiche d'ajustement de stock pour l'inventaire <span class="fw-semibold text-dark" th:text="'#' + ${inventaireDetails[0].getInventaire().getId()}"></span>
+        </p>
+      </div>
+      <a href="/inventaire/liste" class="btn btn-soft-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Retour à l'historique
+      </a>
+    </div>
+
+    <div th:if="${inventaireDetails.isEmpty()}" class="card py-5 text-center text-muted">
+      <div class="card-body">
+        <i class="bi bi-exclamation-circle h3 d-block mb-2 text-warning"></i>
+        Aucun détail d'inventaire trouvé pour cette référence.
+      </div>
+    </div>
+
+    <div th:unless="${inventaireDetails.isEmpty()}" class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4" style="width: 80px;">ID</th>
+                <th style="width: 180px;">Type matériel</th>
+                <th>Matériel</th>
+                <th style="width: 150px;">Qté Initiale</th>
+                <th style="width: 150px;">Qté Réelle</th>
+                <th style="width: 140px;">Écart</th>
+                <th class="pe-4">Observations</th>
+              </tr>
             </thead>
             <tbody>
-                <!-- Iterate over the inventaireDetails list -->
-                <tr th:each="inventaireDetail : ${inventaireDetails}">
-                    <td th:text="${inventaireDetail.getId()}"></td>
-                    <td th:text="${inventaireDetail.getMateriel().getType().getLibelle()}"></td>
-                    <td th:text="${inventaireDetail.getMateriel().getLibelle()}"></td>
-                    <td th:text="${inventaireDetail.getQuantiteInitiale()}"></td>
-                    <td th:text="${inventaireDetail.getQuantiteFinale()}"></td>
-                    <td th:text="${inventaireDetail.getObservation()}"></td>
-                </tr>
+              <tr th:each="inventaireDetail : ${inventaireDetails}">
+                <td class="ps-4 text-muted small" th:text="'#' + ${inventaireDetail.getId()}"></td>
+                <td>
+                  <span class="badge badge-type" th:text="${inventaireDetail.getMateriel().getType().getLibelle()}">Type</span>
+                </td>
+                <td class="fw-medium text-dark" th:text="${inventaireDetail.getMateriel().getLibelle()}">Matériel</td>
+                <td th:text="${inventaireDetail.getQuantiteInitiale()}">0</td>
+                <td class="fw-semibold text-dark" th:text="${inventaireDetail.getQuantiteFinale()}">0</td>
+                <td>
+                  <span th:with="diff=${inventaireDetail.getQuantiteFinale() - inventaireDetail.getQuantiteInitiale()}"
+                        th:class="${diff > 0 ? 'badge badge-ecart ecart-positif' : (diff < 0 ? 'badge badge-ecart ecart-negatif' : 'badge badge-ecart ecart-nul')}"
+                        th:text="${diff > 0 ? '+' + diff : diff}">
+                  </span>
+                </td>
+                <td class="pe-4 text-muted small" th:text="${inventaireDetail.getObservations() != null && !inventaireDetail.getObservations().isEmpty() ? inventaireDetail.getObservations() : 'R.A.S.'}">-</td>
+              </tr>
             </tbody>
-        </table>
-    </th:block>
-</body>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
+</body>
 </html>

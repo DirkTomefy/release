@@ -41,7 +41,6 @@ public class MouvementController {
         return "mouvement/list";
     }
 
-    // Affiche le formulaire unique fusionne
     @GetMapping("/form")
     public String showFormUnique(Model model) {
         List<MaterielType> materielTypes = materielTypeService.findAll();
@@ -52,10 +51,9 @@ public class MouvementController {
         model.addAttribute("materiels", materiels);
         model.addAttribute("caisses", caisses);
 
-        return "mouvement/form"; // Nom de ton nouveau fichier HTML unique
+        return "mouvement/form";
     }
 
-    // Endpoint de validation unique pour ENTREE et SORTIE
     @PostMapping("/form/valider")
     public ResponseEntity<Map<String, String>> validerMouvement(@RequestBody MouvementStockPayload payload) {
         Map<String, String> response = new HashMap<>();
