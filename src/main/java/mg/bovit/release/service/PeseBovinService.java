@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.PeseBovin;
+import mg.bovit.release.model.sqlview.PeseBovinWithDateVente;
 import mg.bovit.release.repository.BovinRepository;
 import mg.bovit.release.repository.PeseBovinRepository;
+import mg.bovit.release.repository.PeseBovinWIthDateVenteRepository;
 import mg.bovit.release.specification.PeseSpecification;
 
 @Service
@@ -23,6 +25,9 @@ public class PeseBovinService {
 
     @Autowired
     private BovinRepository bovinRepository;
+
+    @Autowired
+    private PeseBovinWIthDateVenteRepository peseBovinWIthDateVenteRepository;
 
     // function to find peseBovin by id
     public PeseBovin findById(Long id_peseBovin) {
@@ -62,7 +67,7 @@ public class PeseBovinService {
         return peseBovinRepository.findAll();
     }
 
-    public Page<PeseBovin> searchPeseBovins(MulticriteriaListPeseBovin form) {
+    public Page<PeseBovinWithDateVente> searchPeseBovins(MulticriteriaListPeseBovin form) {
         // Construction du tri
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
@@ -81,7 +86,7 @@ public class PeseBovinService {
                 Sort.by(direction, sortField)
         );
 
-        return peseBovinRepository.findAll(PeseSpecification.fromForm(form), pageable);
+        return peseBovinWIthDateVenteRepository.findAll(PeseSpecification.fromForm(form), pageable);
     }
 
     //  Récupération toutes les pesées d'un bovin triées par date

@@ -21,6 +21,7 @@ import mg.bovit.release.dto.PeseBovinRequest;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.PeseBovin;
 import mg.bovit.release.model.Race;
+import mg.bovit.release.model.sqlview.PeseBovinWithDateVente;
 import mg.bovit.release.service.BovinService;
 import mg.bovit.release.service.PeseBovinService;
 import mg.bovit.release.service.RaceService;
@@ -46,7 +47,7 @@ public class PeseBovinController {
         }
 
         // Appel du service de recherche multicritère paginée
-        Page<PeseBovin> pesePage = peseBovinService.searchPeseBovins(criteria);
+        Page<PeseBovinWithDateVente> pesePage = peseBovinService.searchPeseBovins(criteria);
         List<Race> races = raceService.findAll();
 
         // Ajout des attributs requis par la vue Thymeleaf

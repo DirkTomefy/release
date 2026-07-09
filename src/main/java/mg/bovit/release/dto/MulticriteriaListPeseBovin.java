@@ -1,14 +1,22 @@
 package mg.bovit.release.dto;
 
-import java.sql.Date;
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 public class MulticriteriaListPeseBovin {
 
   
     private Long raceId;
-    private Date dateRecherePese;
-    private Double prixAchatMin;
-    private Double prixAchatMax;
+    
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate datePeseMin;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate datePeseMax;
+
+    private Double poidsApresMin;
+    private Double poidsApresMax;
 
     private String statut; // "tous", "vendu", "non_vendu"
 
@@ -58,28 +66,36 @@ public class MulticriteriaListPeseBovin {
         this.sort = sort;
     }
 
-    public Date getDateRecherePese() {
-        return dateRecherePese;
+    public LocalDate getDatePeseMin() {
+        return datePeseMin;
     }
 
-    public void setDateRecherePese(Date dateRecherePese) {
-        this.dateRecherePese = dateRecherePese;
+    public void setDatePeseMin(LocalDate datePeseMin) {
+        this.datePeseMin = datePeseMin;
     }
 
-    public Double getPrixAchatMin() {
-        return prixAchatMin;
+    public LocalDate getDatePeseMax() {
+        return datePeseMax;
     }
 
-    public void setPrixAchatMin(Double prixAchatMin) {
-        this.prixAchatMin = prixAchatMin;
+    public void setDatePeseMax(LocalDate datePeseMax) {
+        this.datePeseMax = datePeseMax;
     }
 
-    public Double getPrixAchatMax() {
-        return prixAchatMax;
+    public Double getPoidsApresMin() {
+        return poidsApresMin;
     }
 
-    public void setPrixAchatMax(Double prixAchatMax) {
-        this.prixAchatMax = prixAchatMax;
+    public void setPoidsApresMin(Double poidsApresMin) {
+        this.poidsApresMin = poidsApresMin;
+    }
+
+    public Double getPoidsApresMax() {
+        return poidsApresMax;
+    }
+
+    public void setPoidsApresMax(Double poidsApresMax) {
+        this.poidsApresMax = poidsApresMax;
     }
 
 }
