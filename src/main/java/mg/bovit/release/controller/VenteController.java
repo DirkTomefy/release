@@ -113,9 +113,13 @@ public class VenteController {
         VenteBovin vente = venteService.findById(id).orElseThrow();
         List<VenteDetail> details = venteDetailService.findByVenteId(id);
         Facture facture = factureService.findByVenteId(id).orElse(null);
+        double totalVente = details.stream()
+                .mapToDouble(d -> d.getBovin().getPrix_vente() != null ? d.getBovin().getPrix_vente() : 0.0)
+                .sum();
         model.addAttribute("vente", vente);
         model.addAttribute("details", details);
         model.addAttribute("facture", facture);
+        model.addAttribute("venteTotal", totalVente);
         return "vente/details";
     }
 
