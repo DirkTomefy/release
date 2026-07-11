@@ -9,11 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import mg.bovit.release.dto.MouvementPaiementPayload;
 import mg.bovit.release.dto.MouvementStockPayload;
 import mg.bovit.release.model.Caisse;
+import mg.bovit.release.model.CauseCaisse;
 import mg.bovit.release.model.Materiel;
 import mg.bovit.release.model.MouvementCaisse;
 import mg.bovit.release.model.MouvementStock;
 import mg.bovit.release.model.MouvementStockPaiement;
 import mg.bovit.release.repository.CaisseRepository;
+import mg.bovit.release.repository.CauseCaisseRepository;
 import mg.bovit.release.repository.MaterielRepository;
 import mg.bovit.release.repository.MouvementStockPaiementRepository;
 import mg.bovit.release.repository.MouvementStockRepository;
@@ -34,7 +36,14 @@ public class MouvementStockService {
     private CaisseRepository caisseRepository;
 
     @Autowired
+    private CauseCaisseRepository causeCaisseRepository;
+
+    @Autowired
     private MouvementCaisseService mouvementCaisseService;
+
+    // Libellé de la cause appliquée automatiquement aux sorties de caisse
+    // générées par un paiement d'achat de stock/matériel.
+    private static final String CAUSE_STOCK = "STOCK";
 
     @Transactional
     public void traiterMouvementStock(MouvementStockPayload payload) {
@@ -85,6 +94,7 @@ public class MouvementStockService {
             mvtCaisse.setCaisse(paiement.getCaisse());
             mvtCaisse.setMontant(-1 * paiement.getMontant());
             mvtCaisse.setDate(mouvementSauvegarde.getDateMouvement());
+            mvtCaisse.setCauseCaisse(getCauseCaisse(CAUSE_STOCK));
             mouvementCaisseService.save(mvtCaisse);
 
             // Mise a jour du solde reel de la caisse
@@ -143,5 +153,12 @@ public class MouvementStockService {
         } else if ("LIFO".equalsIgnoreCase(typeGestion)) {
             mouvements.sort((m1, m2) -> m2.getDateMouvement().compareTo(m1.getDateMouvement()));
         }
+    }
+
+    // Recherche la cause de caisse par son libellé (seed obligatoire en base,
+    // voir database/Migration_cause_caisse.sql)
+    private CauseCaisse getCauseCaisse(String libelle) {
+        return causeCaisseRepository.findByLibelleIgnoreCase(libelle)
+                .orElseThrow(() -> new RuntimeException("Cause de caisse introuvable : " + libelle));
     }
 }

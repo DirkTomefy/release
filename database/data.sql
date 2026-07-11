@@ -2,6 +2,11 @@
 CREATE DATABASE bovin_db;
 \c bovin_db;
 
+CREATE TABLE cause_caisse(
+    id SERIAL PRIMARY KEY,
+    libelle VARCHAR(100) NOT NULL
+);
+
 CREATE TABLE caisse (
     id SERIAL PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL,
@@ -85,9 +90,20 @@ CREATE TABLE mvt_caisse(
     date DATE NOT NULL,
     montant  DOUBLE PRECISION NOT NULL,
     id_caisse INTEGER NOT NULL,
+    id_cause_caisse INTEGER NOT NULL,
 
     CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse)
+        REFERENCES caisse(id),
 
-        REFERENCES caisse(id)
+    CONSTRAINT fk_mvt_caisse_cause FOREIGN KEY (id_cause_caisse)
+        REFERENCES cause_caisse(id)
 
 );
+
+INSERT INTO cause_caisse (libelle) VALUES
+    ('STOCK'),
+    ('ACHAT_BOVIN'),
+    ('ACHAT'),
+    ('PAYEMENT'),
+    ('VENTE'),
+    ('AUTRE');

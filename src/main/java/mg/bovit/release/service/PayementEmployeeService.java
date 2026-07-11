@@ -27,6 +27,10 @@ public class PayementEmployeeService {
     private static final String LIBELLE_AVANCE = "Avance";
     private static final String LIBELLE_SANCTION = "Sanction";
 
+    // Cause de caisse appliquée automatiquement aux sorties générées
+    // par un paiement d'employé (salaire, avance ou sanction).
+    private static final String CAUSE_PAYEMENT = "PAYEMENT";
+
     @Autowired
     private PayementEmployeeRepository payementEmployeeRepository;
 
@@ -41,6 +45,9 @@ public class PayementEmployeeService {
 
     @Autowired
     private MvtCaisseRepository mvtCaisseRepository;
+
+    @Autowired
+    private CauseCaisseRepository causeCaisseRepository;
 
     @Autowired
     private ContratRepository contratRepository;
@@ -124,6 +131,8 @@ public class PayementEmployeeService {
             mvt.setCaisse(caisse);
             mvt.setDate(new Date(System.currentTimeMillis()));
             mvt.setMontant(-montantDouble); // sortie de fonds
+            mvt.setCauseCaisse(causeCaisseRepository.findByLibelleIgnoreCase(CAUSE_PAYEMENT)
+                    .orElseThrow(() -> new RuntimeException("Cause de caisse introuvable : " + CAUSE_PAYEMENT)));
             mvtCaisseRepository.save(mvt);
         }
 
