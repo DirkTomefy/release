@@ -24,6 +24,11 @@ public class MouvementStockSpecification {
                 predicate = cb.and(predicate,
                         cb.equal(root.get("materiel").get("id"), form.getIdMateriel()));
             }
+
+            if (form.getIdTypeMateriel() != null) {
+                predicate = cb.and(predicate,
+                        cb.equal(root.get("materiel").get("type").get("id"), form.getIdTypeMateriel()));
+            }
             
             return predicate;
         };

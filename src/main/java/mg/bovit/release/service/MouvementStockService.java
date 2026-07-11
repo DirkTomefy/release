@@ -24,6 +24,7 @@ import mg.bovit.release.model.MouvementStock;
 import mg.bovit.release.model.MouvementStockPaiement;
 import mg.bovit.release.repository.CaisseRepository;
 import mg.bovit.release.repository.MaterielRepository;
+import mg.bovit.release.repository.MaterielTypeRepository;
 import mg.bovit.release.repository.MouvementStockPaiementRepository;
 import mg.bovit.release.repository.MouvementStockRepository;
 import mg.bovit.release.specification.MouvementStockSpecification;
@@ -41,12 +42,48 @@ public class MouvementStockService {
     private MaterielRepository materielRepository;
 
     @Autowired
+    private MaterielTypeRepository materielTypeRepository;
+
+    @Autowired
     private CaisseRepository caisseRepository;
 
     @Autowired
     private MouvementCaisseService mouvementCaisseService;
 
     public Map<LocalDate, MaterielStockDto> searchEtatStock(MultiCriteriaEtatStockMateriel form) {
+        if(form.getIdMateriel() != null) {
+            return searchEtatMaterielStock(form);
+        }
+        if(form.getIdTypeMateriel() != null ) {
+            return searchEtatStockTypeMateriel(form);
+        }
+        return null;
+    }
+
+    public Map<LocalDate, MaterielStockDto> searchEtatStockTypeMateriel(MultiCriteriaEtatStockMateriel form) {
+        HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
+        MaterielStockDto matStockRestant = this.findTypeMaterielStockRestant(form.getDateDebut(),
+                form.getIdTypeMateriel().longValue());
+        // recueperer la liste des mouvements selons le critaire
+        List<MouvementStock> mouvementStocks = searchMouvementStock(form);
+
+        // ajouter le premier element
+        materielStockOnDates.put(form.getDateDebut(), matStockRestant);
+
+        Double quantiteRest = matStockRestant.getQuantiteRestant();
+        for (MouvementStock mouvementStock : mouvementStocks) {
+            if (mouvementStock.getTypeMouvement().equalsIgnoreCase("ENTREE")) {
+                quantiteRest += mouvementStock.getQuantite();
+            } else {
+                quantiteRest -= mouvementStock.getQuantite();
+            }
+            materielStockOnDates.put(mouvementStock.getDateMouvement().toLocalDate(),
+                    new MaterielStockDto(matStockRestant.getMateriel(), quantiteRest));
+        }
+        return new TreeMap<>(materielStockOnDates);
+    }
+
+    public Map<LocalDate, MaterielStockDto> searchEtatMaterielStock(MultiCriteriaEtatStockMateriel form) {
         HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
         // recuperer le stock restant au date initial
         MaterielStockDto matStockRestant = this.findMaterielStockRestant(form.getDateDebut(),
@@ -73,6 +110,19 @@ public class MouvementStockService {
     public List<MouvementStock> searchMouvementStock(MultiCriteriaEtatStockMateriel form) {
         Sort sort = Sort.by(Sort.Direction.ASC, "dateMouvement");
         return mouvementStockRepository.findAll(MouvementStockSpecification.fromForm(form), sort);
+    }
+
+    public MaterielStockDto findTypeMaterielStockRestant(LocalDate date, Long idTypeMateriel) {
+        // si le materiel est introuvable retourner exeption
+        if (!materielTypeRepository.existsById(idTypeMateriel)) {
+            throw new RuntimeException("Le type de materiel avec id : " + idTypeMateriel + " est introuvable .");
+        }
+
+        //calculer le reste 
+        double reste  =  mouvementStockRepository.findSommeEntreeTypeMaterielToDate(idTypeMateriel,Date.valueOf(date)) - mouvementStockRepository.findSommeEntreeTypeMaterielToDate(idTypeMateriel,Date.valueOf(date));
+        Materiel materiel = new Materiel();
+        materiel.setType(materielTypeRepository.findById(idTypeMateriel).get());
+        return new MaterielStockDto(materiel,reste);
     }
 
     public MaterielStockDto findMaterielStockRestant(LocalDate date, Long idMateriel) {

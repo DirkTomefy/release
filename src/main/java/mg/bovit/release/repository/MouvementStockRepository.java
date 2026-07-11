@@ -28,7 +28,18 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
             "GROUP BY ms.materiel")
     public List<MaterielStockDto> findAllMaterielStockRestant();
 
-        @Query("SELECT IFNULL(SUM(ms.quantite), 0.0) FROM MouvementStock ms WHERE ms.typeMouvement = 'ENTREE' "+
+    @Query("SELECT IFNULL(SUM(ms.quantite), 0.0) FROM MouvementStock ms WHERE ms.typeMouvement = 'ENTREE' "+
+                "AND ms.materiel.type.id = :idTypeMateriel " +
+                "AND ms.dateMouvement <= :date ")
+        public double findSommeEntreeTypeMaterielToDate(Long idTypeMateriel,Date date);
+
+        @Query("SELECT IFNULL(SUM(ms.quantite), 0.0) FROM MouvementStock ms WHERE ms.typeMouvement = 'SORTIE' "+
+                "AND ms.materiel.type.id = :idTypeMateriel " +
+                "AND ms.dateMouvement <= :date ")
+        public double findSommeSortieTypeMaterielToDate(Long idTypeMateriel,Date date);
+
+        
+    @Query("SELECT IFNULL(SUM(ms.quantite), 0.0) FROM MouvementStock ms WHERE ms.typeMouvement = 'ENTREE' "+
                 "AND ms.materiel.id = :idMateriel " +
                 "AND ms.dateMouvement <= :date ")
         public double findSommeEntreeToDate(Long idMateriel,Date date);
