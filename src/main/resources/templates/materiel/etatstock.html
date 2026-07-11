@@ -1,72 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-    <h1>Etat de stock des materiel</h1>
-       <!-- Formulaire -->
-      <form th:action="@{/materiel/etatstock}" th:object="${criteria}">
-        <div class="form-grid">
-          <!-- Type du materiel -->
-          <div class="field-group">
-            <label for="raceId"><i class="fas fa-tag"></i> Type materiel</label>
-            <select th:field="*{idTypeMateriel}">
-              <option th:each="tm : ${typeMateriels}" th:value="${tm.id}" th:text="${tm.libelle}"></option>
-            </select>
-          </div>
-
-          <!-- Date d'ebut -->
-          <div class="field-group">
-            <label for="dateAchat"
-              ><i class="fas fa-calendar-day"></i> Date debut</label
-            >
-            <input type="date" th:field="*{dateDebut}" required />
-          </div>
-
-           <!-- Date fin -->
-          <div class="field-group">
-            <label for="dateAchat"
-              ><i class="fas fa-calendar-day"></i> Date fin</label
-            >
-            <input type="date" th:field="*{dateFin}" required />
-          </div>
-
-          <!-- Materiel -->
-          <div class="field-group">
-            <label for="raceId"><i class="fas fa-tag"></i> Materiel</label>
-            <select th:field="*{idMateriel}">
-              <option th:each="m : ${materiels}" th:value="${m.id}" th:text="${m.libelle}"></option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="actions-row">
-          <div class="btn-group">
-            <button
-              type="submit"
-              class="btn btn-primary btn-lg"
-              id="validerBtn"
-            >
-              <i class="fas fa-check-circle"></i> Filter
-            </button>
-            <button type="reset" class="btn btn-outline" id="resetBtn">
-              <i class="fas fa-undo-alt"></i> Réinitialiser
-            </button>
-          </div>
-        </div>
-      </form>
-
-      <div>
-        <ul>
-          <li th:each=" entry : ${stock}" >
-            <span th:text="${entry.key}" ></span>
-            <span th:text="${entry.value.quantiteRestant}" ></span>
-          </li>
-        </ul>
+  <h1>Etat de stock des materiel</h1>
+  <!-- Formulaire -->
+  <form th:action="@{/materiel/etatstock}" th:object="${criteria}">
+    <div class="form-grid">
+      <!-- Type du materiel -->
+      <div class="field-group">
+        <label for="raceId"><i class="fas fa-tag"></i> Type materiel</label>
+        <select th:field="*{idTypeMateriel}">
+          <option th:each="tm : ${typeMateriels}" th:value="${tm.id}" th:text="${tm.libelle}"></option>
+        </select>
       </div>
+
+      <!-- Date d'ebut -->
+      <div class="field-group">
+        <label for="dateAchat"><i class="fas fa-calendar-day"></i> Date debut</label>
+        <input type="date" th:field="*{dateDebut}" required />
+      </div>
+
+      <!-- Date fin -->
+      <div class="field-group">
+        <label for="dateAchat"><i class="fas fa-calendar-day"></i> Date fin</label>
+        <input type="date" th:field="*{dateFin}" required />
+      </div>
+
+      <!-- Materiel -->
+      <div class="field-group">
+        <label for="raceId"><i class="fas fa-tag"></i> Materiel</label>
+        <select th:field="*{idMateriel}">
+          <option th:each="m : ${materiels}" th:value="${m.id}" th:text="${m.libelle}"></option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-row">
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary btn-lg" id="validerBtn">
+          <i class="fas fa-check-circle"></i> Filter
+        </button>
+        <button type="reset" class="btn btn-outline" id="resetBtn">
+          <i class="fas fa-undo-alt"></i> Réinitialiser
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- chart -->
+  <canvas id="monChart" width="600" height="300"></canvas>
+
+  <script th:inline="javascript">
+    const labels = /*[[${labels}]]*/[];
+    const valeurs = /*[[${values}]]*/[];
+
+    new Chart(document.getElementById('monChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'nombre',
+          data: valeurs,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  </script>
 </body>
+
 </html>

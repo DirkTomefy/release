@@ -4,6 +4,8 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -44,7 +46,7 @@ public class MouvementStockService {
     @Autowired
     private MouvementCaisseService mouvementCaisseService;
 
-    public HashMap<LocalDate, MaterielStockDto> searchEtatStock(MultiCriteriaEtatStockMateriel form) {
+    public Map<LocalDate, MaterielStockDto> searchEtatStock(MultiCriteriaEtatStockMateriel form) {
         HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
         // recuperer le stock restant au date initial
         MaterielStockDto matStockRestant = this.findMaterielStockRestant(form.getDateDebut(),
@@ -65,7 +67,7 @@ public class MouvementStockService {
             materielStockOnDates.put(mouvementStock.getDateMouvement().toLocalDate(),
                     new MaterielStockDto(matStockRestant.getMateriel(), quantiteRest));
         }
-        return materielStockOnDates;
+        return new TreeMap<>(materielStockOnDates);
     }
 
     public List<MouvementStock> searchMouvementStock(MultiCriteriaEtatStockMateriel form) {
