@@ -1,9 +1,7 @@
 package mg.bovit.release.controller;
 
-import java.security.KeyStore.Entry;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,22 +33,27 @@ public class MaterielController {
     private MouvementStockService mouvementStockService;
 
     @GetMapping("/etatstock")
-    public String showEtatStockView(MultiCriteriaEtatStockMateriel criteria ,Model model) {
-        model.addAttribute("typeMateriels",materielTypeService.findAll());
-        model.addAttribute("materiels",materielService.findAll());
-        model.addAttribute("criteria",criteria);
+    public String showEtatStockView(MultiCriteriaEtatStockMateriel criteria, Model model) {
+        model.addAttribute("typeMateriels", materielTypeService.findAll());
+        model.addAttribute("criteria", criteria);
 
-        Map<LocalDate,MaterielStockDto> stocks =  mouvementStockService.searchEtatStock(criteria);
+        if (criteria.getIdTypeMateriel() != null) {
+            model.addAttribute("materiels",
+                    materielService.findMaterielByTypeId(criteria.getIdTypeMateriel().longValue()));
+        } else {
+            model.addAttribute("materiels", materielService.findAll());
+        }
+        Map<LocalDate, MaterielStockDto> stocks = mouvementStockService.searchEtatStock(criteria);
 
         ArrayList<String> labelles = new ArrayList<>();
         ArrayList<Double> values = new ArrayList<>();
 
-        for (Map.Entry<LocalDate,MaterielStockDto>  stock: stocks.entrySet()) {
+        for (Map.Entry<LocalDate, MaterielStockDto> stock : stocks.entrySet()) {
             labelles.add(stock.getKey().toString());
             values.add(stock.getValue().getQuantiteRestant());
         }
-        model.addAttribute("labels",labelles);
-        model.addAttribute("values",values);
+        model.addAttribute("labels", labelles);
+        model.addAttribute("values", values);
 
         return "materiel/etatstock";
     }
