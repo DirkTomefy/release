@@ -20,9 +20,13 @@ public class CaisseStatDTO {
     // Total des sorties (valeur absolue des montants négatifs) pour chaque intervalle
     private List<Double> sorties;
 
-    // Cumuls sur toute la période filtrée
+    // Cumuls sur toute la période filtrée (entrées/sorties)
     private Double totalEntree = 0.0;
     private Double totalSortie = 0.0;
+
+    // Solde RÉEL de la caisse à la date de fin sélectionnée : cumul de tout
+    // l'historique des mouvements jusqu'à cette date (pas seulement
+    // totalEntree - totalSortie de la période affichée).
     private Double solde = 0.0;
 
     // Renseigné uniquement en cas d'erreur (ex : dates invalides), sinon null

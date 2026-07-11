@@ -76,3 +76,15 @@ VALUES (7, '2022-04-22', NULL, 1100.00, NULL, 94);
 
 INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente, poids_achat) 
 VALUES (8, '2020-07-08', '2022-11-20', 1400.00, 1900.00, 108);
+
+
+-- Test avec caisseId = NULL (toutes les caisses) et causeId = NULL (toutes les causes)
+-- dateDebut = 13/07/2026, dateFin = 15/07/2026
+
+SELECT COALESCE(SUM(m.montant), 0) FROM mvt_caisse m 
+WHERE m.date <= '2026-07-15' 
+  AND (NULL IS NULL OR m.id_caisse  = NULL) 
+  AND (NULL IS NULL OR m.id_cause_caisse = NULL);
+  
+-- Résultat attendu : 1000 + (-500) + 2000 + 1500 + (-300) + 500 + (-800) + 2500 + (-1000) 
+--                  = 4400.00

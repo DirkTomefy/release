@@ -75,10 +75,13 @@ public class CaisseService {
 
     /**
      * Construit l'histogramme des entrées/sorties de caisse entre deux dates,
-     * pour toutes les caisses (caisseId == null) ou une caisse précise.
+     * pour toutes les caisses (caisseId == null) ou une caisse précise, et
+     * calcule le solde réel à la date de fin.
      * Un mouvement (mvt_caisse) est déjà signé à la source : montant positif
      * = entrée (ex. vente de bovin), montant négatif = sortie (ex. paiement
      * employé) — on assemble donc les deux ici à partir de ce même signe.
+     * Le solde, lui, n'est PAS limité à la période affichée : c'est le
+     * cumul de tout l'historique jusqu'à dateFin (voir sumMontantJusquA).
      */
     public CaisseStatDTO getStatistiques(Date dateDebut, Date dateFin, Long caisseId, Long causeId) throws Exception {
         if (dateDebut == null || dateFin == null) {
@@ -137,7 +140,12 @@ public class CaisseService {
         stats.setSorties(sorties);
         stats.setTotalEntree(totalEntree);
         stats.setTotalSortie(totalSortie);
-        stats.setSolde(totalEntree - totalSortie);
+
+        // Le solde n'est PAS "entrées - sorties de la période affichée" :
+        // c'est le solde réel de la caisse à la date de fin, donc il faut
+        // cumuler TOUT l'historique (y compris avant dateDebut) jusqu'à dateFin.
+        Double soldeReel = mvtCaisseRepository.sumMontantJusquA(dateFin, caisseId, causeId);
+        stats.setSolde(soldeReel != null ? soldeReel : 0.0);
 
         return stats;
     }
