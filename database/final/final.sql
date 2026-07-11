@@ -266,6 +266,16 @@ INSERT INTO cause_caisse (libelle) VALUES
     ('VENTE'),
     ('AUTRE');
 
+-- Mouvement d'ouverture des caisses : chaque caisse initialise son solde par un mouvement de caisse
+INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
+SELECT
+    CURRENT_DATE,
+    c.montant_actuelle,
+    c.id,
+    cc.id
+FROM caisse c
+JOIN cause_caisse cc ON cc.libelle = 'STOCK';
+
 -- Bovins (seed.sql)
 INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente, poids_achat, poids_vente) VALUES
     (1, '2020-03-12', NULL, 1500.00, NULL, 100, NULL),
