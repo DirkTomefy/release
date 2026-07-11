@@ -2,7 +2,6 @@ package mg.bovit.release.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,21 +17,34 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // URLs publiques
-                .requestMatchers("/", "/login", "/register", "/public/**").permitAll()
-                
-                // URLs par rôle
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/vet/**").hasRole("VETERINAIRE")
-                .requestMatchers("/api/bovins/**").hasAnyRole("ADMIN", "VETERINAIRE", "EMPLOYE")
-                
-                // méthode HTTP spécifique
-                .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
-                
+                .requestMatchers("/", "/login", "/auth/login", "/register", "/auth/register", "/public/**").permitAll()
+
+                // Vente
+                .requestMatchers("/vente/**", "/clients/**", "/api/factures/**").hasAnyRole("ADMIN", "VENTE")
+
+                // Pesée
+                .requestMatchers("/peseBovin/**", "/bovin/api/**").hasAnyRole("ADMIN", "PESEE")
+
+                // Gestion du troupeau / lots
+                .requestMatchers("/bovins/**", "/races/**", "/mortalite/**", "/contrat/**").hasAnyRole("ADMIN", "LOT")
+
+                // Stock / matériel
+                .requestMatchers("/materiel/**", "/inventaire/**", "/mouvement/**", "/api/materiels/**").hasAnyRole("ADMIN", "STOCK")
+
+                // Caisse / paiements employés
+                .requestMatchers("/caisse/**", "/employees/**", "/employee/**").hasAnyRole("ADMIN", "CAISSE", "EMPLOYE")
+
+                // Administration globale
+                .requestMatchers("/**").hasRole("ADMIN")
+
                 // tout le reste = authentifié
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/login")
+                .loginPage("/auth/login")
+                .loginProcessingUrl("/login")
+                .successHandler(new RoleBasedAuthenticationSuccessHandler())
+                .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
             .logout(logout -> logout.permitAll());
