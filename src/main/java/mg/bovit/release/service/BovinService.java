@@ -1,18 +1,27 @@
 package mg.bovit.release.service;
 
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import mg.bovit.release.specification.BovinSpecification;
-import mg.bovit.release.repository.*;
-import mg.bovit.release.model.*;
-import mg.bovit.release.model.sqlview.BovinWithPoids;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
+import mg.bovit.release.model.Bovin;
+import mg.bovit.release.model.Caisse;
+import mg.bovit.release.model.MvtCaisse;
+import mg.bovit.release.model.PeseBovin;
+import mg.bovit.release.model.sqlview.BovinWithPoids;
+import mg.bovit.release.repository.BovinRepository;
+import mg.bovit.release.repository.BovinWithPoidsRepository;
+import mg.bovit.release.repository.CauseCaisseRepository;
+import mg.bovit.release.repository.MvtCaisseRepository;
+import mg.bovit.release.repository.PeseBovinRepository;
+import mg.bovit.release.specification.BovinSpecification;
 
 @Service
 public class BovinService {
@@ -49,6 +58,14 @@ public class BovinService {
 
     @Transactional(rollbackFor = Exception.class)
 public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite, Double prixUnitaire) throws Exception {
+
+    if (bovin == null) {
+        throw new Exception("Les informations du bovin sont introuvables");
+    }
+
+    if (bovin.getPoids_achat() == null || bovin.getPoids_achat() <= 0) {
+        throw new Exception("Le poids d'achat est obligatoire et doit être supérieur à 0");
+    }
 
     if (quantite <= 0) {
         throw new Exception("La quantité ne doit pas être inférieure ou égale à 0");

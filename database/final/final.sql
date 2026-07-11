@@ -7,6 +7,7 @@
 -- ============================================================
 
 -- Suppression des objets existants (optionnel, pour réinitialisation)
+DROP VIEW IF EXISTS v_pese_bovin_with_date_vente CASCADE;
 DROP VIEW IF EXISTS v_bovin_poids_actuel CASCADE;
 DROP TABLE IF EXISTS inventaire_detail CASCADE;
 DROP TABLE IF EXISTS inventaire CASCADE;
@@ -370,6 +371,16 @@ SELECT
     ) AS date_dernier_pese
 FROM bovin b
 JOIN race r ON b.id_race = r.id;
+
+CREATE VIEW v_pese_bovin_with_date_vente AS
+SELECT
+    pb.id,
+    pb.id_bovin,
+    pb.date_pese,
+    pb.poids_apres,
+    b.date_vente
+FROM pese_bovin pb
+JOIN bovin b ON b.id = pb.id_bovin;
 
 -- ============================================================
 -- Tables : INVENTAIRE et INVENTAIRE_DETAIL

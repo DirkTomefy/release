@@ -85,19 +85,27 @@ public class BovinController {
             Bovin bovin = new Bovin();
             bovin.setDate_achat(Date.valueOf(request.getDateAchat()));
 
-        Race race = new Race();
-        race.setId(request.getRaceId());
-        bovin.setRace(race);
+            Race race = new Race();
+            race.setId(request.getRaceId());
+            bovin.setRace(race);
 
-        // Récupérer le prix unitaire du formulaire
-        Double prixUnitaire = request.getPrixUnitaire();
-        if (prixUnitaire == null || prixUnitaire <= 0) {
-            return ResponseEntity.badRequest().body(
-                Map.of("status", "error", "message", "Le prix unitaire est obligatoire et doit être > 0")
-            );
-        }
+            Double poidsAchat = request.getPoidsAchat();
+            if (poidsAchat == null || poidsAchat <= 0) {
+                return ResponseEntity.badRequest().body(
+                    Map.of("status", "error", "message", "Le poids d'achat est obligatoire et doit être > 0")
+                );
+            }
+            bovin.setPoids_achat(poidsAchat);
 
-        List<Caisse> caisses = new ArrayList<>();
+            // Récupérer le prix unitaire du formulaire
+            Double prixUnitaire = request.getPrixUnitaire();
+            if (prixUnitaire == null || prixUnitaire <= 0) {
+                return ResponseEntity.badRequest().body(
+                    Map.of("status", "error", "message", "Le prix unitaire est obligatoire et doit être > 0")
+                );
+            }
+
+            List<Caisse> caisses = new ArrayList<>();
         if (request.getPayments() != null) {
             for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
                 Caisse caisse = new Caisse();
