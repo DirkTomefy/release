@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS vente_detail CASCADE;
 DROP TABLE IF EXISTS vente_bovin CASCADE;
 DROP TABLE IF EXISTS client CASCADE;
 DROP TABLE IF EXISTS mvt_caisse CASCADE;
+DROP TABLE IF EXISTS cause_caisse CASCADE;
 DROP TABLE IF EXISTS payement_employee CASCADE;
 DROP TABLE IF EXISTS type_payement_employee CASCADE;
 DROP TABLE IF EXISTS contrat CASCADE;
@@ -35,7 +36,14 @@ DROP TABLE IF EXISTS caisse CASCADE;
 CREATE TABLE caisse (
     id SERIAL PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL,
+    id_caisse_parent INTEGER,
+    CONSTRAINT fk_caisse_parent FOREIGN KEY (id_caisse_parent) REFERENCES caisse(id),
     montant_actuelle DOUBLE PRECISION NOT NULL
+);
+
+CREATE TABLE cause_caisse(
+    id SERIAL PRIMARY KEY,
+    libelle VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE race (
@@ -117,7 +125,9 @@ CREATE TABLE mvt_caisse (
     date DATE NOT NULL,
     montant DOUBLE PRECISION NOT NULL,
     id_caisse INTEGER NOT NULL,
-    CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id)
+    id_cause_caisse INTEGER NOT NULL,
+    CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id),
+    CONSTRAINT fk_mvt_caisse_cause FOREIGN KEY (id_cause_caisse) REFERENCES cause_caisse(id)
 );
 
 CREATE TABLE client (
@@ -245,6 +255,15 @@ INSERT INTO caisse (libelle, montant_actuelle) VALUES
     ('Caisse principale', 15000.00),
     ('Caisse d''épargne', 8000.00),
     ('Fonds d''investissement', 20000.00);
+
+-- Causes de mouvement de caisse (raison des entrées/sorties)
+INSERT INTO cause_caisse (libelle) VALUES
+    ('STOCK'),
+    ('ACHAT_BOVIN'),
+    ('ACHAT'),
+    ('PAYEMENT'),
+    ('VENTE'),
+    ('AUTRE');
 
 -- Bovins (seed.sql)
 INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente, poids_achat, poids_vente) VALUES

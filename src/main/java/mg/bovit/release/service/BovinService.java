@@ -27,6 +27,16 @@ public class BovinService {
     @Autowired
     private PeseBovinRepository peseRepository;
 
+    @Autowired
+    private MvtCaisseRepository mvtCaisseRepository;
+
+    @Autowired
+    private CauseCaisseRepository causeCaisseRepository;
+
+    // Cause de caisse appliquée automatiquement aux sorties générées
+    // par l'achat d'un ou plusieurs bovins.
+    private static final String CAUSE_ACHAT_BOVIN = "ACHAT_BOVIN";
+
     // function to find bovin with status by id bovin
     public BovinWithPoids findBovinPoidsById(Long id_bovin) throws Exception {
         return bovinWithPoidsRepository.findById(id_bovin).orElseThrow();
@@ -69,7 +79,16 @@ public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite, Double pri
         // Déduire le montant
         temp_caisse.setMontant_actuelle(temp_caisse.getMontant_actuelle() - caisses.get(i).getMontant_actuelle());
         temp_caisse = caisseService.save(temp_caisse);
-        
+
+        // Enregistrement de la sortie de caisse correspondante
+        MvtCaisse mvtCaisse = new MvtCaisse();
+        mvtCaisse.setCaisse(temp_caisse);
+        mvtCaisse.setDate(bovin.getDate_achat());
+        mvtCaisse.setMontant(-1 * caisses.get(i).getMontant_actuelle());
+        mvtCaisse.setCauseCaisse(causeCaisseRepository.findByLibelleIgnoreCase(CAUSE_ACHAT_BOVIN)
+                .orElseThrow(() -> new Exception("Cause de caisse introuvable : " + CAUSE_ACHAT_BOVIN)));
+        mvtCaisseRepository.save(mvtCaisse);
+
         totalPaiements += caisses.get(i).getMontant_actuelle();
     }
 

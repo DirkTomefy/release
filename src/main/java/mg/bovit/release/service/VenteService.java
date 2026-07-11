@@ -20,12 +20,14 @@ import mg.bovit.release.dto.BuyBovinRequest.CaissePaymentDTO;
 import mg.bovit.release.dto.VenteInsertDto;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.Caisse;
+import mg.bovit.release.model.CauseCaisse;
 import mg.bovit.release.model.Client;
 import mg.bovit.release.model.MvtCaisse;
 import mg.bovit.release.model.VenteBovin;
 import mg.bovit.release.model.VenteDetail;
 import mg.bovit.release.repository.BovinRepository;
 import mg.bovit.release.repository.CaisseRepository;
+import mg.bovit.release.repository.CauseCaisseRepository;
 import mg.bovit.release.repository.ClientRepository;
 import mg.bovit.release.repository.MvtCaisseRepository;
 import mg.bovit.release.repository.VenteBovinRepository;
@@ -51,6 +53,13 @@ public class VenteService {
     @Autowired
     private MvtCaisseRepository mvtCaisseRepository;
 
+    @Autowired
+    private CauseCaisseRepository causeCaisseRepository;
+
+    // Cause de caisse appliquée automatiquement aux entrées générées
+    // par l'encaissement d'une vente de bovin.
+    private static final String CAUSE_VENTE = "VENTE";
+
     // On réutilise le BovinRepository existant sans le modifier :
     // il possède déjà date_vente / prix_vente sur l'entité Bovin.
     private final BovinRepository bovinRepository;
@@ -61,12 +70,14 @@ public class VenteService {
             ClientRepository clientRepository,
             CaisseRepository caisseRepository,
             MvtCaisseRepository mvtCaisseRepository,
+            CauseCaisseRepository causeCaisseRepository,
             BovinRepository bovinRepository) {
         this.venteBovinRepository = venteBovinRepository;
         this.venteDetailRepository = venteDetailRepository;
         this.clientRepository = clientRepository;
         this.caisseRepository = caisseRepository;
         this.mvtCaisseRepository = mvtCaisseRepository;
+        this.causeCaisseRepository = causeCaisseRepository;
         this.bovinRepository = bovinRepository;
     }
 
@@ -159,6 +170,8 @@ public class VenteService {
             mvt.setCaisse(caisse);
             mvt.setDate(new Date(System.currentTimeMillis()));
             mvt.setMontant(paiement.getMontant());
+            mvt.setCauseCaisse(causeCaisseRepository.findByLibelleIgnoreCase(CAUSE_VENTE)
+                    .orElseThrow(() -> new Exception("Cause de caisse introuvable : " + CAUSE_VENTE)));
             mvtCaisseRepository.save(mvt);
 
             totalPaiements += paiement.getMontant();

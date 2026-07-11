@@ -30,6 +30,13 @@ public class MvtCaisse {
     )
     private Caisse caisse;
 
+    @ManyToOne
+    @JoinColumn(
+        name = "id_cause_caisse",
+        nullable = false
+    )
+    private CauseCaisse causeCaisse;
+
     // Getters et Setters
 
     public Long getId() {
@@ -62,5 +69,13 @@ public class MvtCaisse {
 
     public void setCaisse(Caisse caisse) {
         this.caisse = caisse;
+    }
+
+    public CauseCaisse getCauseCaisse() {
+        return causeCaisse;
+    }
+
+    public void setCauseCaisse(CauseCaisse causeCaisse) {
+        this.causeCaisse = causeCaisse;
     }
 }

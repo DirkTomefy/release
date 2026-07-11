@@ -20,6 +20,10 @@ public class MouvementCaisse {
     @JoinColumn(name = "id_caisse")
     private Caisse caisse;
 
+    @ManyToOne
+    @JoinColumn(name = "id_cause_caisse")
+    private CauseCaisse causeCaisse;
+
     private Double montant;
     private Date date;
 
@@ -37,6 +41,14 @@ public class MouvementCaisse {
 
     public void setCaisse(Caisse caisse) {
         this.caisse = caisse;
+    }
+
+    public CauseCaisse getCauseCaisse() {
+        return causeCaisse;
+    }
+
+    public void setCauseCaisse(CauseCaisse causeCaisse) {
+        this.causeCaisse = causeCaisse;
     }
 
     public Double getMontant() {
