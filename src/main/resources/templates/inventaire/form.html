@@ -7,67 +7,10 @@
   
   <th:block th:replace="~{fragments/common :: assets}"></th:block>
 
-  <style>
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background-color: #f9f7f4;
-      color: #3e3e3b;
-    }
-    .card {
-      border: 1px solid #e7e0d8;
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-    .form-control, .form-select {
-      border-color: #e0d8cf;
-      background-color: #fff;
-      border-radius: 8px;
-    }
-    .form-control:focus, .form-select:focus {
-      border-color: #b6a88e;
-      box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
-    }
-    .btn-soft-primary {
-      background-color: #eef3ea;
-      color: #4a6b3a;
-      border: 1px solid #d2ddc4;
-      font-weight: 500;
-      padding: 0.6rem 1.2rem;
-      border-radius: 8px;
-    }
-    .btn-soft-primary:hover {
-      background-color: #dde8d1;
-      color: #3a562c;
-    }
-    .btn-soft-danger {
-      background-color: #fde8e8;
-      color: #813838;
-      border: 1px solid #f5d2d2;
-      border-radius: 6px;
-      padding: 0.35rem 0.7rem;
-    }
-    .btn-soft-danger:hover {
-      background-color: #eeb9b9;
-    }
-    .toast-message {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #3d5a2e;
-      color: #fff;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      display: none;
-      z-index: 1050;
-      min-width: 300px;
-    }
-    .toast-message.error { background-color: #813838; }
-    .toast-message.show { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
 </head>
 <body>
+
+  <th:block th:replace="~{fragments/common :: navbar('inventaire')}"></th:block>
 
   <div class="container py-5">
     
@@ -336,6 +279,4 @@
     });
   </script>
 </body>
-
-  <th:block th:replace="~{fragments/common :: navbar('inventaire')}"></th:block>
 </html>
