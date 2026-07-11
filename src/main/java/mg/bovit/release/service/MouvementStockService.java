@@ -57,7 +57,29 @@ public class MouvementStockService {
         if(form.getIdTypeMateriel() != null ) {
             return searchEtatStockTypeMateriel(form);
         }
-        return null;
+        return searchEtatStockTotal(form);
+    }
+
+     public Map<LocalDate, MaterielStockDto> searchEtatStockTotal(MultiCriteriaEtatStockMateriel form) {
+        HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
+        MaterielStockDto matStockRestant = this.findAllQuantiteRestant(form.getDateDebut());
+        // recueperer la liste des mouvements selons le critaire
+        List<MouvementStock> mouvementStocks = searchMouvementStock(form);
+
+        // ajouter le premier element
+        materielStockOnDates.put(form.getDateDebut(), matStockRestant);
+
+        Double quantiteRest = matStockRestant.getQuantiteRestant();
+        for (MouvementStock mouvementStock : mouvementStocks) {
+            if (mouvementStock.getTypeMouvement().equalsIgnoreCase("ENTREE")) {
+                quantiteRest += mouvementStock.getQuantite();
+            } else {
+                quantiteRest -= mouvementStock.getQuantite();
+            }
+            materielStockOnDates.put(mouvementStock.getDateMouvement().toLocalDate(),
+                    new MaterielStockDto(matStockRestant.getMateriel(), quantiteRest));
+        }
+        return new TreeMap<>(materielStockOnDates);
     }
 
     public Map<LocalDate, MaterielStockDto> searchEtatStockTypeMateriel(MultiCriteriaEtatStockMateriel form) {
@@ -125,6 +147,14 @@ public class MouvementStockService {
         return new MaterielStockDto(materiel,reste);
     }
 
+      public MaterielStockDto findAllQuantiteRestant(LocalDate date) {
+  
+        //calculer le reste 
+        double reste  =  mouvementStockRepository.findSommeEntreeToDate(Date.valueOf(date)) - mouvementStockRepository.findSommeSortieToDate(Date.valueOf(date));
+        Materiel materiel = new Materiel();
+        materiel.setLibelle("All");
+        return new MaterielStockDto(materiel,reste);
+    }
     public MaterielStockDto findMaterielStockRestant(LocalDate date, Long idMateriel) {
         // si le materiel est introuvable retourner exeption
         if (!materielRepository.existsById(idMateriel)) {
@@ -132,7 +162,7 @@ public class MouvementStockService {
         }
 
         //calculer le reste 
-        double reste  =  mouvementStockRepository.findSommeEntreeToDate(idMateriel,Date.valueOf(date)) - mouvementStockRepository.findSommeSortieToDate(idMateriel,Date.valueOf(date));
+        double reste  =  mouvementStockRepository.findSommeEntreeMaterielToDate(idMateriel,Date.valueOf(date)) - mouvementStockRepository.findSommeSortieMaterielToDate(idMateriel,Date.valueOf(date));
         return new MaterielStockDto(materielRepository.findById(idMateriel).get(),reste);
     }
 
