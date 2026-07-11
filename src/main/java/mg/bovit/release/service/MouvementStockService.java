@@ -1,13 +1,22 @@
 package mg.bovit.release.service;
 
 import java.sql.Date;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import mg.bovit.release.dto.MaterielStockDto;
 import mg.bovit.release.dto.MouvementPaiementPayload;
 import mg.bovit.release.dto.MouvementStockPayload;
+import mg.bovit.release.dto.MultiCriteriaEtatStockMateriel;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.CauseCaisse;
 import mg.bovit.release.model.Materiel;
@@ -17,8 +26,10 @@ import mg.bovit.release.model.MouvementStockPaiement;
 import mg.bovit.release.repository.CaisseRepository;
 import mg.bovit.release.repository.CauseCaisseRepository;
 import mg.bovit.release.repository.MaterielRepository;
+import mg.bovit.release.repository.MaterielTypeRepository;
 import mg.bovit.release.repository.MouvementStockPaiementRepository;
 import mg.bovit.release.repository.MouvementStockRepository;
+import mg.bovit.release.specification.MouvementStockSpecification;
 
 @Service
 public class MouvementStockService {
@@ -33,6 +44,9 @@ public class MouvementStockService {
     private MaterielRepository materielRepository;
 
     @Autowired
+    private MaterielTypeRepository materielTypeRepository;
+
+    @Autowired
     private CaisseRepository caisseRepository;
 
     @Autowired
@@ -44,6 +58,121 @@ public class MouvementStockService {
     // Libellé de la cause appliquée automatiquement aux sorties de caisse
     // générées par un paiement d'achat de stock/matériel.
     private static final String CAUSE_STOCK = "STOCK";
+    public Map<LocalDate, MaterielStockDto> searchEtatStock(MultiCriteriaEtatStockMateriel form) {
+        if(form.getIdMateriel() != null) {
+            return searchEtatMaterielStock(form);
+        }
+        if(form.getIdTypeMateriel() != null ) {
+            return searchEtatStockTypeMateriel(form);
+        }
+        return searchEtatStockTotal(form);
+    }
+
+     public Map<LocalDate, MaterielStockDto> searchEtatStockTotal(MultiCriteriaEtatStockMateriel form) {
+        HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
+        MaterielStockDto matStockRestant = this.findAllQuantiteRestant(form.getDateDebut());
+        // recueperer la liste des mouvements selons le critaire
+        List<MouvementStock> mouvementStocks = searchMouvementStock(form);
+
+        // ajouter le premier element
+        materielStockOnDates.put(form.getDateDebut(), matStockRestant);
+
+        Double quantiteRest = matStockRestant.getQuantiteRestant();
+        for (MouvementStock mouvementStock : mouvementStocks) {
+            if (mouvementStock.getTypeMouvement().equalsIgnoreCase("ENTREE")) {
+                quantiteRest += mouvementStock.getQuantite();
+            } else {
+                quantiteRest -= mouvementStock.getQuantite();
+            }
+            materielStockOnDates.put(mouvementStock.getDateMouvement().toLocalDate(),
+                    new MaterielStockDto(matStockRestant.getMateriel(), quantiteRest));
+        }
+        return new TreeMap<>(materielStockOnDates);
+    }
+
+    public Map<LocalDate, MaterielStockDto> searchEtatStockTypeMateriel(MultiCriteriaEtatStockMateriel form) {
+        HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
+        MaterielStockDto matStockRestant = this.findTypeMaterielStockRestant(form.getDateDebut(),
+                form.getIdTypeMateriel().longValue());
+        // recueperer la liste des mouvements selons le critaire
+        List<MouvementStock> mouvementStocks = searchMouvementStock(form);
+
+        // ajouter le premier element
+        materielStockOnDates.put(form.getDateDebut(), matStockRestant);
+
+        Double quantiteRest = matStockRestant.getQuantiteRestant();
+        for (MouvementStock mouvementStock : mouvementStocks) {
+            if (mouvementStock.getTypeMouvement().equalsIgnoreCase("ENTREE")) {
+                quantiteRest += mouvementStock.getQuantite();
+            } else {
+                quantiteRest -= mouvementStock.getQuantite();
+            }
+            materielStockOnDates.put(mouvementStock.getDateMouvement().toLocalDate(),
+                    new MaterielStockDto(matStockRestant.getMateriel(), quantiteRest));
+        }
+        return new TreeMap<>(materielStockOnDates);
+    }
+
+    public Map<LocalDate, MaterielStockDto> searchEtatMaterielStock(MultiCriteriaEtatStockMateriel form) {
+        HashMap<LocalDate, MaterielStockDto> materielStockOnDates = new HashMap<>();
+        // recuperer le stock restant au date initial
+        MaterielStockDto matStockRestant = this.findMaterielStockRestant(form.getDateDebut(),
+                form.getIdMateriel().longValue());
+        // recueperer la liste des mouvements selons le critaire
+        List<MouvementStock> mouvementStocks = searchMouvementStock(form);
+
+        // ajouter le premier element
+        materielStockOnDates.put(form.getDateDebut(), matStockRestant);
+
+        Double quantiteRest = matStockRestant.getQuantiteRestant();
+        for (MouvementStock mouvementStock : mouvementStocks) {
+            if (mouvementStock.getTypeMouvement().equalsIgnoreCase("ENTREE")) {
+                quantiteRest += mouvementStock.getQuantite();
+            } else {
+                quantiteRest -= mouvementStock.getQuantite();
+            }
+            materielStockOnDates.put(mouvementStock.getDateMouvement().toLocalDate(),
+                    new MaterielStockDto(matStockRestant.getMateriel(), quantiteRest));
+        }
+        return new TreeMap<>(materielStockOnDates);
+    }
+
+    public List<MouvementStock> searchMouvementStock(MultiCriteriaEtatStockMateriel form) {
+        Sort sort = Sort.by(Sort.Direction.ASC, "dateMouvement");
+        return mouvementStockRepository.findAll(MouvementStockSpecification.fromForm(form), sort);
+    }
+
+    public MaterielStockDto findTypeMaterielStockRestant(LocalDate date, Long idTypeMateriel) {
+        // si le materiel est introuvable retourner exeption
+        if (!materielTypeRepository.existsById(idTypeMateriel)) {
+            throw new RuntimeException("Le type de materiel avec id : " + idTypeMateriel + " est introuvable .");
+        }
+
+        //calculer le reste 
+        double reste  =  mouvementStockRepository.findSommeEntreeTypeMaterielToDate(idTypeMateriel,Date.valueOf(date)) - mouvementStockRepository.findSommeEntreeTypeMaterielToDate(idTypeMateriel,Date.valueOf(date));
+        Materiel materiel = new Materiel();
+        materiel.setType(materielTypeRepository.findById(idTypeMateriel).get());
+        return new MaterielStockDto(materiel,reste);
+    }
+
+      public MaterielStockDto findAllQuantiteRestant(LocalDate date) {
+  
+        //calculer le reste 
+        double reste  =  mouvementStockRepository.findSommeEntreeToDate(Date.valueOf(date)) - mouvementStockRepository.findSommeSortieToDate(Date.valueOf(date));
+        Materiel materiel = new Materiel();
+        materiel.setLibelle("All");
+        return new MaterielStockDto(materiel,reste);
+    }
+    public MaterielStockDto findMaterielStockRestant(LocalDate date, Long idMateriel) {
+        // si le materiel est introuvable retourner exeption
+        if (!materielRepository.existsById(idMateriel)) {
+            throw new RuntimeException("Le materiel avec id : " + idMateriel + " est introuvable .");
+        }
+
+        //calculer le reste 
+        double reste  =  mouvementStockRepository.findSommeEntreeMaterielToDate(idMateriel,Date.valueOf(date)) - mouvementStockRepository.findSommeSortieMaterielToDate(idMateriel,Date.valueOf(date));
+        return new MaterielStockDto(materielRepository.findById(idMateriel).get(),reste);
+    }
 
     @Transactional
     public void traiterMouvementStock(MouvementStockPayload payload) {
@@ -60,19 +189,19 @@ public class MouvementStockService {
         // 1. Sauvegarde du mouvement principal
         MouvementStock mouvement = new MouvementStock();
         Materiel materiel = materielRepository.getReferenceById(payload.getMaterielId());
-        
+
         mouvement.setMateriel(materiel);
         mouvement.setTypeMouvement("ENTREE");
         mouvement.setQuantite(payload.getQuantite());
         mouvement.setQteRestant(payload.getQuantite()); // Initialise pour FIFO/LIFO
         mouvement.setPrixUnitaire(payload.getPrixUnitaire());
         mouvement.setDateMouvement(Date.valueOf(payload.getDateMouvement()));
-        
+
         MouvementStock mouvementSauvegarde = mouvementStockRepository.save(mouvement);
 
         // 2. Traitement des paiements associes
         List<Caisse> caissesListe = caisseRepository.findAll();
-        
+
         for (MouvementPaiementPayload payPayload : payload.getPayments()) {
             MouvementStockPaiement paiement = new MouvementStockPaiement();
             paiement.setMouvementStock(mouvementSauvegarde);
@@ -133,7 +262,8 @@ public class MouvementStockService {
         trierSelonFIFOouLIFO(entrees, entrees.get(0).getMateriel().getTypeGestion());
 
         for (MouvementStock entree : entrees) {
-            if (quantiteASortir <= 0) break;
+            if (quantiteASortir <= 0)
+                break;
 
             double mvtQttRestant = entree.getQteRestant();
             if (mvtQttRestant >= quantiteASortir) {
