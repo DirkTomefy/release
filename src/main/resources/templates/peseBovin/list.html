@@ -166,12 +166,12 @@
                 
                 
                 <div class="col-md-2">
-                    <label class="form-label small text-muted">Date de pesée</label>
-                    <input type="date" name="dateRecherePese" class="form-control" th:value="${criteria.dateRecherePese}" required>
+                    <label class="form-label small text-muted">Date debut </label>
+                    <input type="date" name="datePeseMin" class="form-control" th:value="${criteria.datePeseMin}" >
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small text-muted">Date de pesée</label>
-                    <input type="date" name="dateRecherePese" class="form-control" th:value="${criteria.dateRecherePese}">
+                    <label class="form-label small text-muted">Date fin</label>
+                    <input type="date" name="datePeseMax" class="form-control" th:value="${criteria.datePeseMax}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small text-muted">Statut</label>
@@ -182,12 +182,12 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small text-muted">Prix Min</label>
-                    <input type="number" step="0.01" name="prixAchatMin" class="form-control" th:value="${criteria.prixAchatMin}">
+                    <label class="form-label small text-muted">Poids min</label>
+                    <input type="number" step="0.01" name="poidsApresMin" class="form-control" th:value="${criteria.poidsApresMin}">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small text-muted">Prix Max</label>
-                    <input type="number" step="0.01" name="prixAchatMax" class="form-control" th:value="${criteria.prixAchatMax}">
+                    <label class="form-label small text-muted">Poids max</label>
+                    <input type="number" step="0.01" name="poidsApresMax" class="form-control" th:value="${criteria.poidsApresMax}">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-soft-primary w-100" title="Filtrer">
@@ -207,8 +207,8 @@
                 <form th:action="@{/peseBovin/list}" method="get" class="d-inline-flex align-items-center">
                     <input type="hidden" name="raceId" th:value="${criteria.raceId}" />
                     <input type="hidden" name="statut" th:value="${criteria.statut}" />
-                    <input type="hidden" name="prixAchatMin" th:value="${criteria.prixAchatMin}" />
-                    <input type="hidden" name="prixAchatMax" th:value="${criteria.prixAchatMax}" />
+                    <input type="hidden" name="poidsApresMin" th:value="${criteria.poidsApresMin}" />
+                    <input type="hidden" name="poidsApresMax" th:value="${criteria.poidsApresMax}" />
                     <input type="hidden" name="page" value="0" />
                     <input type="number" name="size" id="pageSizeInput" min="1" step="1"
                            class="form-control form-control-sm d-inline-block me-2" style="width: 60px;" th:value="${criteria.size}" />
@@ -263,13 +263,13 @@
     <nav class="mt-4" aria-label="Pagination" th:if="${pesePage != null && pesePage.totalPages > 1}">
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${pesePage.first} ? 'disabled'">
-                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}">Précédent</a>
+                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Précédent</a>
             </li>
             <li th:each="i : ${#numbers.sequence(0, pesePage.totalPages - 1)}" class="page-item" th:classappend="${i == pesePage.number} ? 'active'">
-                <a class="page-link" th:href="@{/peseBovin/list(page=${i}, size=${criteria.size} , raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}" th:text="${i + 1}">1</a>
+                <a class="page-link" th:href="@{/peseBovin/list(page=${i}, size=${criteria.size} , raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}" th:text="${i + 1}">1</a>
             </li>
             <li class="page-item" th:classappend="${pesePage.last} ? 'disabled'">
-                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number + 1}, size=${criteria.size} , raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, prixAchatMin=${criteria.prixAchatMin}, prixAchatMax=${criteria.prixAchatMax})}">Suivant</a>
+                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number + 1}, size=${criteria.size} , raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Suivant</a>
             </li>
         </ul>
     </nav>
