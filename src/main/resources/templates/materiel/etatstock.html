@@ -1,85 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · État de stock matériel</title>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .field-group label { font-size: 0.8rem; color: #6b5e53; margin-bottom: 0.3rem; display: block; }
+        .field-group label i { color: #b6a88e; margin-right: 0.3rem; }
+        .chart-card { padding: 1.5rem; }
+        .chart-wrap { position: relative; height: 380px; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: #9c9188; }
+        .empty-state i { font-size: 2.5rem; color: #d2ddc4; margin-bottom: 0.75rem; display: block; }
+    </style>
 </head>
-
 <body>
-  <h1>Etat de stock des materiel</h1>
-  <!-- Formulaire -->
-  <form th:action="@{/materiel/etatstock}" th:object="${criteria}">
-    <div class="form-grid">
-      <!-- Type du materiel -->
-      <div class="field-group">
-        <label for="raceId"><i class="fas fa-tag"></i> Type materiel</label>
-        <select th:field="*{idTypeMateriel}">
-          <option th:each="tm : ${typeMateriels}" th:value="${tm.id}" th:text="${tm.libelle}"></option>
-        </select>
-      </div>
 
-      <!-- Date d'ebut -->
-      <div class="field-group">
-        <label for="dateAchat"><i class="fas fa-calendar-day"></i> Date debut</label>
-        <input type="date" th:field="*{dateDebut}" required />
-      </div>
+    <th:block th:replace="~{fragments/common :: navbar('materiel')}"></th:block>
 
-      <!-- Date fin -->
-      <div class="field-group">
-        <label for="dateAchat"><i class="fas fa-calendar-day"></i> Date fin</label>
-        <input type="date" th:field="*{dateFin}" required />
-      </div>
+<div class="container py-4">
 
-      <!-- Materiel -->
-      <div class="field-group">
-        <label for="raceId"><i class="fas fa-tag"></i> Materiel</label>
-        <select th:field="*{idMateriel}">
-          <option th:each="m : ${materiels}" th:value="${m.id}" th:text="${m.libelle}"></option>
-        </select>
-      </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+            <i class="bi bi-bar-chart-fill me-2" style="color:#c4a35a;"></i>État de stock des matériels
+        </h1>
     </div>
 
-    <!-- Actions -->
-    <div class="actions-row">
-      <div class="btn-group">
-        <button type="submit" class="btn btn-primary btn-lg" id="validerBtn">
-          <i class="fas fa-check-circle"></i> Filter
-        </button>
-        <button type="reset" class="btn btn-outline" id="resetBtn">
-          <i class="fas fa-undo-alt"></i> Réinitialiser
-        </button>
-      </div>
+    <!-- Formulaire de filtre -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/materiel/etatstock}" th:object="${criteria}" method="get" class="row g-3 align-items-end">
+
+                <div class="col-md-3 field-group">
+                    <label for="idTypeMateriel"><i class="bi bi-tags-fill"></i>Type matériel</label>
+                    <select th:field="*{idTypeMateriel}" class="form-select">
+                        <option value="">Tous</option>
+                        <option th:each="tm : ${typeMateriels}" th:value="${tm.id}" th:text="${tm.libelle}"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 field-group">
+                    <label for="idMateriel"><i class="bi bi-tools"></i>Matériel</label>
+                    <select th:field="*{idMateriel}" class="form-select">
+                        <option value="">Tous</option>
+                        <option th:each="m : ${materiels}" th:value="${m.id}" th:text="${m.libelle}"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 field-group">
+                    <label for="dateDebut"><i class="bi bi-calendar-event"></i>Date début</label>
+                    <input type="date" th:field="*{dateDebut}" class="form-control" required />
+                </div>
+
+                <div class="col-md-2 field-group">
+                    <label for="dateFin"><i class="bi bi-calendar-event"></i>Date fin</label>
+                    <input type="date" th:field="*{dateFin}" class="form-control" required />
+                </div>
+
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-soft-primary flex-fill">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                    <button type="reset" class="btn btn-soft-danger">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
-  </form>
 
-  <!-- chart -->
-  <canvas id="monChart" width="600" height="300"></canvas>
+    <!-- Graphique -->
+    <div class="card chart-card">
+        <div class="chart-wrap">
+            <canvas id="monChart"></canvas>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="bi bi-inbox"></i>
+            Aucune donnée pour cette période
+        </div>
+    </div>
 
-  <script th:inline="javascript">
-    const labels = /*[[${labels}]]*/[];
-    const valeurs = /*[[${values}]]*/[];
+</div>
 
-    new Chart(document.getElementById('monChart'), {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'nombre',
-          data: valeurs,
-          backgroundColor: 'rgba(54, 162, 235, 0.6)'
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
-    });
-  </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const labels = /*[[${labels}]]*/ [];
+    const valeurs = /*[[${values}]]*/ [];
+
+    if (!labels.length) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('monChart').style.display = 'none';
+    } else {
+        const ctx = document.getElementById('monChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 380);
+        gradient.addColorStop(0, 'rgba(122, 158, 90, 0.55)');
+        gradient.addColorStop(1, 'rgba(122, 158, 90, 0.05)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Quantité',
+                    data: valeurs,
+                    backgroundColor: gradient,
+                    borderColor: '#7a9e5a',
+                    borderWidth: 1.5,
+                    borderRadius: 8,
+                    maxBarThickness: 48
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#3e3e3b',
+                        bodyColor: '#6b5e53',
+                        borderColor: '#e2ddd6',
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#6b5e53', font: { family: 'Inter' } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f0ede8' },
+                        ticks: { color: '#6b5e53', font: { family: 'Inter' } }
+                    }
+                }
+            }
+        });
+    }
+</script>
 </body>
-
 </html>
