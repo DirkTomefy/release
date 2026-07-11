@@ -2,6 +2,7 @@ package mg.bovit.release.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -10,14 +11,18 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // nécessaire pour @PreAuthorize
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // URLs publiques
-                .requestMatchers("/", "/login", "/auth/login", "/register", "/auth/register", "/public/**").permitAll()
+                // URLs publiques (plus de /register ici !)
+                .requestMatchers("/", "/login", "/auth/login", "/public/**").permitAll()
+
+                // Création / gestion des utilisateurs réservée à l'admin
+                .requestMatchers("/admin/users/**").hasRole("ADMIN")
 
                 // Vente
                 .requestMatchers("/vente/**", "/clients/**", "/api/factures/**").hasAnyRole("ADMIN", "VENTE")
