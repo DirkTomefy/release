@@ -5,32 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Élevage · Gestion du troupeau</title>
         <th:block th:replace="~{fragments/common :: assets}"></th:block>
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: #f9f7f4; color: #3e3e3b; }
-        .navbar { background-color: #fff; border-bottom: 1px solid #e2ddd6; }
-        .navbar-brand { font-weight: 600; color: #5b4b3a !important; }
-        .nav-link { color: #6b5e53 !important; font-weight: 500; }
-        .nav-link.active { color: #4a6b3a !important; border-bottom: 2px solid #7a9e5a; }
-        .card { border: 1px solid #e7e0d8; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .table thead th { background-color: #faf8f5; font-weight: 500; color: #6b5e53; border-bottom: 2px solid #e2ddd6; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.04em; }
-        .table tbody td { vertical-align: middle; border-bottom: 1px solid #f0ede8; padding-top: 0.85rem; padding-bottom: 0.85rem; }
-        .badge-actif { background-color: #28a745; color: #fff; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
-        .badge-vendu { background-color: #fd7e14; color: #fff; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
-        .badge-decede { background-color: #dc3545; color: #fff; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
-        .btn-soft-primary { background-color: #eef3ea; color: #4a6b3a; border: 1px solid #d2ddc4; font-weight: 500; }
-        .btn-soft-primary:hover { background-color: #dde8d1; color: #3a562c; }
-        .btn-soft-warning { background-color: #fdf6e8; color: #8a6d2e; border: 1px solid #eddea4; font-weight: 500; }
-        .btn-soft-danger { background-color: #fef1f1; color: #b34040; border: 1px solid #f5d2d2; font-weight: 500; }
-        .form-control, .form-select { border-color: #e0d8cf; border-radius: 8px; padding: 0.6rem 1rem; }
-        .form-control:focus, .form-select:focus { border-color: #b6a88e; box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15); }
-        .page-link { color: #5b4b3a; border: none; border-radius: 8px; margin: 0 2px; }
-        .page-item.active .page-link { background-color: #7a9e5a; border-color: #7a9e5a; color: #fff; }
-        .page-link:hover { background-color: #f0ede8; color: #3e3e3b; }
-        .pagination .page-link { min-width: 40px; text-align: center; }
-        .summary-bar { background-color: #f8f6f2; border-top: 1px solid #e7e0d8; padding: 0.75rem 1.25rem; border-radius: 0 0 12px 12px; }
-        .poids-actuel { font-weight: 600; color: #0f6e38; }
-        .poids-achat { color: #6b5e53; }
-    </style>
 </head>
 <body>
 
