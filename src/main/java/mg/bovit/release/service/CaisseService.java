@@ -2,6 +2,11 @@ package mg.bovit.release.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.sql.Date;
 import java.time.DayOfWeek;
@@ -14,8 +19,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import mg.bovit.release.dto.CaisseStatDTO;
+import mg.bovit.release.dto.MvtCaisseCriteria;
 import mg.bovit.release.repository.*;
 import mg.bovit.release.model.*;
+import mg.bovit.release.specification.MvtCaisseSpecification;
 
 @Service
 public class CaisseService {
@@ -24,6 +31,9 @@ public class CaisseService {
 
     @Autowired
     private MvtCaisseRepository mvtCaisseRepository;
+
+    @Autowired
+    private CauseCaisseRepository causeCaisseRepository;
 
     // Granularité de regroupement des barres de l'histogramme,
     // choisie automatiquement selon l'étendue de la période filtrée.
@@ -43,6 +53,26 @@ public class CaisseService {
         return caisseRepository.findAll();
     }
 
+    // Liste des causes disponibles (STOCK, ACHAT_BOVIN, ACHAT, PAYEMENT, VENTE, AUTRE...),
+    // utilisée pour peupler les filtres (historique et statistiques).
+    public List<CauseCaisse> findAllCauses() {
+        return causeCaisseRepository.findAll();
+    }
+
+    /**
+     * Liste paginée et filtrable des mouvements de caisse, pour la page
+     * d'historique/traçabilité (caisse + cause + montant + date de chaque
+     * mouvement, du plus récent au plus ancien).
+     */
+    public Page<MvtCaisse> findMouvementsPagines(MvtCaisseCriteria criteria) {
+        Specification<MvtCaisse> spec = MvtCaisseSpecification.fromCriteria(criteria);
+        Pageable pageable = PageRequest.of(
+                criteria.getPage(),
+                criteria.getSize(),
+                Sort.by(Sort.Direction.DESC, "date").and(Sort.by(Sort.Direction.DESC, "id")));
+        return mvtCaisseRepository.findAll(spec, pageable);
+    }
+
     /**
      * Construit l'histogramme des entrées/sorties de caisse entre deux dates,
      * pour toutes les caisses (caisseId == null) ou une caisse précise.
@@ -50,7 +80,7 @@ public class CaisseService {
      * = entrée (ex. vente de bovin), montant négatif = sortie (ex. paiement
      * employé) — on assemble donc les deux ici à partir de ce même signe.
      */
-    public CaisseStatDTO getStatistiques(Date dateDebut, Date dateFin, Long caisseId) throws Exception {
+    public CaisseStatDTO getStatistiques(Date dateDebut, Date dateFin, Long caisseId, Long causeId) throws Exception {
         if (dateDebut == null || dateFin == null) {
             throw new Exception("La date de début et la date de fin sont obligatoires.");
         }
@@ -58,9 +88,17 @@ public class CaisseService {
             throw new Exception("La date de début doit être antérieure à la date de fin.");
         }
 
-        List<MvtCaisse> mouvements = (caisseId == null)
-                ? mvtCaisseRepository.findByDateBetweenOrderByDateAsc(dateDebut, dateFin)
-                : mvtCaisseRepository.findByDateBetweenAndCaisse_IdOrderByDateAsc(dateDebut, dateFin, caisseId);
+        List<MvtCaisse> mouvements;
+        if (caisseId != null && causeId != null) {
+            mouvements = mvtCaisseRepository.findByDateBetweenAndCaisse_IdAndCauseCaisse_IdOrderByDateAsc(
+                    dateDebut, dateFin, caisseId, causeId);
+        } else if (caisseId != null) {
+            mouvements = mvtCaisseRepository.findByDateBetweenAndCaisse_IdOrderByDateAsc(dateDebut, dateFin, caisseId);
+        } else if (causeId != null) {
+            mouvements = mvtCaisseRepository.findByDateBetweenAndCauseCaisse_IdOrderByDateAsc(dateDebut, dateFin, causeId);
+        } else {
+            mouvements = mvtCaisseRepository.findByDateBetweenOrderByDateAsc(dateDebut, dateFin);
+        }
 
         LocalDate debutLocal = dateDebut.toLocalDate();
         LocalDate finLocal = dateFin.toLocalDate();

@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS vente_detail CASCADE;
 DROP TABLE IF EXISTS vente_bovin CASCADE;
 DROP TABLE IF EXISTS client CASCADE;
 DROP TABLE IF EXISTS mvt_caisse CASCADE;
+DROP TABLE IF EXISTS cause_caisse CASCADE;
 DROP TABLE IF EXISTS payement_employee CASCADE;
 DROP TABLE IF EXISTS type_payement_employee CASCADE;
 DROP TABLE IF EXISTS contrat CASCADE;
@@ -36,10 +37,8 @@ CREATE TABLE caisse (
     id SERIAL PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL,
     id_caisse_parent INTEGER,
-    montant_actuelle DOUBLE PRECISION NOT NULL,
-    id_cause_caisse INTEGER,
-    CONSTRAINT fk_caisse_cause FOREIGN KEY (id_cause_caisse)
-        REFERENCES cause_caisse(id)
+    CONSTRAINT fk_caisse_parent FOREIGN KEY (id_caisse_parent) REFERENCES caisse(id),
+    montant_actuelle DOUBLE PRECISION NOT NULL
 );
 
 CREATE TABLE cause_caisse(
@@ -126,7 +125,9 @@ CREATE TABLE mvt_caisse (
     date DATE NOT NULL,
     montant DOUBLE PRECISION NOT NULL,
     id_caisse INTEGER NOT NULL,
-    CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id)
+    id_cause_caisse INTEGER NOT NULL,
+    CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id),
+    CONSTRAINT fk_mvt_caisse_cause FOREIGN KEY (id_cause_caisse) REFERENCES cause_caisse(id)
 );
 
 CREATE TABLE client (
@@ -255,6 +256,15 @@ INSERT INTO caisse (libelle, montant_actuelle) VALUES
     ('Caisse d''épargne', 8000.00),
     ('Fonds d''investissement', 20000.00);
 
+-- Causes de mouvement de caisse (raison des entrées/sorties)
+INSERT INTO cause_caisse (libelle) VALUES
+    ('STOCK'),
+    ('ACHAT_BOVIN'),
+    ('ACHAT'),
+    ('PAYEMENT'),
+    ('VENTE'),
+    ('AUTRE');
+
 -- Bovins (seed.sql)
 INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente, poids_achat, poids_vente) VALUES
     (1, '2020-03-12', NULL, 1500.00, NULL, 100, NULL),
@@ -360,48 +370,6 @@ SELECT
     ) AS date_dernier_pese
 FROM bovin b
 JOIN race r ON b.id_race = r.id;
-
-INSERT INTO cause_caisse (libelle)
-SELECT 'STOCK'
-WHERE NOT EXISTS (SELECT 1 FROM cause_caisse WHERE lower(libelle) = 'stock');
-
-INSERT INTO cause_caisse (libelle)
-SELECT 'ACHAT_BOVIN'
-WHERE NOT EXISTS (SELECT 1 FROM cause_caisse WHERE lower(libelle) = 'achat_bovin');
-
-INSERT INTO cause_caisse (libelle)
-SELECT 'ACHAT'
-WHERE NOT EXISTS (SELECT 1 FROM cause_caisse WHERE lower(libelle) = 'achat');
-
-INSERT INTO cause_caisse (libelle)
-SELECT 'PAYEMENT'
-WHERE NOT EXISTS (SELECT 1 FROM cause_caisse WHERE lower(libelle) = 'payement');
-
-INSERT INTO cause_caisse (libelle)
-SELECT 'VENTE'
-WHERE NOT EXISTS (SELECT 1 FROM cause_caisse WHERE lower(libelle) = 'vente');
-
-INSERT INTO cause_caisse (libelle)
-SELECT 'AUTRE'
-WHERE NOT EXISTS (SELECT 1 FROM cause_caisse WHERE lower(libelle) = 'autre');
-
--- 2. Nouvelle colonne sur mvt_caisse : la cause du mouvement
-ALTER TABLE mvt_caisse
-    ADD COLUMN IF NOT EXISTS id_cause_caisse INTEGER;
-
--- Rétro-remplissage : pour les mouvements déjà existants, on ne peut pas
--- reconstituer la cause d'origine exacte, donc on les rattache à 'AUTRE'.
--- Adaptez cette valeur si vous avez une autre source de vérité.
-UPDATE mvt_caisse
-SET id_cause_caisse = (SELECT id FROM cause_caisse WHERE lower(libelle) = 'autre')
-WHERE id_cause_caisse IS NULL;
-
-ALTER TABLE mvt_caisse
-    ALTER COLUMN id_cause_caisse SET NOT NULL;
-
-ALTER TABLE mvt_caisse
-    ADD CONSTRAINT fk_mvt_caisse_cause FOREIGN KEY (id_cause_caisse)
-        REFERENCES cause_caisse(id);
 
 -- ============================================================
 -- Tables : INVENTAIRE et INVENTAIRE_DETAIL

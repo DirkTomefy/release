@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caisse · Historique des mouvements</title>
+        <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <style>
+        .table thead th { background-color: #faf8f5; font-weight: 500; color: #6b5e53; border-bottom: 2px solid #e2ddd6; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.04em; }
+        .table tbody td { vertical-align: middle; border-bottom: 1px solid #f0ede8; padding-top: 0.85rem; padding-bottom: 0.85rem; }
+        .badge-entree { background-color: #eef6ec; color: #2f5024; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
+        .badge-sortie { background-color: #fdeeee; color: #8a2f2f; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
+        .badge-cause { background-color: #f1f0fb; color: #37356b; border-radius: 20px; padding: 0.4em 0.9em; font-weight: 500; font-size: 0.78rem; }
+        .montant-entree { color: #2f5024; font-weight: 600; }
+        .montant-sortie { color: #8a2f2f; font-weight: 600; }
+        .summary-bar { background-color: #f8f6f2; border-top: 1px solid #e7e0d8; padding: 0.75rem 1.25rem; border-radius: 0 0 12px 12px; }
+    </style>
+</head>
+<body>
+
+    <th:block th:replace="~{fragments/common :: navbar('caisse')}"></th:block>
+
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+            <i class="bi bi-clock-history me-2" style="color:#7a9e5a;"></i>Historique des mouvements de caisse
+        </h1>
+        <a href="/caisse/stats" class="btn btn-outline-secondary">
+            <i class="bi bi-bar-chart-fill me-1"></i> Statistiques
+        </a>
+    </div>
+
+    <!-- Filtres de recherche -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/caisse/historique}" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="page" value="0" />
+                <input type="hidden" name="size" th:value="${criteria.size}" />
+
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Caisse</label>
+                    <select name="caisseId" class="form-select">
+                        <option value="">Toutes</option>
+                        <option th:each="c : ${caisses}" th:value="${c.id}" th:text="${c.libelle}"
+                                th:selected="${criteria.caisseId != null && criteria.caisseId == c.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Cause</label>
+                    <select name="causeCaisseId" class="form-select">
+                        <option value="">Toutes</option>
+                        <option th:each="cause : ${causes}" th:value="${cause.id}" th:text="${cause.libelle}"
+                                th:selected="${criteria.causeCaisseId != null && criteria.causeCaisseId == cause.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date min</label>
+                    <input type="date" name="dateMin" class="form-control" th:value="${criteria.dateMin}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date max</label>
+                    <input type="date" name="dateMax" class="form-control" th:value="${criteria.dateMax}">
+                </div>
+                <div class="col-md-1 d-grid">
+                    <button type="submit" class="btn btn-soft-primary" title="Filtrer">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                </div>
+                <div class="col-md-1 d-grid">
+                    <a href="/caisse/historique" class="btn btn-outline-secondary" title="Réinitialiser">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="summary-bar d-flex flex-wrap align-items-center justify-content-between">
+            <div class="text-muted small">
+                <span th:text="${mouvementPage.totalElements}">0</span> mouvement(s)
+                <span class="ms-2">| Page <span th:text="${mouvementPage.number + 1}">1</span> / <span th:text="${mouvementPage.totalPages}">1</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des mouvements -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+                <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Date</th>
+                    <th>Caisse</th>
+                    <th>Cause</th>
+                    <th class="text-end">Montant</th>
+                    <th class="text-end">Sens</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${mouvementPage.content}">
+                    <td class="text-muted" th:text="${m.id}">1</td>
+                    <td th:text="${#dates.format(m.date, 'dd/MM/yyyy')}">15/06/2026</td>
+                    <td th:text="${m.caisse != null ? m.caisse.libelle : '—'}">Caisse principale</td>
+                    <td><span class="badge-cause" th:text="${m.causeCaisse != null ? m.causeCaisse.libelle : '—'}">VENTE</span></td>
+                    <td th:class="${'text-end ' + (m.montant >= 0 ? 'montant-entree' : 'montant-sortie')}"
+                        th:text="${#numbers.formatDecimal(m.montant, 0, 2)} + ' Ar'">150000.00 Ar</td>
+                    <td class="text-end">
+                        <span th:if="${m.montant >= 0}" class="badge badge-entree"><i class="bi bi-arrow-down-circle-fill me-1"></i>Entrée</span>
+                        <span th:if="${m.montant lt 0}" class="badge badge-sortie"><i class="bi bi-arrow-up-circle-fill me-1"></i>Sortie</span>
+                    </td>
+                </tr>
+                <tr th:if="${mouvementPage.content.isEmpty()}">
+                    <td colspan="6" class="text-center text-muted py-4">Aucun mouvement de caisse enregistré</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mt-4" aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${mouvementPage.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/caisse/historique(page=${mouvementPage.number - 1}, size=${criteria.size}, caisseId=${criteria.caisseId}, causeCaisseId=${criteria.causeCaisseId}, dateMin=${criteria.dateMin}, dateMax=${criteria.dateMax})}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            <li th:each="i : ${#numbers.sequence(0, mouvementPage.totalPages - 1)}"
+                class="page-item" th:classappend="${i == mouvementPage.number} ? 'active'">
+                <a class="page-link" th:href="@{/caisse/historique(page=${i}, size=${criteria.size}, caisseId=${criteria.caisseId}, causeCaisseId=${criteria.causeCaisseId}, dateMin=${criteria.dateMin}, dateMax=${criteria.dateMax})}"
+                   th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${mouvementPage.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/caisse/historique(page=${mouvementPage.number + 1}, size=${criteria.size}, caisseId=${criteria.caisseId}, causeCaisseId=${criteria.causeCaisseId}, dateMin=${criteria.dateMin}, dateMax=${criteria.dateMax})}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
