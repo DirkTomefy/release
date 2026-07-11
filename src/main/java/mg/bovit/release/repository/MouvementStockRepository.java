@@ -2,7 +2,6 @@ package mg.bovit.release.repository;
 
 import java.sql.Date;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -29,13 +28,16 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
             "GROUP BY ms.materiel")
     public List<MaterielStockDto> findAllMaterielStockRestant();
 
-    @Query("SELECT new mg.bovit.release.dto.MaterielStockDto(ms.materiel, SUM(ms.qteRestant)) " +
-            "FROM MouvementStock ms " +
-            "WHERE ms.typeMouvement = 'ENTREE' " +
-            "AND ms.materiel.id = :idMateriel " +
-            "AND ms.dateMouvement <= :date " +
-            "GROUP BY ms.materiel")
-    public Optional<MaterielStockDto> findMaterielStockRestantOnDate(@Param("date") Date date,Long idMateriel);
+        @Query("SELECT IFNULL(SUM(ms.quantite), 0.0) FROM MouvementStock ms WHERE ms.typeMouvement = 'ENTREE' "+
+                "AND ms.materiel.id = :idMateriel " +
+                "AND ms.dateMouvement <= :date ")
+        public double findSommeEntreeToDate(Long idMateriel,Date date);
+
+        @Query("SELECT IFNULL(SUM(ms.quantite), 0.0) FROM MouvementStock ms WHERE ms.typeMouvement = 'SORTIE' "+
+                "AND ms.materiel.id = :idMateriel " +
+                "AND ms.dateMouvement <= :date ")
+        public double findSommeSortieToDate(Long idMateriel,Date date);
+        
 
     @Query("SELECT new mg.bovit.release.dto.MaterielStockDto(ms.materiel, SUM(ms.qteRestant)) " +
             "FROM MouvementStock ms " +
