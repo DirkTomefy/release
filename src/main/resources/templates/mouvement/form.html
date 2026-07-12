@@ -658,9 +658,15 @@
                 }
 
                 // Endpoint unique pour le traitement des deux flux
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
                 fetch('/mouvement/form/valider', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+                    },
                     body: JSON.stringify(payload)
                 })
                     .then(response => response.json())

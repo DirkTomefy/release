@@ -174,6 +174,11 @@ public class MouvementStockService {
         return new MaterielStockDto(materielRepository.findById(idMateriel).get(),reste);
     }
 
+    @Transactional(readOnly = true)
+    public List<MouvementStock> findAll() {
+        return mouvementStockRepository.findAll(Sort.by(Sort.Direction.DESC, "dateMouvement"));
+    }
+
     @Transactional
     public void traiterMouvementStock(MouvementStockPayload payload) {
         if ("ENTREE".equalsIgnoreCase(payload.getTypeMouvement())) {

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐄 Liste des mouvements de stock</title>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f9f7f4;
+            color: #3e3e3b;
+        }
+        .card-modern {
+            border: 1px solid #e7e0d8;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2ddd6;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        .header-section h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #4a4a44;
+            margin: 0;
+        }
+        .header-section h1 i {
+            color: #7a9e5a;
+            margin-right: 0.5rem;
+        }
+        .badge-engrais {
+            background-color: #e2f0da;
+            color: #3d5a2e;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        .badge-sortie {
+            background-color: #fde8e8;
+            color: #813838;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        .btn-primary {
+            background-color: #7a9e5a !important;
+            border-color: #7a9e5a !important;
+            color: #fff !important;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+        }
+        .btn-primary:hover {
+            background-color: #638249 !important;
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #6b5e53;
+            border: 1px solid #e0d8cf;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+        }
+        .btn-outline:hover {
+            background-color: #f0ede8;
+            color: #3e3e3b;
+        }
+        table {
+            vertical-align: middle;
+        }
+        thead th {
+            background-color: #f5f2ed;
+            color: #4a4a44;
+            font-weight: 600;
+            border-bottom: 2px solid #e7e0d8;
+        }
+        tbody tr:hover {
+            background-color: #faf8f5;
+        }
+        .empty-state {
+            text-align: center;
+            color: #6b5e53;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/common :: navbar('materiel')}"></th:block>
+
+    <div class="container pb-5">
+        <div class="card-modern">
+            <div class="header-section">
+                <h1><i class="fas fa-list"></i> Liste des mouvements de stock</h1>
+                <a class="btn btn-primary" th:href="@{/mouvement/form}">
+                    <i class="fas fa-plus-circle"></i> Nouveau mouvement
+                </a>
+            </div>
+
+            <div class="table-responsive" th:if="${!#lists.isEmpty(mouvements)}">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Matériel</th>
+                            <th>Type</th>
+                            <th class="text-end">Quantité</th>
+                            <th class="text-end">P.U. (Ar)</th>
+                            <th class="text-end">Total estimé (Ar)</th>
+                            <th class="text-end">Qté restante ligne</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="m : ${mouvements}">
+                            <td th:text="${#dates.format(m.dateMouvement, 'dd/MM/yyyy')}"></td>
+                            <td th:text="${m.materiel != null ? m.materiel.libelle : '-'}"></td>
+                            <td>
+                                <span th:if="${m.typeMouvement == 'ENTREE'}" class="badge-engrais">ENTREE</span>
+                                <span th:if="${m.typeMouvement == 'SORTIE'}" class="badge-sortie">SORTIE</span>
+                            </td>
+                            <td class="text-end" th:text="${m.quantite}"></td>
+                            <td class="text-end" th:text="${m.prixUnitaire != null ? #numbers.formatDecimal(m.prixUnitaire, 1, 2) : '-'}"></td>
+                            <td class="text-end" th:text="${m.prixUnitaire != null ? #numbers.formatDecimal(m.prixUnitaire * m.quantite, 1, 2) : '-'}"></td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(m.qteRestant, 1, 2)}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" th:if="${#lists.isEmpty(mouvements)}">
+                <i class="fas fa-inbox" style="font-size: 2rem; color: #e7e0d8;"></i>
+                <p class="mt-2">Aucun mouvement de stock enregistré pour le moment.</p>
+                <a class="btn btn-primary mt-2" th:href="@{/mouvement/form}">
+                    <i class="fas fa-plus-circle"></i> Créer un mouvement
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

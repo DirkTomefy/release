@@ -37,7 +37,9 @@ public class MouvementController {
     private CaisseService caisseService;
 
     @GetMapping("/")
-    public String listMouvements() {
+    public String listMouvements(Model model) {
+        List<MouvementStock> mouvements = mouvementStockService.findAll();
+        model.addAttribute("mouvements", mouvements);
         return "mouvement/list";
     }
 
