@@ -18,6 +18,7 @@ import mg.bovit.release.dto.MouvementStockPayload;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.Materiel;
 import mg.bovit.release.model.MaterielType;
+import mg.bovit.release.model.MouvementStock;
 import mg.bovit.release.service.CaisseService;
 import mg.bovit.release.service.MaterielService;
 import mg.bovit.release.service.MaterielTypeService;
