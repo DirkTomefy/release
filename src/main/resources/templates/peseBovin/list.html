@@ -15,9 +15,33 @@
         <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
             <i class="me-2" style="color:#c4a35a;"></i>Liste des pesées des bovins
         </h1>
-        <a th:href="@{/peseBovin/form}" class="btn btn-soft-primary">
-            <i class="bi bi-plus-circle me-1"></i> Nouvelle pesée
-        </a>
+        <div class="d-flex gap-2">
+            <a th:href="@{/peseBovin/form}" class="btn btn-soft-primary">
+                <i class="bi bi-plus-circle me-1"></i> Nouvelle pesée
+            </a>
+            <form th:action="@{/peseBovin/export/excel/all}" method="get">
+                <input type="hidden" name="raceId" th:value="${criteria.raceId}" />
+                <input type="hidden" name="datePeseMin" th:value="${criteria.datePeseMin}" />
+                <input type="hidden" name="datePeseMax" th:value="${criteria.datePeseMax}" />
+                <input type="hidden" name="statut" th:value="${criteria.statut}" />
+                <input type="hidden" name="poidsApresMin" th:value="${criteria.poidsApresMin}" />
+                <input type="hidden" name="poidsApresMax" th:value="${criteria.poidsApresMax}" />
+                <button type="submit" class="btn btn-soft-success btn-sm" title="Exporter tout en Excel">
+                    <i class="bi bi-file-earmark-excel"></i>
+                </button>
+            </form>
+            <form th:action="@{/peseBovin/export/pdf/all}" method="get">
+                <input type="hidden" name="raceId" th:value="${criteria.raceId}" />
+                <input type="hidden" name="datePeseMin" th:value="${criteria.datePeseMin}" />
+                <input type="hidden" name="datePeseMax" th:value="${criteria.datePeseMax}" />
+                <input type="hidden" name="statut" th:value="${criteria.statut}" />
+                <input type="hidden" name="poidsApresMin" th:value="${criteria.poidsApresMin}" />
+                <input type="hidden" name="poidsApresMax" th:value="${criteria.poidsApresMax}" />
+                <button type="submit" class="btn btn-soft-danger btn-sm" title="Exporter tout en PDF">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                </button>
+            </form>
+        </div>
     </div>
 
     <div class="card mb-4">
@@ -112,6 +136,16 @@
                            class="btn btn-soft-warning btn-sm me-1" 
                            title="Modifier">
                             <i class="bi bi-pencil"></i>
+                        </a>
+                        <a th:href="@{'/peseBovin/export/excel/' + ${peseBovin.id}}" 
+                           class="btn btn-soft-success btn-sm me-1" 
+                           title="Exporter en Excel">
+                            <i class="bi bi-file-earmark-excel"></i>
+                        </a>
+                        <a th:href="@{'/peseBovin/export/pdf/' + ${peseBovin.id}}" 
+                           class="btn btn-soft-danger btn-sm" 
+                           title="Exporter en PDF">
+                            <i class="bi bi-file-earmark-pdf"></i>
                         </a>
                     </td>
                 </tr>
