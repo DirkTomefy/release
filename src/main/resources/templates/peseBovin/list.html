@@ -98,7 +98,7 @@
                     <td class="text-muted" th:text="${peseBovin.id}">1</td>
                     <td>
                         <span class="fw-medium">Bovin #<span th:text="${peseBovin.bovin.id}"></span></span><br>
-                        <small class="text-muted" th:text="'Race : ' + ${peseBovin.bovin.race.nom}"></small>
+                        <small class="text-muted" th:text="'Race : ' + ${peseBovin.bovin.race?.nom}"></small>
                     </td>
                     <td th:text="${#dates.format(peseBovin.date_pese, 'dd/MM/yyyy')}">-</td>
                     <td th:text="${#numbers.formatDecimal(peseBovin.poids_apres, 0, 2)}">-</td>
@@ -126,13 +126,13 @@
     <nav class="mt-4" aria-label="Pagination" th:if="${pesePage != null && pesePage.totalPages > 1}">
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${pesePage.first} ? 'disabled'">
-                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Précédent</a>
+                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, datePeseMin=${criteria.datePeseMin}, datePeseMax=${criteria.datePeseMax}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Précédent</a>
             </li>
             <li th:each="i : ${#numbers.sequence(0, pesePage.totalPages - 1)}" class="page-item" th:classappend="${i == pesePage.number} ? 'active'">
-                <a class="page-link" th:href="@{/peseBovin/list(page=${i}, size=${criteria.size} , raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}" th:text="${i + 1}">1</a>
+                <a class="page-link" th:href="@{/peseBovin/list(page=${i}, size=${criteria.size} , raceId=${criteria.raceId}, datePeseMin=${criteria.datePeseMin}, datePeseMax=${criteria.datePeseMax}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}" th:text="${i + 1}">1</a>
             </li>
             <li class="page-item" th:classappend="${pesePage.last} ? 'disabled'">
-                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number + 1}, size=${criteria.size} , raceId=${criteria.raceId}, dateRecherePese=${criteria.dateRecherePese}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Suivant</a>
+                <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number + 1}, size=${criteria.size} , raceId=${criteria.raceId}, datePeseMin=${criteria.datePeseMin}, datePeseMax=${criteria.datePeseMax}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Suivant</a>
             </li>
         </ul>
     </nav>
