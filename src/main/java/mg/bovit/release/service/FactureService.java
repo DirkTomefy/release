@@ -107,10 +107,10 @@ public class FactureService {
         // Création des détails
         for (VenteDetail vd : detailsVente) {
             FactureDetail fd = new FactureDetail();
-            fd.setFacture(facture);
             fd.setVenteDetail(vd);
             fd.setPrixUnitaire(vd.getBovin().getPrix_vente());
             fd.setQuantite(1);
+            facture.addDetail(fd);
             factureDetailRepository.save(fd);
         }
 

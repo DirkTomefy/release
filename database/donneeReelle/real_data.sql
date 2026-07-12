@@ -406,46 +406,53 @@ INSERT INTO payement_employee (id_employee, id_type_payement_employee, date_paye
 -- Employe 10 : embauche le 2026-06-01 (mois courant au moment de la
 -- redaction de ce jeu de donnees) -> AUCUN paiement, AUCUNE alerte
 -- attendue (cas limite deliberement laisse sans donnees de paiement).
+-- ------------------------------------------------------------
+-- 11. Mouvements de caisse (mvt_caisse) - VERSION CORRIGÉE
+--     Ajout de id_cause_caisse (NOT NULL dans le schéma), absent
+--     de la version précédente -> c'est ce qui provoquait le
+--     ROLLBACK complet du script.
+--     Rappel des causes (voir seed.sql) :
+--       1 = STOCK | 2 = ACHAT_BOVIN | 3 = ACHAT
+--       4 = PAYEMENT | 5 = VENTE | 6 = AUTRE
+-- ------------------------------------------------------------
+INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse) VALUES
+    -- Sorties paie (salaires / avances / sanctions) -> cause PAYEMENT (4)
+    ('2026-01-05', -900000.00,  4, 4),
+    ('2026-01-05', -850000.00,  4, 4),
+    ('2026-01-20',  -50000.00,  1, 4),
+    ('2026-01-05', -950000.00,  4, 4),
+    ('2026-01-05', -780000.00,  4, 4),
+    ('2026-01-05', -1100000.00, 4, 4),
+    ('2026-01-05', -750000.00,  4, 4),
+    ('2026-01-05', -820000.00,  4, 4),
+    ('2026-01-05', -870000.00,  4, 4),
+    ('2026-01-05', -800000.00,  4, 4),
+    ('2026-02-05', -900000.00,  4, 4),
+    ('2026-02-18', -100000.00,  1, 4),
+    ('2026-02-05', -850000.00,  4, 4),
+    ('2026-02-05', -950000.00,  4, 4),
+    ('2026-02-10',  -30000.00,  1, 4),
+    ('2026-02-05', -780000.00,  4, 4),
 
--- ------------------------------------------------------------
--- 11. Mouvements de caisse (mvt_caisse) - traces des sorties de fonds
---     correspondant a une partie des paiements employes ci-dessus,
---     repartis entre "Caisse principale" et "Caisse paie employes".
--- ------------------------------------------------------------
-INSERT INTO mvt_caisse (date, montant, id_caisse) VALUES
-    ('2026-01-05', -900000.00,  4),
-    ('2026-01-05', -850000.00,  4),
-    ('2026-01-20',  -50000.00,  1),
-    ('2026-01-05', -950000.00,  4),
-    ('2026-01-05', -780000.00,  4),
-    ('2026-01-05', -1100000.00, 4),
-    ('2026-01-05', -750000.00,  4),
-    ('2026-01-05', -820000.00,  4),
-    ('2026-01-05', -870000.00,  4),
-    ('2026-01-05', -800000.00,  4),
-    ('2026-02-05', -900000.00,  4),
-    ('2026-02-18', -100000.00,  1),
-    ('2026-02-05', -850000.00,  4),
-    ('2026-02-05', -950000.00,  4),
-    ('2026-02-10',  -30000.00,  1),
-    ('2026-02-05', -780000.00,  4),
-    -- Apports en caisse (ventes de bovins encaissees)
-    ('2024-01-15', 2600000.00,  1),  -- vente 1 (bovin 2)
-    ('2024-02-20', 1950000.00,  1),  -- vente 2 (bovin 3)
-    ('2024-05-10', 1500000.00,  1),  -- vente 3 (bovin 13)
-    ('2024-05-01', 2550000.00,  1),  -- vente 4 (bovin 11)
-    ('2024-08-12', 2100000.00,  1),  -- vente 6 (bovin 8)
-    ('2024-08-28', 2400000.00,  1),  -- vente 5 (bovin 16)
-    ('2024-09-30', 2700000.00,  1),  -- vente 7 (bovin 20)
-    ('2024-11-20', 2050000.00,  1),  -- vente 8 (bovin 6)
-    ('2025-06-15', 1450000.00,  1),  -- vente 9 (bovin 26)
-    -- Sorties pour achats de bovins recents
-    ('2025-01-09', -1150000.00, 3),
-    ('2025-02-25', -1650000.00, 3),
-    ('2025-04-03',  -810000.00, 3),
-    -- Mouvement d'epargne
-    ('2026-03-01',  2000000.00, 2),
-    ('2026-06-01',  1500000.00, 2);
+    -- Apports en caisse (ventes de bovins encaissées) -> cause VENTE (5)
+    ('2024-01-15', 2600000.00,  1, 5),  -- vente 1 (bovin 2)
+    ('2024-02-20', 1950000.00,  1, 5),  -- vente 2 (bovin 3)
+    ('2024-05-10', 1500000.00,  1, 5),  -- vente 3 (bovin 13)
+    ('2024-05-01', 2550000.00,  1, 5),  -- vente 4 (bovin 11)
+    ('2024-08-12', 2100000.00,  1, 5),  -- vente 6 (bovin 8)
+    ('2024-08-28', 2400000.00,  1, 5),  -- vente 5 (bovin 16)
+    ('2024-09-30', 2700000.00,  1, 5),  -- vente 7 (bovin 20)
+    ('2024-11-20', 2050000.00,  1, 5),  -- vente 8 (bovin 6)
+    ('2025-06-15', 1450000.00,  1, 5),  -- vente 9 (bovin 26)
+
+    -- Sorties pour achats de bovins récents -> cause ACHAT_BOVIN (2)
+    ('2025-01-09', -1150000.00, 3, 2),
+    ('2025-02-25', -1650000.00, 3, 2),
+    ('2025-04-03',  -810000.00, 3, 2),
+
+    -- Mouvement d'épargne -> cause AUTRE (6)
+    ('2026-03-01',  2000000.00, 2, 6),
+    ('2026-06-01',  1500000.00, 2, 6);
 
 COMMIT;
 

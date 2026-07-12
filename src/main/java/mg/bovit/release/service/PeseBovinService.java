@@ -93,4 +93,32 @@ public class PeseBovinService {
     public List<PeseBovin> findByBovinIdOrderByDatePeseAsc(Long bovinId) {
         return peseBovinRepository.findByBovinIdOrderByDatePeseAsc(bovinId);
     }
+
+    // ===================== Export Excel / PDF =====================
+
+    // Récupération d'une pesée (vue) par id, pour l'export unitaire
+    public PeseBovinWithDateVente findViewById(Long id) {
+        return peseBovinWIthDateVenteRepository.findById(id).orElse(null);
+    }
+
+    // Récupération de TOUTES les pesées correspondant aux critères de la liste,
+    // sans pagination, pour l'export "tout exporter"
+    public List<PeseBovinWithDateVente> searchAllForExport(MulticriteriaListPeseBovin form) {
+        String sortField = "id";
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (form.getSort() != null && !form.getSort().isEmpty()) {
+            String[] parts = form.getSort().split(",");
+            if (parts.length >= 1) {
+                sortField = parts[0];
+            }
+            if (parts.length >= 2) {
+                direction = Sort.Direction.fromString(parts[1]);
+            }
+        }
+
+        return peseBovinWIthDateVenteRepository.findAll(
+                PeseSpecification.fromForm(form),
+                Sort.by(direction, sortField)
+        );
+    }
 }

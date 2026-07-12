@@ -128,7 +128,6 @@ CREATE TABLE mvt_caisse (
     id_caisse INTEGER NOT NULL,
     id_cause_caisse INTEGER NOT NULL,
     CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id),
-    CONSTRAINT fk_mvt_caisse_cause FOREIGN KEY (id_cause_caisse) REFERENCES cause_caisse(id)
 );
 
 CREATE TABLE client (

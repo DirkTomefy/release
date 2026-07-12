@@ -33,11 +33,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
 
 @Controller
 @RequestMapping("/vente")
@@ -153,23 +156,31 @@ public class VenteController {
     }
 
     // ==================== Génération / téléchargement facture ====================
+    @Transactional
     @PostMapping("/{id}/facture")
-    public ResponseEntity<byte[]> gererFacture(@PathVariable Long id) throws Exception {
-        // Vérifier si la facture existe déjà
-        if (factureService.existsByVenteId(id)) {
-            Facture facture = factureService.findByVenteId(id).get();
-            byte[] pdf = factureService.generatePdf(facture);
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + facture.getCodeFacture() + ".pdf")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .body(pdf);
-        } else {
-            // Générer la facture et la sauvegarder, retourner le PDF
-            byte[] pdf = factureService.genererFacture(id);
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_" + id + ".pdf")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .body(pdf);
+    public ResponseEntity<byte[]> gererFacture(@PathVariable Long id) {
+        try {
+            // Vérifier si la facture existe déjà
+            if (factureService.existsByVenteId(id)) {
+                Facture facture = factureService.findByVenteId(id).get();
+                byte[] pdf = factureService.generatePdf(facture);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + facture.getCodeFacture() + ".pdf")
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(pdf);
+            } else {
+                // Générer la facture et la sauvegarder, retourner le PDF
+                byte[] pdf = factureService.genererFacture(id);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=facture_" + id + ".pdf")
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(pdf);
+            }
+        } catch (Exception e) {
+            String message = e.getMessage() != null ? e.getMessage() : "Erreur lors de la génération de la facture";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(message.getBytes(StandardCharsets.UTF_8));
         }
     }
 

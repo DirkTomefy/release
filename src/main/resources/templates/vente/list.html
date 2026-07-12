@@ -283,10 +283,13 @@
     function genererFacture(id) {
         if (!confirm('Générer une facture pour cette vente ?')) return;
         
-        fetch(`/vente/${id}/facture`, { 
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        fetch(`/vente/${id}/facture`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
             }
         })
         .then(res => {
@@ -317,10 +320,13 @@
 
     // Fonction pour télécharger une facture existante
     function telechargerFacture(id) {
-        fetch(`/vente/${id}/facture`, { 
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        fetch(`/vente/${id}/facture`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
             }
         })
         .then(res => {
