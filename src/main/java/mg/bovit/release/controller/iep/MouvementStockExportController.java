@@ -1,4 +1,4 @@
-package mg.bovit.release.controller;
+package mg.bovit.release.controller.iep;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.bovit.release.model.MouvementStock;
 import mg.bovit.release.service.MouvementStockService;
-import mg.bovit.release.util.MouvementStockExcelExporter;
-import mg.bovit.release.util.MouvementStockPdfExporter;
+import mg.bovit.release.service.iep.MouvementStockExcelExporter;
+import mg.bovit.release.service.iep.MouvementStockPdfExporter;
 
 /**
  * Endpoints dédiés à l'export des mouvements de stock en Excel et PDF.

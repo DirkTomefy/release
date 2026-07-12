@@ -1,7 +1,8 @@
-package mg.bovit.release.util;
+package mg.bovit.release.service.iep;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -16,19 +17,19 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import mg.bovit.release.model.MouvementStock;
+import mg.bovit.release.model.MvtCaisse;
 
-public class MouvementStockExcelExporter {
+public class MvtCaisseExcelExporter {
 
     private static final String[] HEADERS = {
-            "ID", "Date", "Matériel", "Type", "Quantité", "P.U. (Ar)", "Total estimé (Ar)", "Qté restante"
+            "ID", "Date", "Caisse", "Cause", "Montant", "Sens"
     };
 
-    public static byte[] export(List<MouvementStock> mouvements) throws IOException {
+    public static byte[] export(List<MvtCaisse> mouvements) throws IOException {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
-            Sheet sheet = workbook.createSheet("Mouvements de stock");
+            Sheet sheet = workbook.createSheet("Mouvements de caisse");
 
             CellStyle headerStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
@@ -48,26 +49,22 @@ public class MouvementStockExcelExporter {
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             int rowIdx = 1;
-            for (MouvementStock m : mouvements) {
+            for (MvtCaisse m : mouvements) {
                 Row row = sheet.createRow(rowIdx++);
 
                 row.createCell(0).setCellValue(m.getId() != null ? m.getId() : 0L);
                 row.createCell(1).setCellValue(
-                        m.getDateMouvement() != null ? sdf.format(m.getDateMouvement()) : "");
+                        m.getDate() != null ? sdf.format(m.getDate()) : "");
                 row.createCell(2).setCellValue(
-                        m.getMateriel() != null && m.getMateriel().getLibelle() != null
-                                ? m.getMateriel().getLibelle() : "-");
+                        m.getCaisse() != null && m.getCaisse().getLibelle() != null
+                                ? m.getCaisse().getLibelle() : "-");
                 row.createCell(3).setCellValue(
-                        m.getTypeMouvement() != null ? m.getTypeMouvement() : "");
+                        m.getCauseCaisse() != null && m.getCauseCaisse().getLibelle() != null
+                                ? m.getCauseCaisse().getLibelle() : "-");
                 row.createCell(4).setCellValue(
-                        m.getQuantite() != null ? m.getQuantite() : 0d);
-                row.createCell(5).setCellValue(
-                        m.getPrixUnitaire() != null ? m.getPrixUnitaire() : 0d);
-                row.createCell(6).setCellValue(
-                        m.getPrixUnitaire() != null && m.getQuantite() != null
-                                ? m.getPrixUnitaire() * m.getQuantite() : 0d);
-                row.createCell(7).setCellValue(
-                        m.getQteRestant() != null ? m.getQteRestant() : 0d);
+                        m.getMontant() != null ? m.getMontant() : 0d);
+                String sens = m.getMontant() != null && m.getMontant() >= 0 ? "Entrée" : "Sortie";
+                row.createCell(5).setCellValue(sens);
             }
 
             for (int i = 0; i < HEADERS.length; i++) {

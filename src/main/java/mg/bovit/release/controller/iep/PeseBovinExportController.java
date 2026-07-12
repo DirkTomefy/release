@@ -1,4 +1,4 @@
-package mg.bovit.release.controller;
+package mg.bovit.release.controller.iep;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,8 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 import mg.bovit.release.model.sqlview.PeseBovinWithDateVente;
 import mg.bovit.release.service.PeseBovinService;
-import mg.bovit.release.util.PeseBovinExcelExporter;
-import mg.bovit.release.util.PeseBovinPdfExporter;
+import mg.bovit.release.service.iep.PeseBovinExcelExporter;
+import mg.bovit.release.service.iep.PeseBovinPdfExporter;
 
 /**
  * Endpoints dédiés à l'export des pesées de bovins en Excel et PDF.

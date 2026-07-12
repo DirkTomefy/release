@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mg.bovit.release.dto.MaterielStockDto;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import mg.bovit.release.dto.InventairePayload;
-import mg.bovit.release.dto.MaterielStockDto;
 import mg.bovit.release.model.Inventaire;
 import mg.bovit.release.model.InventaireDetail;
 import mg.bovit.release.model.Materiel;
@@ -77,7 +78,28 @@ public class InventaireController {
     @GetMapping("/liste")
     public String listInventaires(Model model) {
         List<Inventaire> inventaires = inventaireService.listerInventaires();
+
+        // Stock actuel de chaque matériel (materielId -> quantité restante)
+        Map<Long, Double> stockByMateriel = new HashMap<>();
+        for (MaterielStockDto stock : materielService.findAllMaterielStockRestant()) {
+            stockByMateriel.put(stock.getMateriel().getId(),
+                    stock.getQuantiteRestant() != null ? stock.getQuantiteRestant() : 0.0);
+        }
+
+        // Quantité actuelle totale par inventaire (somme des stocks actuels de ses matériels)
+        Map<Long, Double> currentQuantityByInventaire = new HashMap<>();
+        for (Inventaire inventaire : inventaires) {
+            double total = 0.0;
+            for (InventaireDetail detail : inventaireService.listerInventairesDetailsParId(inventaire.getId())) {
+                if (detail.getMateriel() != null) {
+                    total += stockByMateriel.getOrDefault(detail.getMateriel().getId(), 0.0);
+                }
+            }
+            currentQuantityByInventaire.put(inventaire.getId(), total);
+        }
+
         model.addAttribute("inventaires", inventaires);
+        model.addAttribute("currentQuantityByInventaire", currentQuantityByInventaire);
 
         return "inventaire/list";
     }
@@ -86,7 +108,18 @@ public class InventaireController {
     public String listInventaireDetails(@PathVariable Long id, Model model) {
         // Filtrer ou charger les détails specifiques a cet inventaire id
         List<InventaireDetail> inventaireDetails = inventaireService.listerInventairesDetailsParId(id);
+
+        // Calcul de la quantité actuelle (stock restant) de chaque matériel
+        Map<Long, Double> currentStocks = new HashMap<>();
+        for (InventaireDetail detail : inventaireDetails) {
+            if (detail.getMateriel() != null) {
+                MaterielStockDto stock = materielService.findMaterielStockRestantById(detail.getMateriel().getId());
+                currentStocks.put(detail.getMateriel().getId(), stock != null && stock.getQuantiteRestant() != null ? stock.getQuantiteRestant() : 0.0);
+            }
+        }
+
         model.addAttribute("inventaireDetails", inventaireDetails);
+        model.addAttribute("currentStocks", currentStocks);
 
         return "inventaire/listDetails";
     }

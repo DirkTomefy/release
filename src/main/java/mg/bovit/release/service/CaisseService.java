@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.time.DayOfWeek;
@@ -51,6 +52,17 @@ public class CaisseService {
 
     public List<Caisse> findAll() {
         return caisseRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public MvtCaisse findMouvementById(Long id) {
+        return mvtCaisseRepository.findById(id).orElse(null);
+    }
+
+    public List<MvtCaisse> searchAllForExport(MvtCaisseCriteria criteria) {
+        Specification<MvtCaisse> spec = MvtCaisseSpecification.fromCriteria(criteria);
+        Sort sort = Sort.by(Sort.Direction.DESC, "date").and(Sort.by(Sort.Direction.DESC, "id"));
+        return mvtCaisseRepository.findAll(spec, sort);
     }
 
     // Liste des causes disponibles (STOCK, ACHAT_BOVIN, ACHAT, PAYEMENT, VENTE, AUTRE...),

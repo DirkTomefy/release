@@ -45,6 +45,7 @@
                 <th>Matériel</th>
                 <th style="width: 150px;">Qté Initiale</th>
                 <th style="width: 150px;">Qté Réelle</th>
+                <th style="width: 150px;">Qté Actuelle</th>
                 <th style="width: 140px;">Écart</th>
                 <th class="pe-4">Observations</th>
               </tr>
@@ -58,6 +59,7 @@
                 <td class="fw-medium text-dark" th:text="${inventaireDetail.getMateriel().getLibelle()}">Matériel</td>
                 <td th:text="${inventaireDetail.getQuantiteInitiale()}">0</td>
                 <td class="fw-semibold text-dark" th:text="${inventaireDetail.getQuantiteFinale()}">0</td>
+                <td class="text-info fw-semibold" th:text="${currentStocks.get(inventaireDetail.getMateriel().getId())}">0</td>
                 <td>
                   <span th:with="diff=${inventaireDetail.getQuantiteFinale() - inventaireDetail.getQuantiteInitiale()}"
                         th:class="${diff > 0 ? 'badge badge-ecart ecart-positif' : (diff < 0 ? 'badge badge-ecart ecart-negatif' : 'badge badge-ecart ecart-nul')}"

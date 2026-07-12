@@ -1,7 +1,9 @@
 package mg.bovit.release.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,6 +92,11 @@ public class InventaireService {
 
     public List<Inventaire> listerInventaires() {
         return inventaireRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Inventaire findById(Long id) {
+        return inventaireRepository.findById(id).orElse(null);
     }
 
     public List<InventaireDetail> listerInventairesDetailsParId(Long id) {

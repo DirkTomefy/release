@@ -1,4 +1,4 @@
-package mg.bovit.release.util;
+package mg.bovit.release.service.iep;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -16,11 +16,11 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
-import mg.bovit.release.model.MouvementStock;
+import mg.bovit.release.model.MvtCaisse;
 
-public class MouvementStockPdfExporter {
+public class MvtCaissePdfExporter {
 
-    public static byte[] export(List<MouvementStock> mouvements, String titre) throws DocumentException {
+    public static byte[] export(List<MvtCaisse> mouvements, String titre) throws DocumentException {
         Document document = new Document(PageSize.A4.rotate(), 30, 30, 40, 30);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PdfWriter.getInstance(document, out);
@@ -41,12 +41,12 @@ public class MouvementStockPdfExporter {
         genDate.setSpacingAfter(10f);
         document.add(genDate);
 
-        PdfPTable table = new PdfPTable(8);
+        PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{0.6f, 1.2f, 1.5f, 1f, 1f, 1.2f, 1.5f, 1.2f});
+        table.setWidths(new float[]{0.6f, 1.2f, 1.5f, 1.5f, 1.5f, 1.2f});
 
         Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD, Color.WHITE);
-        String[] headers = {"ID", "Date", "Matériel", "Type", "Quantité", "P.U. (Ar)", "Total estimé (Ar)", "Qté restante"};
+        String[] headers = {"ID", "Date", "Caisse", "Cause", "Montant", "Sens"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
             cell.setBackgroundColor(new Color(34, 100, 34));
@@ -58,22 +58,22 @@ public class MouvementStockPdfExporter {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         Font bodyFont = new Font(Font.HELVETICA, 9);
         boolean alt = false;
-        for (MouvementStock m : mouvements) {
+        for (MvtCaisse m : mouvements) {
             Color bg = alt ? new Color(240, 245, 240) : Color.WHITE;
             alt = !alt;
 
-            String materiel = (m.getMateriel() != null && m.getMateriel().getLibelle() != null)
-                    ? m.getMateriel().getLibelle() : "-";
+            String caisse = (m.getCaisse() != null && m.getCaisse().getLibelle() != null)
+                    ? m.getCaisse().getLibelle() : "-";
+            String cause = (m.getCauseCaisse() != null && m.getCauseCaisse().getLibelle() != null)
+                    ? m.getCauseCaisse().getLibelle() : "-";
+            String sens = m.getMontant() != null && m.getMontant() >= 0 ? "Entrée" : "Sortie";
 
             addCell(table, String.valueOf(m.getId()), bodyFont, bg);
-            addCell(table, m.getDateMouvement() != null ? sdf.format(m.getDateMouvement()) : "", bodyFont, bg);
-            addCell(table, materiel, bodyFont, bg);
-            addCell(table, m.getTypeMouvement() != null ? m.getTypeMouvement() : "", bodyFont, bg);
-            addCell(table, m.getQuantite() != null ? String.valueOf(m.getQuantite()) : "", bodyFont, bg);
-            addCell(table, m.getPrixUnitaire() != null ? String.valueOf(m.getPrixUnitaire()) : "-", bodyFont, bg);
-            addCell(table, m.getPrixUnitaire() != null && m.getQuantite() != null
-                    ? String.valueOf(m.getPrixUnitaire() * m.getQuantite()) : "0", bodyFont, bg);
-            addCell(table, m.getQteRestant() != null ? String.valueOf(m.getQteRestant()) : "", bodyFont, bg);
+            addCell(table, m.getDate() != null ? sdf.format(m.getDate()) : "", bodyFont, bg);
+            addCell(table, caisse, bodyFont, bg);
+            addCell(table, cause, bodyFont, bg);
+            addCell(table, m.getMontant() != null ? String.valueOf(m.getMontant()) : "", bodyFont, bg);
+            addCell(table, sens, bodyFont, bg);
         }
 
         document.add(table);

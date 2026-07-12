@@ -1,4 +1,4 @@
-package mg.bovit.release.util;
+package mg.bovit.release.service.iep;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;

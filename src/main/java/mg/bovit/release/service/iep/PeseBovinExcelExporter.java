@@ -1,4 +1,4 @@
-package mg.bovit.release.util;
+package mg.bovit.release.service.iep;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
