@@ -4,7 +4,9 @@ import mg.bovit.release.model.*;
 import mg.bovit.release.repository.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.NonUniqueResultException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,9 +17,14 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ImportService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImportService.class);
 
     @Autowired
     private CaisseRepository caisseRepository;
@@ -52,7 +59,7 @@ public class ImportService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     // ------------------------------------------------------------
-    // 1. IMPORT CAISSE + MOUVEMENTS (tolère feuille Caisse vide)
+    // 1. IMPORT CAISSE + MOUVEMENTS
     // ------------------------------------------------------------
     @Transactional(rollbackFor = Exception.class)
     public void importCaisseEtMouvements(MultipartFile file) throws Exception {
@@ -60,63 +67,81 @@ public class ImportService {
             Sheet caisseSheet = workbook.getSheet("Caisse");
             Sheet mouvementSheet = workbook.getSheet("Mouvement");
 
-            // 1. Lire les caisses si la feuille existe et a des lignes
             Map<String, Caisse> caisses = new HashMap<>();
+            // Import des caisses si la feuille existe et contient des données (hors en-tête)
             if (caisseSheet != null && caisseSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des caisses à partir de la feuille 'Caisse'");
                 for (Row row : caisseSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0) continue; // saut en-tête
                     String libelle = getStringCell(row, 0);
                     Double solde = getDoubleCell(row, 1);
                     Caisse c = new Caisse();
                     c.setLibelle(libelle);
                     c.setMontant_actuelle(solde);
                     caisses.put(libelle, caisseRepository.save(c));
+                    logger.debug("Caisse créée : {}", libelle);
                 }
+            } else {
+                logger.info("Feuille 'Caisse' vide ou absente, aucune caisse créée.");
             }
 
-            // 2. Lire les mouvements si la feuille existe et a des lignes
+            // Import des mouvements si la feuille existe et contient des données
             if (mouvementSheet != null && mouvementSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des mouvements à partir de la feuille 'Mouvement'");
                 for (Row row : mouvementSheet) {
                     if (row.getRowNum() == 0) continue;
                     String libelleCaisse = getStringCell(row, 0);
-                    Date date = Date.valueOf(LocalDate.parse(getStringCell(row, 1), DATE_FORMAT));
+                    Date date = parseDate(getStringCell(row, 1), "Mouvement", row);
                     Double montant = getDoubleCell(row, 2);
                     String causeLibelle = getStringCell(row, 3);
 
-                    // Chercher la caisse d'abord dans les nouvelles, sinon en base
+                    // Recherche de la caisse : d'abord dans la map, sinon en base
                     Caisse caisse = caisses.get(libelleCaisse);
                     if (caisse == null) {
-                        // Rechercher en base
-                        caisse = caisseRepository.findByLibelle(libelleCaisse)
-                                .orElseThrow(() -> new RuntimeException("Caisse introuvable : " + libelleCaisse));
+                        caisse = uniqueResult(
+                            () -> caisseRepository.findByLibelle(libelleCaisse)
+                                    .orElseThrow(() -> new RuntimeException("Caisse introuvable : " + libelleCaisse)),
+                            "Mouvement",
+                            row,
+                            libelleCaisse
+                        );
                     }
 
-                    // Récupérer ou créer la cause
-                    CauseCaisse cause = causeCaisseRepository.findByLibelle(causeLibelle)
-                            .orElseGet(() -> {
-                                CauseCaisse newCause = new CauseCaisse();
-                                newCause.setLibelle(causeLibelle);
-                                return causeCaisseRepository.save(newCause);
-                            });
+                    // Récupération ou création de la cause
+                    CauseCaisse cause = uniqueResult(
+                        () -> causeCaisseRepository.findByLibelle(causeLibelle)
+                                .orElseGet(() -> {
+                                    CauseCaisse newCause = new CauseCaisse();
+                                    newCause.setLibelle(causeLibelle);
+                                    return causeCaisseRepository.save(newCause);
+                                }),
+                        "Mouvement",
+                        row,
+                        causeLibelle
+                    );
 
-                    // Vérifier le solde
+                    // Mise à jour du solde (vérification négatif)
                     double nouveauSolde = caisse.getMontant_actuelle() + montant;
                     if (nouveauSolde < 0) {
                         throw new RuntimeException(
-                                String.format("Solde négatif pour la caisse '%s' après mouvement de %.2f (solde actuel : %.2f)",
-                                        libelleCaisse, montant, caisse.getMontant_actuelle())
+                            String.format("Solde négatif pour la caisse '%s' après mouvement de %.2f (solde actuel : %.2f) - ligne %d",
+                                    libelleCaisse, montant, caisse.getMontant_actuelle(), row.getRowNum()+1)
                         );
                     }
                     caisse.setMontant_actuelle(nouveauSolde);
                     caisseRepository.save(caisse);
 
+                    // Enregistrement du mouvement
                     MvtCaisse mvt = new MvtCaisse();
                     mvt.setCaisse(caisse);
                     mvt.setCauseCaisse(cause);
                     mvt.setMontant(montant);
                     mvt.setDate(date);
                     mvtCaisseRepository.save(mvt);
+                    logger.debug("Mouvement ajouté : {} - {} - {}", libelleCaisse, montant, date);
                 }
+            } else {
+                logger.info("Feuille 'Mouvement' vide ou absente, aucun mouvement importé.");
             }
         } catch (IOException e) {
             throw new Exception("Erreur de lecture du fichier", e);
@@ -124,7 +149,7 @@ public class ImportService {
     }
 
     // ------------------------------------------------------------
-    // 2. IMPORT BOVINS + PESÉES (tolère feuille Bovin vide)
+    // 2. IMPORT BOVINS + PESÉES (CORRIGÉ POUR GÉRER LES DOUBLONS DE RACE)
     // ------------------------------------------------------------
     @Transactional(rollbackFor = Exception.class)
     public void importBovinsEtPesees(MultipartFile file) throws Exception {
@@ -133,26 +158,23 @@ public class ImportService {
             Sheet peseeSheet = workbook.getSheet("Pesee");
 
             Map<String, Bovin> bovins = new HashMap<>();
+            // Import des bovins si la feuille existe et contient des données
             if (bovinSheet != null && bovinSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des bovins à partir de la feuille 'Bovin'");
                 for (Row row : bovinSheet) {
                     if (row.getRowNum() == 0) continue;
                     Double refDouble = getDoubleCell(row, 0);
                     String ref = (refDouble == null) ? "" : String.valueOf(refDouble.longValue());
                     String raceNom = getStringCell(row, 1);
-                    Date dateAchat = Date.valueOf(LocalDate.parse(getStringCell(row, 2), DATE_FORMAT));
-                    Date dateVente = getStringCell(row, 3).isEmpty() ? null : Date.valueOf(LocalDate.parse(getStringCell(row, 3), DATE_FORMAT));
+                    Date dateAchat = parseDate(getStringCell(row, 2), "Bovin", row);
+                    Date dateVente = getStringCell(row, 3).isEmpty() ? null : parseDate(getStringCell(row, 3), "Bovin", row);
                     Double prixAchat = getDoubleCell(row, 4);
                     Double prixVente = getDoubleCell(row, 5);
                     Double poidsAchat = getDoubleCell(row, 6);
                     Double poidsVente = getDoubleCell(row, 7);
 
-                    Race race = raceRepository.findByNom(raceNom)
-                            .orElseGet(() -> {
-                                Race newRace = new Race();
-                                newRace.setNom(raceNom);
-                                newRace.setDescriptions("");
-                                return raceRepository.save(newRace);
-                            });
+                    // Récupération ou création de la race avec gestion des doublons
+                    Race race = getOrCreateRace(raceNom, row);
 
                     Bovin bovin = new Bovin();
                     bovin.setRace(race);
@@ -163,21 +185,25 @@ public class ImportService {
                     bovin.setPoids_achat(poidsAchat);
                     bovin.setPoids_vente(poidsVente);
                     bovins.put(ref, bovinRepository.save(bovin));
+                    logger.debug("Bovin créé avec ref : {}", ref);
                 }
+            } else {
+                logger.info("Feuille 'Bovin' vide ou absente, aucun bovin créé.");
             }
 
+            // Import des pesées si la feuille existe et contient des données
             if (peseeSheet != null && peseeSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des pesées à partir de la feuille 'Pesee'");
                 for (Row row : peseeSheet) {
                     if (row.getRowNum() == 0) continue;
                     Double bovinRefDouble = getDoubleCell(row, 0);
                     String bovinRef = (bovinRefDouble == null) ? "" : String.valueOf(bovinRefDouble.longValue());
-                    Date datePese = Date.valueOf(LocalDate.parse(getStringCell(row, 1), DATE_FORMAT));
+                    Date datePese = parseDate(getStringCell(row, 1), "Pesee", row);
                     Double poidsApres = getDoubleCell(row, 2);
 
-                    // Chercher le bovin d'abord dans les nouveaux, sinon en base
+                    // Recherche du bovin : d'abord dans la map, sinon en base
                     Bovin bovin = bovins.get(bovinRef);
                     if (bovin == null) {
-                        // On suppose que la réf est un ID existant en base
                         Long id = Long.parseLong(bovinRef);
                         bovin = bovinRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Bovin introuvable avec l'ID : " + bovinRef));
@@ -188,15 +214,43 @@ public class ImportService {
                     pesee.setDate_pese(datePese);
                     pesee.setPoids_apres(poidsApres);
                     peseBovinRepository.save(pesee);
+                    logger.debug("Pesée ajoutée pour bovin ref {} le {}", bovinRef, datePese);
                 }
+            } else {
+                logger.info("Feuille 'Pesee' vide ou absente, aucune pesée importée.");
             }
         } catch (IOException e) {
             throw new Exception("Erreur de lecture du fichier", e);
         }
     }
 
+    /**
+     * Récupère une Race par son nom.
+     * S'il y a plusieurs occurrences, prend la première (par ID croissant) et log un warning.
+     * Si aucune, crée une nouvelle race.
+     */
+    private Race getOrCreateRace(String nom, Row row) {
+        List<Race> races = raceRepository.findAllByNom(nom);
+        if (races.isEmpty()) {
+            Race newRace = new Race();
+            newRace.setNom(nom);
+            newRace.setDescriptions("");
+            Race saved = raceRepository.save(newRace);
+            logger.info("Nouvelle race créée : {}", nom);
+            return saved;
+        } else if (races.size() > 1) {
+            // Trier par ID pour prendre la première (par exemple la plus ancienne)
+            races.sort(Comparator.comparingLong(Race::getId));
+            Race selected = races.get(0);
+            logger.warn("⚠️ Plusieurs races trouvées pour '{}' (ligne {}). Utilisation de l'ID {}.",
+                        nom, row.getRowNum() + 1, selected.getId());
+            return selected;
+        }
+        return races.get(0);
+    }
+
     // ------------------------------------------------------------
-    // 3. IMPORT INVENTAIRE + DÉTAILS (tolère feuille Inventaire vide)
+    // 3. IMPORT INVENTAIRE + DÉTAILS
     // ------------------------------------------------------------
     @Transactional(rollbackFor = Exception.class)
     public void importInventaireEtDetails(MultipartFile file) throws Exception {
@@ -206,21 +260,26 @@ public class ImportService {
 
             Map<String, Inventaire> inventaires = new HashMap<>();
             if (inventaireSheet != null && inventaireSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des inventaires à partir de la feuille 'Inventaire'");
                 for (Row row : inventaireSheet) {
                     if (row.getRowNum() == 0) continue;
                     Double refDouble = getDoubleCell(row, 0);
                     String ref = (refDouble == null) ? "" : String.valueOf(refDouble.longValue());
-                    Date date = Date.valueOf(LocalDate.parse(getStringCell(row, 1), DATE_FORMAT));
+                    Date date = parseDate(getStringCell(row, 1), "Inventaire", row);
                     String libelle = getStringCell(row, 2);
 
                     Inventaire inv = new Inventaire();
                     inv.setDateInventaire(date);
                     inv.setLibelle(libelle);
                     inventaires.put(ref, inventaireRepository.save(inv));
+                    logger.debug("Inventaire créé : {}", libelle);
                 }
+            } else {
+                logger.info("Feuille 'Inventaire' vide ou absente, aucun inventaire créé.");
             }
 
             if (detailSheet != null && detailSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des détails d'inventaire à partir de la feuille 'Inventaire_detail'");
                 for (Row row : detailSheet) {
                     if (row.getRowNum() == 0) continue;
                     String refInventaire = getStringCell(row, 0);
@@ -229,23 +288,26 @@ public class ImportService {
                     Double quantiteFinale = getDoubleCell(row, 3);
                     String observations = getStringCell(row, 4);
 
-                    // Chercher l'inventaire d'abord dans les nouveaux, sinon en base
+                    // Recherche de l'inventaire
                     Inventaire inv = inventaires.get(refInventaire);
                     if (inv == null) {
-                        // La référence est un ID existant en base
                         Long id = Long.parseLong(refInventaire);
                         inv = inventaireRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Inventaire introuvable avec l'ID : " + refInventaire));
                     }
 
-                    // Matériel peut être créé s'il n'existe pas
-                    Materiel materiel = materielRepository.findByLibelle(materielLibelle)
-                            .orElseGet(() -> {
-                                Materiel m = new Materiel();
-                                m.setLibelle(materielLibelle);
-                                // on ne définit pas le type ni le typeGestion, ils peuvent être nuls
-                                return materielRepository.save(m);
-                            });
+                    // Récupération ou création du matériel
+                    Materiel materiel = uniqueResult(
+                        () -> materielRepository.findByLibelle(materielLibelle)
+                                .orElseGet(() -> {
+                                    Materiel m = new Materiel();
+                                    m.setLibelle(materielLibelle);
+                                    return materielRepository.save(m);
+                                }),
+                        "Inventaire_detail",
+                        row,
+                        materielLibelle
+                    );
 
                     InventaireDetail detail = new InventaireDetail();
                     detail.setInventaire(inv);
@@ -254,7 +316,10 @@ public class ImportService {
                     detail.setQuantiteFinale(quantiteFinale);
                     detail.setObservations(observations);
                     inventaireDetailRepository.save(detail);
+                    logger.debug("Détail d'inventaire ajouté pour matériel {}", materielLibelle);
                 }
+            } else {
+                logger.info("Feuille 'Inventaire_detail' vide ou absente, aucun détail importé.");
             }
         } catch (IOException e) {
             throw new Exception("Erreur de lecture du fichier", e);
@@ -262,7 +327,7 @@ public class ImportService {
     }
 
     // ------------------------------------------------------------
-    // 4. IMPORT PAIEMENTS + EMPLOYÉS + CONTRATS (tolère feuilles Employé et Contrat vides)
+    // 4. IMPORT PAIEMENTS + EMPLOYÉS + CONTRATS
     // ------------------------------------------------------------
     @Transactional(rollbackFor = Exception.class)
     public void importPaiementsEmployesContrats(MultipartFile file) throws Exception {
@@ -273,12 +338,13 @@ public class ImportService {
 
             Map<String, Employee> employees = new HashMap<>();
             if (employeeSheet != null && employeeSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des employés à partir de la feuille 'Employé'");
                 for (Row row : employeeSheet) {
                     if (row.getRowNum() == 0) continue;
                     String nom = getStringCell(row, 0);
                     String prenom = getStringCell(row, 1);
-                    Date dateNaissance = Date.valueOf(LocalDate.parse(getStringCell(row, 2), DATE_FORMAT));
-                    Date dateEntree = Date.valueOf(LocalDate.parse(getStringCell(row, 3), DATE_FORMAT));
+                    Date dateNaissance = parseDate(getStringCell(row, 2), "Employé", row);
+                    Date dateEntree = parseDate(getStringCell(row, 3), "Employé", row);
 
                     Employee e = new Employee();
                     e.setNom(nom);
@@ -286,24 +352,32 @@ public class ImportService {
                     e.setDateNaissance(dateNaissance);
                     e.setDateEntree(dateEntree);
                     employees.put(nom + "_" + prenom, employeeRepository.save(e));
+                    logger.debug("Employé créé : {} {}", nom, prenom);
                 }
+            } else {
+                logger.info("Feuille 'Employé' vide ou absente, aucun employé créé.");
             }
 
             Map<String, Contrat> contrats = new HashMap<>();
             if (contratSheet != null && contratSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des contrats à partir de la feuille 'Contrat'");
                 for (Row row : contratSheet) {
                     if (row.getRowNum() == 0) continue;
                     String nom = getStringCell(row, 0);
                     String prenom = getStringCell(row, 1);
-                    Date dateDebut = Date.valueOf(LocalDate.parse(getStringCell(row, 2), DATE_FORMAT));
-                    Date dateFin = getStringCell(row, 3).isEmpty() ? null : Date.valueOf(LocalDate.parse(getStringCell(row, 3), DATE_FORMAT));
+                    Date dateDebut = parseDate(getStringCell(row, 2), "Contrat", row);
+                    Date dateFin = getStringCell(row, 3).isEmpty() ? null : parseDate(getStringCell(row, 3), "Contrat", row);
                     Double salaire = getDoubleCell(row, 4);
 
                     Employee emp = employees.get(nom + "_" + prenom);
                     if (emp == null) {
-                        // Chercher l'employé en base
-                        emp = employeeRepository.findByNomAndPrenom(nom, prenom)
-                                .orElseThrow(() -> new RuntimeException("Employé introuvable : " + nom + " " + prenom));
+                        emp = uniqueResult(
+                            () -> employeeRepository.findByNomAndPrenom(nom, prenom)
+                                    .orElseThrow(() -> new RuntimeException("Employé introuvable : " + nom + " " + prenom)),
+                            "Contrat",
+                            row,
+                            nom + " " + prenom
+                        );
                     }
 
                     Contrat c = new Contrat();
@@ -312,35 +386,53 @@ public class ImportService {
                     c.setDateFin(dateFin);
                     c.setSalaire(java.math.BigDecimal.valueOf(salaire));
                     contrats.put(nom + "_" + prenom + "_" + dateDebut.toString(), contratRepository.save(c));
+                    logger.debug("Contrat créé pour {} {} débutant le {}", nom, prenom, dateDebut);
                 }
+            } else {
+                logger.info("Feuille 'Contrat' vide ou absente, aucun contrat créé.");
             }
 
             if (paiementSheet != null && paiementSheet.getPhysicalNumberOfRows() > 1) {
+                logger.info("Import des paiements à partir de la feuille 'Paiement'");
                 for (Row row : paiementSheet) {
                     if (row.getRowNum() == 0) continue;
                     String nom = getStringCell(row, 0);
                     String prenom = getStringCell(row, 1);
-                    Date dateDebutContrat = Date.valueOf(LocalDate.parse(getStringCell(row, 2), DATE_FORMAT));
-                    Date mois = Date.valueOf(LocalDate.parse(getStringCell(row, 3), DATE_FORMAT));
+                    Date dateDebutContrat = parseDate(getStringCell(row, 2), "Paiement", row);
+                    Date mois = parseDate(getStringCell(row, 3), "Paiement", row);
                     Double montant = getDoubleCell(row, 4);
                     String typePaiementLibelle = getStringCell(row, 5);
 
                     String key = nom + "_" + prenom + "_" + dateDebutContrat.toString();
                     Contrat contrat = contrats.get(key);
                     if (contrat == null) {
-                        // Chercher le contrat en base selon le couple (nom, prenom, dateDebut)
-                        Employee emp = employeeRepository.findByNomAndPrenom(nom, prenom)
-                                .orElseThrow(() -> new RuntimeException("Employé introuvable : " + nom + " " + prenom));
-                        contrat = contratRepository.findByEmployeeAndDateDebut(emp, dateDebutContrat)
-                                .orElseThrow(() -> new RuntimeException("Contrat introuvable pour " + nom + " " + prenom + " débutant le " + dateDebutContrat));
+                        Employee emp = uniqueResult(
+                            () -> employeeRepository.findByNomAndPrenom(nom, prenom)
+                                    .orElseThrow(() -> new RuntimeException("Employé introuvable : " + nom + " " + prenom)),
+                            "Paiement",
+                            row,
+                            nom + " " + prenom
+                        );
+                        contrat = uniqueResult(
+                            () -> contratRepository.findByEmployeeAndDateDebut(emp, dateDebutContrat)
+                                    .orElseThrow(() -> new RuntimeException("Contrat introuvable pour " + nom + " " + prenom + " débutant le " + dateDebutContrat)),
+                            "Paiement",
+                            row,
+                            "contrat"
+                        );
                     }
 
-                    TypePayementEmployee type = typePayementEmployeeRepository.findByLibelle(typePaiementLibelle)
-                            .orElseGet(() -> {
-                                TypePayementEmployee t = new TypePayementEmployee();
-                                t.setLibelle(typePaiementLibelle);
-                                return typePayementEmployeeRepository.save(t);
-                            });
+                    TypePayementEmployee type = uniqueResult(
+                        () -> typePayementEmployeeRepository.findByLibelle(typePaiementLibelle)
+                                .orElseGet(() -> {
+                                    TypePayementEmployee t = new TypePayementEmployee();
+                                    t.setLibelle(typePaiementLibelle);
+                                    return typePayementEmployeeRepository.save(t);
+                                }),
+                        "Paiement",
+                        row,
+                        typePaiementLibelle
+                    );
 
                     PayementEmployee paiement = new PayementEmployee();
                     paiement.setEmployee(contrat.getEmployee());
@@ -350,13 +442,46 @@ public class ImportService {
                     paiement.setRestePaye(java.math.BigDecimal.ZERO);
                     paiement.setDatePayement(new java.sql.Timestamp(System.currentTimeMillis()));
                     payementEmployeeRepository.save(paiement);
+                    logger.debug("Paiement enregistré pour {} {} - mois {}", nom, prenom, mois);
                 }
+            } else {
+                logger.info("Feuille 'Paiement' vide ou absente, aucun paiement importé.");
             }
         } catch (IOException e) {
             throw new Exception("Erreur de lecture du fichier", e);
         }
     }
 
+    // ------------------------------------------------------------
+    // MÉTHODE UNIQUE RESULT POUR GÉRER LES DOUBLONS
+    // ------------------------------------------------------------
+    private <T> T uniqueResult(Supplier<T> supplier, String feuille, Row row, String valeur) {
+        try {
+            return supplier.get();
+        } catch (IncorrectResultSizeDataAccessException | NonUniqueResultException e) {
+            throw new RuntimeException(
+                "Erreur ligne " + (row.getRowNum() + 1) + " feuille " + feuille +
+                " : plusieurs enregistrements trouvés pour '" + valeur + "'."
+            );
+        }
+    }
+
+    // ------------------------------------------------------------
+    // MÉTHODES DE PARSING AVEC GESTION D'ERREURS
+    // ------------------------------------------------------------
+    private Date parseDate(String dateStr, String feuille, Row row) {
+        if (dateStr.isEmpty()) {
+            throw new RuntimeException("Date vide ligne " + (row.getRowNum() + 1) + " feuille " + feuille);
+        }
+        try {
+            return Date.valueOf(LocalDate.parse(dateStr, DATE_FORMAT));
+        } catch (Exception e) {
+            throw new RuntimeException(
+                "Format de date invalide ligne " + (row.getRowNum() + 1) + " feuille " + feuille +
+                " : " + dateStr
+            );
+        }
+    }
 
     // ------------------------------------------------------------
     // MÉTHODES ROBUSTES DE LECTURE DES CELLULES
@@ -369,7 +494,6 @@ public class ImportService {
                 return cell.getStringCellValue().trim();
             case NUMERIC:
                 double val = cell.getNumericCellValue();
-                // Éviter ".0" pour les entiers
                 if (val == (long) val) {
                     return String.valueOf((long) val);
                 } else {
@@ -485,7 +609,7 @@ public class ImportService {
         h1.createCell(6).setCellValue("poids_achat");
         h1.createCell(7).setCellValue("poids_vente");
         Row ex1 = sheet1.createRow(1);
-        ex1.createCell(0).setCellValue(1);      // ref (nombre)
+        ex1.createCell(0).setCellValue(1);
         ex1.createCell(1).setCellValue("Holstein");
         ex1.createCell(2).setCellValue("2025-01-15");
         ex1.createCell(3).setCellValue("");
@@ -500,7 +624,7 @@ public class ImportService {
         h2.createCell(1).setCellValue("date_pese");
         h2.createCell(2).setCellValue("poids_apres");
         Row ex2 = sheet2.createRow(1);
-        ex2.createCell(0).setCellValue(1);      // ref_bovin (nombre)
+        ex2.createCell(0).setCellValue(1);
         ex2.createCell(1).setCellValue("2025-06-01");
         ex2.createCell(2).setCellValue(250.0);
     }
@@ -512,7 +636,7 @@ public class ImportService {
         h1.createCell(1).setCellValue("date");
         h1.createCell(2).setCellValue("libelle");
         Row ex1 = sheet1.createRow(1);
-        ex1.createCell(0).setCellValue(1);      // ref (nombre)
+        ex1.createCell(0).setCellValue(1);
         ex1.createCell(1).setCellValue("2026-01-01");
         ex1.createCell(2).setCellValue("Inventaire janvier");
 
@@ -524,7 +648,7 @@ public class ImportService {
         h2.createCell(3).setCellValue("quantite_finale");
         h2.createCell(4).setCellValue("observations");
         Row ex2 = sheet2.createRow(1);
-        ex2.createCell(0).setCellValue("1");    // ref_inventaire (String)
+        ex2.createCell(0).setCellValue("1");
         ex2.createCell(1).setCellValue("Aliment vache");
         ex2.createCell(2).setCellValue(100.0);
         ex2.createCell(3).setCellValue(85.0);

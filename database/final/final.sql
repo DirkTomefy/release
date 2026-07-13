@@ -49,7 +49,7 @@ CREATE TABLE cause_caisse(
 
 CREATE TABLE race (
     id SERIAL PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
+    nom VARCHAR(100) UNIQUE NOT NULL,
     descriptions TEXT
 );
 
