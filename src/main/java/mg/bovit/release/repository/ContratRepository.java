@@ -1,6 +1,8 @@
 package mg.bovit.release.repository;
 
+import java.sql.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,4 +16,6 @@ public interface ContratRepository extends JpaRepository<Contrat, Long> {
 
     // Tous les contrats d'un employé, du plus récent (date_debut) au plus ancien
     List<Contrat> findByEmployeeOrderByDateDebutDesc(Employee employee);
+
+    Optional<Contrat> findByEmployeeAndDateDebut(Employee employee, Date dateDebut);
 }

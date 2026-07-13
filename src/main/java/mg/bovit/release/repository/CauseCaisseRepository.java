@@ -14,4 +14,5 @@ public interface CauseCaisseRepository extends JpaRepository<CauseCaisse, Long> 
     // à appliquer automatiquement à chaque insertion de mvt_caisse
     // (STOCK, ACHAT_BOVIN, ACHAT, PAYEMENT, VENTE, AUTRE...)
     Optional<CauseCaisse> findByLibelleIgnoreCase(String libelle);
+    Optional<CauseCaisse> findByLibelle(String libelle);
 }

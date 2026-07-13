@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import général</title>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/common :: navbar('import')}"></th:block>
+
+<div class="container py-4">
+    <h1 class="h4 fw-semibold mb-4">
+        <i class="bi bi-upload me-2" style="color:#7a9e5a;"></i>
+        Import général
+    </h1>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" th:action="@{/import/upload}" enctype="multipart/form-data">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Type d'import</label>
+                        <select name="type" id="typeImport" class="form-select" required>
+                            <option value="">Choisir...</option>
+                            <option value="caisse">Caisse + Mouvements</option>
+                            <option value="pesee">Bovins + Pesées</option>
+                            <option value="inventaire">Inventaire + Détails</option>
+                            <option value="paiement">Paiements + Employés + Contrats</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Fichier Excel (.xlsx)</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-soft-primary w-100">
+                            <i class="bi bi-cloud-upload me-1"></i> Importer
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1">Télécharger le modèle pour le type sélectionné :</p>
+                    <a href="#" id="downloadModelBtn" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-download me-1"></i> Gérer modèle
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('downloadModelBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const type = document.getElementById('typeImport').value;
+        if (!type) {
+            alert('Veuillez d\'abord sélectionner un type d\'import.');
+            return;
+        }
+        window.location.href = '/import/model?type=' + type;
+    });
+</script>
+
+</body>
+</html>
