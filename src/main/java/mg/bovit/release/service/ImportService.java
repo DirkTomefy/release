@@ -68,11 +68,10 @@ public class ImportService {
             Sheet mouvementSheet = workbook.getSheet("Mouvement");
 
             Map<String, Caisse> caisses = new HashMap<>();
-            // Import des caisses si la feuille existe et contient des données (hors en-tête)
             if (caisseSheet != null && caisseSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des caisses à partir de la feuille 'Caisse'");
                 for (Row row : caisseSheet) {
-                    if (row.getRowNum() == 0) continue; // saut en-tête
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     String libelle = getStringCell(row, 0);
                     Double solde = getDoubleCell(row, 1);
                     Caisse c = new Caisse();
@@ -85,17 +84,15 @@ public class ImportService {
                 logger.info("Feuille 'Caisse' vide ou absente, aucune caisse créée.");
             }
 
-            // Import des mouvements si la feuille existe et contient des données
             if (mouvementSheet != null && mouvementSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des mouvements à partir de la feuille 'Mouvement'");
                 for (Row row : mouvementSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     String libelleCaisse = getStringCell(row, 0);
                     Date date = parseDate(getStringCell(row, 1), "Mouvement", row);
                     Double montant = getDoubleCell(row, 2);
                     String causeLibelle = getStringCell(row, 3);
 
-                    // Recherche de la caisse : d'abord dans la map, sinon en base
                     Caisse caisse = caisses.get(libelleCaisse);
                     if (caisse == null) {
                         caisse = uniqueResult(
@@ -107,7 +104,6 @@ public class ImportService {
                         );
                     }
 
-                    // Récupération ou création de la cause
                     CauseCaisse cause = uniqueResult(
                         () -> causeCaisseRepository.findByLibelle(causeLibelle)
                                 .orElseGet(() -> {
@@ -120,7 +116,6 @@ public class ImportService {
                         causeLibelle
                     );
 
-                    // Mise à jour du solde (vérification négatif)
                     double nouveauSolde = caisse.getMontant_actuelle() + montant;
                     if (nouveauSolde < 0) {
                         throw new RuntimeException(
@@ -131,7 +126,6 @@ public class ImportService {
                     caisse.setMontant_actuelle(nouveauSolde);
                     caisseRepository.save(caisse);
 
-                    // Enregistrement du mouvement
                     MvtCaisse mvt = new MvtCaisse();
                     mvt.setCaisse(caisse);
                     mvt.setCauseCaisse(cause);
@@ -149,7 +143,7 @@ public class ImportService {
     }
 
     // ------------------------------------------------------------
-    // 2. IMPORT BOVINS + PESÉES (CORRIGÉ POUR GÉRER LES DOUBLONS DE RACE)
+    // 2. IMPORT BOVINS + PESÉES
     // ------------------------------------------------------------
     @Transactional(rollbackFor = Exception.class)
     public void importBovinsEtPesees(MultipartFile file) throws Exception {
@@ -158,11 +152,10 @@ public class ImportService {
             Sheet peseeSheet = workbook.getSheet("Pesee");
 
             Map<String, Bovin> bovins = new HashMap<>();
-            // Import des bovins si la feuille existe et contient des données
             if (bovinSheet != null && bovinSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des bovins à partir de la feuille 'Bovin'");
                 for (Row row : bovinSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     Double refDouble = getDoubleCell(row, 0);
                     String ref = (refDouble == null) ? "" : String.valueOf(refDouble.longValue());
                     String raceNom = getStringCell(row, 1);
@@ -173,7 +166,6 @@ public class ImportService {
                     Double poidsAchat = getDoubleCell(row, 6);
                     Double poidsVente = getDoubleCell(row, 7);
 
-                    // Récupération ou création de la race avec gestion des doublons
                     Race race = getOrCreateRace(raceNom, row);
 
                     Bovin bovin = new Bovin();
@@ -191,17 +183,15 @@ public class ImportService {
                 logger.info("Feuille 'Bovin' vide ou absente, aucun bovin créé.");
             }
 
-            // Import des pesées si la feuille existe et contient des données
             if (peseeSheet != null && peseeSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des pesées à partir de la feuille 'Pesee'");
                 for (Row row : peseeSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     Double bovinRefDouble = getDoubleCell(row, 0);
                     String bovinRef = (bovinRefDouble == null) ? "" : String.valueOf(bovinRefDouble.longValue());
                     Date datePese = parseDate(getStringCell(row, 1), "Pesee", row);
                     Double poidsApres = getDoubleCell(row, 2);
 
-                    // Recherche du bovin : d'abord dans la map, sinon en base
                     Bovin bovin = bovins.get(bovinRef);
                     if (bovin == null) {
                         Long id = Long.parseLong(bovinRef);
@@ -224,11 +214,6 @@ public class ImportService {
         }
     }
 
-    /**
-     * Récupère une Race par son nom.
-     * S'il y a plusieurs occurrences, prend la première (par ID croissant) et log un warning.
-     * Si aucune, crée une nouvelle race.
-     */
     private Race getOrCreateRace(String nom, Row row) {
         List<Race> races = raceRepository.findAllByNom(nom);
         if (races.isEmpty()) {
@@ -239,7 +224,6 @@ public class ImportService {
             logger.info("Nouvelle race créée : {}", nom);
             return saved;
         } else if (races.size() > 1) {
-            // Trier par ID pour prendre la première (par exemple la plus ancienne)
             races.sort(Comparator.comparingLong(Race::getId));
             Race selected = races.get(0);
             logger.warn("⚠️ Plusieurs races trouvées pour '{}' (ligne {}). Utilisation de l'ID {}.",
@@ -262,7 +246,7 @@ public class ImportService {
             if (inventaireSheet != null && inventaireSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des inventaires à partir de la feuille 'Inventaire'");
                 for (Row row : inventaireSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     Double refDouble = getDoubleCell(row, 0);
                     String ref = (refDouble == null) ? "" : String.valueOf(refDouble.longValue());
                     Date date = parseDate(getStringCell(row, 1), "Inventaire", row);
@@ -281,14 +265,13 @@ public class ImportService {
             if (detailSheet != null && detailSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des détails d'inventaire à partir de la feuille 'Inventaire_detail'");
                 for (Row row : detailSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     String refInventaire = getStringCell(row, 0);
                     String materielLibelle = getStringCell(row, 1);
                     Double quantiteInitiale = getDoubleCell(row, 2);
                     Double quantiteFinale = getDoubleCell(row, 3);
                     String observations = getStringCell(row, 4);
 
-                    // Recherche de l'inventaire
                     Inventaire inv = inventaires.get(refInventaire);
                     if (inv == null) {
                         Long id = Long.parseLong(refInventaire);
@@ -296,7 +279,6 @@ public class ImportService {
                                 .orElseThrow(() -> new RuntimeException("Inventaire introuvable avec l'ID : " + refInventaire));
                     }
 
-                    // Récupération ou création du matériel
                     Materiel materiel = uniqueResult(
                         () -> materielRepository.findByLibelle(materielLibelle)
                                 .orElseGet(() -> {
@@ -340,7 +322,7 @@ public class ImportService {
             if (employeeSheet != null && employeeSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des employés à partir de la feuille 'Employé'");
                 for (Row row : employeeSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     String nom = getStringCell(row, 0);
                     String prenom = getStringCell(row, 1);
                     Date dateNaissance = parseDate(getStringCell(row, 2), "Employé", row);
@@ -362,7 +344,7 @@ public class ImportService {
             if (contratSheet != null && contratSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des contrats à partir de la feuille 'Contrat'");
                 for (Row row : contratSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     String nom = getStringCell(row, 0);
                     String prenom = getStringCell(row, 1);
                     Date dateDebut = parseDate(getStringCell(row, 2), "Contrat", row);
@@ -395,7 +377,7 @@ public class ImportService {
             if (paiementSheet != null && paiementSheet.getPhysicalNumberOfRows() > 1) {
                 logger.info("Import des paiements à partir de la feuille 'Paiement'");
                 for (Row row : paiementSheet) {
-                    if (row.getRowNum() == 0) continue;
+                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
                     String nom = getStringCell(row, 0);
                     String prenom = getStringCell(row, 1);
                     Date dateDebutContrat = parseDate(getStringCell(row, 2), "Paiement", row);
@@ -481,6 +463,21 @@ public class ImportService {
                 " : " + dateStr
             );
         }
+    }
+
+    // ------------------------------------------------------------
+    // VÉRIFICATION SI UNE LIGNE EST VIDE
+    // ------------------------------------------------------------
+    private boolean isRowEmpty(Row row) {
+        if (row == null) return true;
+        for (int i = 0; i < row.getLastCellNum(); i++) {
+            Cell cell = row.getCell(i);
+            if (cell != null && cell.getCellType() != CellType.BLANK
+                && !cell.toString().trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // ------------------------------------------------------------
