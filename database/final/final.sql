@@ -127,7 +127,7 @@ CREATE TABLE mvt_caisse (
     montant DOUBLE PRECISION NOT NULL,
     id_caisse INTEGER NOT NULL,
     id_cause_caisse INTEGER NOT NULL,
-    CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id),
+    CONSTRAINT fk_mvt_caisse_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id)
 );
 
 CREATE TABLE client (
@@ -439,6 +439,17 @@ CREATE TABLE facture_detail (
 
 CREATE INDEX IF NOT EXISTS idx_mortalite_date ON mortalite(date);
 CREATE INDEX IF NOT EXISTS idx_mortalite_id_race ON mortalite(id_race);
+
+CREATE TABLE IF NOT EXISTS import_job (
+    id               BIGSERIAL PRIMARY KEY,
+    type             VARCHAR(255),
+    status           VARCHAR(255),
+    imported_count   INTEGER NOT NULL DEFAULT 0,
+    skipped_count    INTEGER NOT NULL DEFAULT 0,
+    failed_count     INTEGER NOT NULL DEFAULT 0,
+    error_log_path   VARCHAR(255),
+    created_at       TIMESTAMP NOT NULL DEFAULT now()
+);
 
 -- ============================================================
 -- Fin du script
