@@ -156,7 +156,6 @@ public class VenteController {
     }
 
     // ==================== Génération / téléchargement facture ====================
-    @Transactional
     @PostMapping("/{id}/facture")
     public ResponseEntity<byte[]> gererFacture(@PathVariable Long id) {
         try {
