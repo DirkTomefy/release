@@ -194,9 +194,10 @@ public class VenteController {
     @ResponseBody
     public VenteStatsDTO getStatsData(@RequestParam(required = false) String dateDebut,
                                       @RequestParam(required = false) String dateFin,
-                                      @RequestParam(required = false) Long raceId) {
+                                      @RequestParam(required = false) Long raceId,
+                                      @RequestParam(required = false, defaultValue = "mois") String mode) {
         LocalDate debut = dateDebut != null && !dateDebut.isEmpty() ? LocalDate.parse(dateDebut) : null;
         LocalDate fin = dateFin != null && !dateFin.isEmpty() ? LocalDate.parse(dateFin) : null;
-        return venteService.getVenteStats(debut, fin, raceId);
+        return venteService.getVenteStats(debut, fin, raceId, mode);
     }
 }

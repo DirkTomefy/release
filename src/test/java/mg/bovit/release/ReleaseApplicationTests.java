@@ -1,6 +1,6 @@
 package mg.bovit.release;
 
-import org.junit.jupiter.api.Test;
+import org.junit.iter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
