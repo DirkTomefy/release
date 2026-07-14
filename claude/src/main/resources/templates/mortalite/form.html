@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · Déclarer une mortalité</title>
+        <th:block th:replace="~{fragments/common :: assets}"></th:block>
+</head>
+<body>
+
+    <th:block th:replace="~{fragments/common :: navbar('mortalite')}"></th:block>
+
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+            <i class="bi bi-heartbreak-fill me-2" style="color:#b34040;"></i>Déclarer une mortalité
+        </h1>
+        <a href="/mortalite" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+        </a>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" id="serverError" th:text="${errorMessage}"></div>
+
+    <div class="row g-4">
+        <!-- Formulaire de saisie -->
+        <div class="col-lg-7">
+            <div class="card p-3 p-md-4">
+                <div id="alertBox" class="alert d-none" role="alert"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Date de la mortalité</label>
+                    <div class="form-control-plaintext text-muted">La date du jour sera utilisée automatiquement.</div>
+                </div>
+
+                <label class="form-label fw-medium">Bovins concernés</label>
+                <div class="form-text mb-2">Sélectionnez les bovins encore vivants et non vendus.</div>
+                <div id="bovinRows">
+                    <div class="row-bovin d-flex align-items-center gap-2">
+                        <select class="form-select bovin-id-select" required>
+                            <option value="">Choisir un bovin</option>
+                            <option th:each="bovin : ${bovinPage.content}" th:value="${bovin.id}" th:text="${bovin.id + ' - ' + bovin.raceNom + ' (' + #numbers.formatDecimal(bovin.poidsActuel, 0, 1) + ' kg)'}"></option>
+                        </select>
+                        <button type="button" class="btn btn-soft-danger btn-sm btn-remove-row" title="Retirer">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" id="btnAddRow" class="btn btn-outline-secondary btn-sm mt-2">
+                    <i class="bi bi-plus-lg me-1"></i> Ajouter un bovin
+                </button>
+
+                <hr class="my-4">
+
+                <button type="button" id="btnSubmit" class="btn btn-soft-danger w-100">
+                    <i class="bi bi-heartbreak me-1"></i> Enregistrer la mortalité
+                </button>
+                <div class="form-text mt-2">
+                    Chaque bovin saisi sera retiré du registre des animaux et son décès sera
+                    enregistré dans l'historique des mortalités (race, prix d'achat et poids conservés).
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste de référence des bovins vivants -->
+        <div class="col-lg-5">
+            <div class="card p-3 p-md-4">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-list-ul me-1"></i>Bovins actuellement enregistrés</h6>
+                <div id="refTable" class="table-responsive">
+                    <table class="table table-sm table-borderless mb-0">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Race</th>
+                            <th>Poids actuel</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="bovin : ${bovinPage.content}">
+                            <td class="fw-medium" th:text="${bovin.id}">1</td>
+                            <td th:text="${bovin.raceNom}">Limousine</td>
+                            <td>
+                                <span th:if="${bovin.poidsActuel != null}" th:text="${#numbers.formatDecimal(bovin.poidsActuel, 0, 1)} + ' kg'">320.5 kg</span>
+                                <span th:if="${bovin.poidsActuel == null}" class="text-muted">-</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${bovinPage.content.isEmpty()}">
+                            <td colspan="3" class="text-center text-muted py-3">Aucun bovin éligible</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const bovinRows = document.getElementById('bovinRows');
+    const btnAddRow = document.getElementById('btnAddRow');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const alertBox = document.getElementById('alertBox');
+
+    function nouvelleLigne() {
+        const div = document.createElement('div');
+        div.className = 'row-bovin d-flex align-items-center gap-2';
+        div.innerHTML = `
+            <select class="form-select bovin-id-select" required>
+                <option value="">Choisir un bovin</option>
+                ${Array.from(document.querySelectorAll('.bovin-id-select option:not([value=""])')).map(option => `<option value="${option.value}">${option.textContent}</option>`).join('')}
+            </select>
+            <button type="button" class="btn btn-soft-danger btn-sm btn-remove-row" title="Retirer">
+                <i class="bi bi-x-lg"></i>
+            </button>`;
+        bovinRows.appendChild(div);
+    }
+
+    btnAddRow.addEventListener('click', nouvelleLigne);
+
+    bovinRows.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-remove-row');
+        if (!btn) return;
+        const rows = bovinRows.querySelectorAll('.row-bovin');
+        if (rows.length > 1) {
+            btn.closest('.row-bovin').remove();
+        } else {
+            btn.closest('.row-bovin').querySelector('.bovin-id-select').value = '';
+        }
+    });
+
+    function afficherAlerte(type, message) {
+        alertBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+        alertBox.classList.add(type === 'success' ? 'alert-success' : 'alert-danger');
+        alertBox.textContent = message;
+    }
+
+    btnSubmit.addEventListener('click', () => {
+        const ids = Array.from(document.querySelectorAll('.bovin-id-select'))
+            .map(select => select.value.trim())
+            .filter(v => v !== '')
+            .map(v => parseInt(v, 10));
+
+        if (ids.length === 0) {
+            afficherAlerte('error', "Veuillez saisir au moins un identifiant de bovin.");
+            return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...';
+
+        fetch('/mortalite/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bovinIds: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                afficherAlerte('success', data.message);
+                setTimeout(() => { window.location.href = '/mortalite'; }, 1000);
+            } else {
+                afficherAlerte('error', data.message || "Une erreur est survenue.");
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="bi bi-heartbreak me-1"></i> Enregistrer la mortalité';
+            }
+        })
+        .catch(() => {
+            afficherAlerte('error', "Erreur de communication avec le serveur.");
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-heartbreak me-1"></i> Enregistrer la mortalité';
+        });
+    });
+</script>
+</body>
+</html>

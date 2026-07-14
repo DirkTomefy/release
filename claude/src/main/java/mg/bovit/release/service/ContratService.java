@@ -1,17 +1,16 @@
 package mg.bovit.release.service;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import mg.bovit.release.model.Contrat;
 import mg.bovit.release.model.Employee;
 import mg.bovit.release.repository.ContratRepository;
 import mg.bovit.release.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class ContratService {
@@ -64,6 +63,4 @@ public class ContratService {
 
         return !debutNouveau.isAfter(finExistantEffective) && !debutExistant.isAfter(finNouveauEffective);
     }
-
-    
 }
