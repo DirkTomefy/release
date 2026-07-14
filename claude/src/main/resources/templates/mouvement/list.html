@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐄 Liste des mouvements de stock</title>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f9f7f4;
+            color: #3e3e3b;
+        }
+        .card-modern {
+            border: 1px solid #e7e0d8;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2ddd6;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        .header-section h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #4a4a44;
+            margin: 0;
+        }
+        .header-section h1 i {
+            color: #7a9e5a;
+            margin-right: 0.5rem;
+        }
+        .badge-engrais {
+            background-color: #e2f0da;
+            color: #3d5a2e;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        .badge-sortie {
+            background-color: #fde8e8;
+            color: #813838;
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        .btn-primary {
+            background-color: #7a9e5a !important;
+            border-color: #7a9e5a !important;
+            color: #fff !important;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+        }
+    .btn-primary:hover {
+        background-color: #638249 !important;
+    }
+    .btn-outline {
+        background-color: transparent;
+        color: #6b5e53;
+        border: 1px solid #e0d8cf;
+        font-weight: 500;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+    }
+    .btn-outline:hover {
+        background-color: #f0ede8;
+        color: #3e3e3b;
+    }
+    .btn-export {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border: 1px solid transparent;
+        color: #fff;
+        text-decoration: none;
+    }
+    .btn-export-excel {
+        background-color: #217346;
+        border-color: #217346;
+    }
+    .btn-export-excel:hover {
+        background-color: #1a5c38;
+        border-color: #1a5c38;
+        color: #fff;
+    }
+    .btn-export-pdf {
+        background-color: #d93025;
+        border-color: #d93025;
+    }
+    .btn-export-pdf:hover {
+        background-color: #b9251c;
+        border-color: #b9251c;
+        color: #fff;
+    }
+    .action-btn {
+        padding: 0.35rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        border: 1px solid #e0d8cf;
+        background: #fff;
+        color: #6b5e53;
+        text-decoration: none;
+    }
+    .action-btn:hover {
+        background-color: #f0ede8;
+        color: #3e3e3b;
+    }
+        table {
+            vertical-align: middle;
+        }
+        thead th {
+            background-color: #f5f2ed;
+            color: #4a4a44;
+            font-weight: 600;
+            border-bottom: 2px solid #e7e0d8;
+        }
+        tbody tr:hover {
+            background-color: #faf8f5;
+        }
+        .empty-state {
+            text-align: center;
+            color: #6b5e53;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/common :: navbar('materiel')}"></th:block>
+
+    <div class="container pb-5">
+        <div class="card-modern">
+            <div class="header-section">
+                <h1><i class="fas fa-list"></i> Liste des mouvements de stock</h1>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-primary" th:href="@{/mouvement/form}">
+                        <i class="fas fa-plus-circle"></i> Nouveau mouvement
+                    </a>
+                    <form th:action="@{/mouvement/export/excel/all}" method="get">
+                        <button type="submit" class="btn btn-export btn-export-excel" title="Exporter tout en Excel">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                    </form>
+                    <form th:action="@{/mouvement/export/pdf/all}" method="get">
+                        <button type="submit" class="btn btn-export btn-export-pdf" title="Exporter tout en PDF">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="table-responsive" th:if="${!#lists.isEmpty(mouvements)}">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>Date</th>
+                            <th>Matériel</th>
+                            <th>Type</th>
+                            <th class="text-end">Quantité</th>
+                            <th class="text-end">P.U. (Ar)</th>
+                            <th class="text-end">Total estimé (Ar)</th>
+                            <th class="text-end">Qté restante ligne</th>
+                            <th class="text-end" style="width: 160px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="m : ${mouvements}">
+                            <td class="text-muted" th:text="${m.id}">1</td>
+                            <td th:text="${#dates.format(m.dateMouvement, 'dd/MM/yyyy')}"></td>
+                            <td th:text="${m.materiel != null ? m.materiel.libelle : '-'}"></td>
+                            <td>
+                                <span th:if="${m.typeMouvement == 'ENTREE'}" class="badge-engrais">ENTREE</span>
+                                <span th:if="${m.typeMouvement == 'SORTIE'}" class="badge-sortie">SORTIE</span>
+                            </td>
+                            <td class="text-end" th:text="${m.quantite}"></td>
+                            <td class="text-end" th:text="${m.prixUnitaire != null ? #numbers.formatDecimal(m.prixUnitaire, 1, 2) : '-'}"></td>
+                            <td class="text-end" th:text="${m.prixUnitaire != null ? #numbers.formatDecimal(m.prixUnitaire * m.quantite, 1, 2) : '-'}"></td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(m.qteRestant, 1, 2)}"></td>
+                            <td class="text-end">
+                                <a th:href="@{'/mouvement/export/excel/' + ${m.id}}"
+                                   class="btn btn-export btn-export-excel me-1"
+                                   title="Exporter en Excel">
+                                    <i class="fas fa-file-excel"></i>
+                                </a>
+                                <a th:href="@{'/mouvement/export/pdf/' + ${m.id}}"
+                                   class="btn btn-export btn-export-pdf"
+                                   title="Exporter en PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" th:if="${#lists.isEmpty(mouvements)}">
+                <i class="fas fa-inbox" style="font-size: 2rem; color: #e7e0d8;"></i>
+                <p class="mt-2">Aucun mouvement de stock enregistré pour le moment.</p>
+                <a class="btn btn-primary mt-2" th:href="@{/mouvement/form}">
+                    <i class="fas fa-plus-circle"></i> Créer un mouvement
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

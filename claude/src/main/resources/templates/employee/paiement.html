@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Élevage · Paiement employé</title>
+  <th:block th:replace="~{fragments/common :: assets}"></th:block>
+  <style>
+    /* Assure la compatibilité du système d'affichage show/hide JS avec Bootstrap */
+    .info-box { display: none; }
+    .info-box.show { display: flex !important; }
+    .toast-message {
+      position: fixed; bottom: 20px; right: 20px; z-index: 1050;
+      display: none; padding: 1rem 1.5rem; border-radius: 8px; color: white;
+    }
+    .toast-message.show { display: block; background-color: #28a745; }
+    .toast-message.show.error { background-color: #dc3545; }
+  </style>
+</head>
+<body>
+  <th:block th:replace="~{fragments/common :: navbar('paiement')}"></th:block>
+
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
+          <i class="bi bi-cash-coin me-2" style="color:#7a9e5a;"></i>
+          Paiement employé
+        </h1>
+        <p class="text-muted mb-0">Enregistrez les salaires, avances ou sanctions mensuelles.</p>
+      </div>
+      <div>
+        <a th:href="@{/employee/alertes}" class="btn btn-soft-primary">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i> Voir non-payées
+        </a>
+      </div>
+    </div>
+
+    <form id="payeForm" onsubmit="return false;">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;">
+            <i class="bi bi-file-earmark-person-fill me-2"></i> Paramètres du paiement
+          </h5>
+          
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label"><i class="bi bi-person me-1"></i> Employé</label>
+              <select id="employeeSelect" class="form-select" name="employeeId" required>
+                <option value="">-- Sélectionner un employé --</option>
+                <option th:each="emp : ${employees}"
+                        th:value="${emp.id}"
+                        th:text="${emp.nom + ' ' + emp.prenom}"
+                        th:selected="${preselectEmployeeId != null and emp.id == preselectEmployeeId}">
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label"><i class="bi bi-calendar-event me-1"></i> Mois à payer</label>
+              <input type="month" id="moisPaye" class="form-control" name="moisPaye" th:value="${preselectMois}" required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label"><i class="bi bi-tag me-1"></i> Type de paiement</label>
+              <select id="typePayementId" class="form-select" name="typePayementId" required>
+                <option th:each="type : ${typesPayement}"
+                        th:if="${type.libelle == 'Salaire'}"
+                        th:value="${type.id}"
+                        th:text="${type.libelle}"
+                        th:attr="data-libelle=${type.libelle}">
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Salaire contrat (Ar)</label>
+              <input type="text" id="salaireContrat" class="form-control bg-light" readonly value="0,00" data-raw-value="0" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Reste dû ce mois (Ar)</label>
+              <input type="text" id="resteDu" class="form-control bg-light" readonly value="0,00" data-raw-value="0" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Montant à verser (Ar)</label>
+              <input type="number" id="montantAVerser" class="form-control" name="montantAVerser" step="0.01" min="0" value="0" required />
+            </div>
+          </div>
+
+          <div class="alert alert-danger align-items-center mt-3 info-box" id="moisPayeBox" role="alert">
+            <i class="bi bi-x-circle-fill me-2"></i>
+            <span>Le salaire de ce mois a déjà été réglé.</span>
+          </div>
+
+          <div class="alert alert-warning align-items-center mt-3 info-box" id="avanceBox" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span>Avance(s) déjà enregistrée(s) ce mois.</span>
+          </div>
+
+          <div class="alert alert-info align-items-center mt-3 info-box" id="sanctionBox" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-semibold mb-0" style="color:#5b4b3a;">
+              <i class="bi bi-bank me-2"></i> Répartition par caisse
+              <span class="badge bg-secondary ms-2 text-white fw-normal" id="payCountBadge" style="font-size: 0.75rem;">1 ligne</span>
+            </h5>
+            <button type="button" class="btn btn-sm btn-soft-primary" id="addPaymentBtn">
+              <i class="bi bi-plus-circle me-1"></i> Ajouter ligne
+            </button>
+          </div>
+
+          <div class="payment-list mb-3" id="paymentList">
+            <div class="row g-2 mb-2 payment-row align-items-center" data-row-id="1">
+              <div class="col-md-6">
+                <select class="form-select pay-type" required>
+                  <option value="">-- Caisse --</option>
+                  <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <input type="number" class="form-control pay-amount" placeholder="0.00" step="0.01" min="0" value="0" required />
+              </div>
+              <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-pay" disabled>
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-muted" style="font-size: 0.85rem;">
+            <i class="bi bi-info-circle me-1"></i> Le total réparti ci-dessus doit correspondre exactement au montant à verser.
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="mb-3 fw-semibold" style="color:#5b4b3a;">
+            <i class="bi bi-coin me-2"></i> Enregistrer une Avance / Sanction indifférente
+          </h5>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Type</label>
+              <select id="avanceTypeSelect" class="form-select" name="avanceTypeSelect" required>
+                <option value="">-- Sélectionner --</option>
+                <option value="Avance">Avance</option>
+                <option value="Sanction">Sanction</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Montant (Ar)</label>
+              <input type="number" id="avanceMontant" class="form-select" name="avanceMontant" placeholder="0.00" step="0.01" min="0" value="0" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Motif (optionnel)</label>
+              <input type="text" id="avanceMotif" class="form-control" name="avanceMotif" placeholder="Ex. avance de salaire" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="saveAdvanceBtn">
+            <i class="bi bi-save me-1"></i> Enregistrer avance / sanction seule
+          </button>
+        </div>
+      </div>
+
+      <div class="card mb-4 border-success bg-light text-success fw-bold p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-calculator me-2"></i> Total réparti sur les caisses :</span>
+          <span class="fs-5" id="totalDisplay">0,00 Ar</span>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <button type="button" class="btn btn-soft-primary btn-lg px-4" id="validerBtn">
+            <i class="bi bi-check-circle-fill me-1"></i> Valider le paiement
+          </button>
+          <button type="reset" class="btn btn-light btn-lg ms-2" id="resetBtn">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Réinitialiser
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast-message"></div>
+
+  <select id="caisseOptionsTemplate" style="display: none;">
+    <option value="">-- Caisse --</option>
+    <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
+  </select>
+
+  <script th:inline="javascript">
+    (function () {
+      const employeeSelect = document.getElementById("employeeSelect");
+      const moisInput = document.getElementById("moisPaye");
+      const typeSelect = document.getElementById("typePayementId");
+      const salaireInput = document.getElementById("salaireContrat");
+      const resteDuInput = document.getElementById("resteDu");
+      const montantInput = document.getElementById("montantAVerser");
+
+      const moisPayeBox = document.getElementById("moisPayeBox");
+      const avanceBox = document.getElementById("avanceBox");
+      const sanctionBox = document.getElementById("sanctionBox");
+
+      const paymentList = document.getElementById("paymentList");
+      const addPaymentBtn = document.getElementById("addPaymentBtn");
+      const payCountBadge = document.getElementById("payCountBadge");
+      const totalDisplay = document.getElementById("totalDisplay");
+      const validerBtn = document.getElementById("validerBtn");
+      const saveAdvanceBtn = document.getElementById("saveAdvanceBtn");
+      const avanceTypeSelect = document.getElementById("avanceTypeSelect");
+      const avanceMontantInput = document.getElementById("avanceMontant");
+      const avanceMotifInput = document.getElementById("avanceMotif");
+      const toast = document.getElementById("toast");
+      const caisseOptionsTemplate = document.getElementById("caisseOptionsTemplate");
+
+      let rowCounter = 1;
+      let statutMois = null;
+      let moisDejaPaye = false;
+
+      if (!moisInput.value) {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        moisInput.value = `${y}-${m}`;
+      }
+
+      function formatAr(n) {
+        return (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " Ar";
+      }
+
+      function typeSelectionneEstSalaire() {
+        const opt = typeSelect.selectedOptions[0];
+        if (!opt) return false;
+        const libelle = opt.getAttribute("data-libelle") || "";
+        return libelle.toLowerCase() === "salaire";
+      }
+
+      function refreshStatutMois() {
+        const empId = employeeSelect.value;
+        const mois = moisInput.value;
+        moisPayeBox.classList.remove("show");
+        avanceBox.classList.remove("show");
+        sanctionBox.classList.remove("show");
+        moisDejaPaye = false;
+        validerBtn.disabled = false;
+
+        if (!empId || !mois) {
+          salaireInput.value = "0,00";
+          resteDuInput.value = "0,00";
+          statutMois = null;
+          return;
+        }
+
+        fetch(`/employees/${empId}/statut-paye?mois=${encodeURIComponent(mois)}`)
+          .then((r) => r.json())
+          .then((data) => {
+            statutMois = data;
+            salaireInput.value = formatAr(data.salaire);
+            resteDuInput.value = formatAr(data.resteDu);
+            salaireInput.setAttribute("data-raw-value", data.salaire);
+            resteDuInput.setAttribute("data-raw-value", data.resteDu);
+
+            if (data.resteDu <= 0) {
+              moisDejaPaye = true;
+              moisPayeBox.classList.add("show");
+              moisPayeBox.querySelector("span").textContent = "Le salaire de ce mois a été intégralement réglé.";
+              validerBtn.disabled = typeSelectionneEstSalaire();
+            } else {
+              moisDejaPaye = false;
+              moisPayeBox.classList.remove("show");
+              validerBtn.disabled = false;
+              if (typeSelectionneEstSalaire()) {
+                montantInput.value = data.resteDu;
+              }
+            }
+
+            if (data.totalAvance > 0) {
+              avanceBox.querySelector("span").textContent = `Avance(s) déjà enregistrée(s) ce mois : ${formatAr(data.totalAvance)} — non déduite automatiquement.`;
+              avanceBox.classList.add("show");
+            }
+
+            if (data.totalSanction > 0) {
+              sanctionBox.classList.add("show");
+            }
+            updateGlobalDisplay();
+          })
+          .catch(() => {
+            salaireInput.value = "0,00";
+            resteDuInput.value = "0,00";
+            statutMois = null;
+          });
+      }
+
+      employeeSelect.addEventListener("change", refreshStatutMois);
+      moisInput.addEventListener("change", refreshStatutMois);
+      typeSelect.addEventListener("change", function () {
+        validerBtn.disabled = moisDejaPaye && typeSelectionneEstSalaire();
+        if (typeSelectionneEstSalaire() && statutMois) {
+          montantInput.value = statutMois.resteDu;
+        }
+      });
+
+      function getPaymentRows() {
+        return paymentList.querySelectorAll(".payment-row");
+      }
+
+      function getPaymentTotal() {
+        let sum = 0;
+        getPaymentRows().forEach((row) => {
+          const amt = parseFloat(row.querySelector(".pay-amount").value) || 0;
+          sum += amt;
+        });
+        return sum;
+      }
+
+      function updateGlobalDisplay() {
+        const sum = getPaymentTotal();
+        totalDisplay.textContent = formatAr(sum);
+        const count = getPaymentRows().length;
+        payCountBadge.textContent = count + " ligne" + (count > 1 ? "s" : "");
+      }
+
+      function createPaymentRow(rowId) {
+        const row = document.createElement("div");
+        row.className = "row g-2 mb-2 payment-row align-items-center";
+        row.dataset.rowId = rowId;
+
+        const selectWrapper = document.createElement("div");
+        selectWrapper.className = "col-md-6";
+        const select = caisseOptionsTemplate.cloneNode(true);
+        select.removeAttribute("id");
+        select.removeAttribute("style");
+        select.className = "form-select pay-type";
+        select.required = true;
+        selectWrapper.appendChild(select);
+
+        const montantWrapper = document.createElement("div");
+        montantWrapper.className = "col-md-4";
+        montantWrapper.innerHTML = '<input type="number" class="form-control pay-amount" placeholder="0.00" step="0.01" min="0" value="0" required>';
+
+        const btnWrapper = document.createElement("div");
+        btnWrapper.className = "col-md-2 text-end";
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "btn btn-outline-danger btn-sm btn-remove-pay";
+        removeBtn.innerHTML = '<i class="bi bi-trash-fill"></i>';
+        btnWrapper.appendChild(removeBtn);
+
+        row.appendChild(selectWrapper);
+        row.appendChild(montantWrapper);
+        row.appendChild(btnWrapper);
+        return row;
+      }
+
+      function attachRowEvents(row) {
+        row.querySelector(".pay-amount").addEventListener("input", updateGlobalDisplay);
+        row.querySelector(".btn-remove-pay").addEventListener("click", function () {
+          if (getPaymentRows().length <= 1) return;
+          row.remove();
+          updateGlobalDisplay();
+          updateRemoveButtons();
+        });
+      }
+
+      function updateRemoveButtons() {
+        const rows = getPaymentRows();
+        rows.forEach((row) => {
+          row.querySelector(".btn-remove-pay").disabled = rows.length <= 1;
+        });
+      }
+
+      addPaymentBtn.addEventListener("click", function () {
+        rowCounter++;
+        const newRow = createPaymentRow(rowCounter);
+        paymentList.appendChild(newRow);
+        attachRowEvents(newRow);
+        updateGlobalDisplay();
+        updateRemoveButtons();
+      });
+
+      montantInput.addEventListener("input", updateGlobalDisplay);
+
+      validerBtn.addEventListener("click", function () {
+        const employeeId = parseInt(employeeSelect.value);
+        const mois = moisInput.value;
+        const typePayementId = parseInt(typeSelect.value);
+        const montantAVerser = parseFloat(montantInput.value) || 0;
+
+        if (!employeeId || !mois || !typePayementId) {
+          alert("Veuillez remplir tous les champs obligatoires.");
+          return;
+        }
+        if (montantAVerser <= 0) {
+          alert("Le montant à verser doit être supérieur à 0.");
+          return;
+        }
+
+        const payments = [];
+        getPaymentRows().forEach((row) => {
+          const caisseId = parseInt(row.querySelector(".pay-type").value);
+          const montant = parseFloat(row.querySelector(".pay-amount").value) || 0;
+          if (caisseId && montant > 0) payments.push({ caisseId, montant });
+        });
+
+        if (payments.length === 0) {
+          alert("Ajoutez au moins une caisse avec un montant valide.");
+          return;
+        }
+
+        const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
+        if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
+          alert("Le total réparti sur les caisses doit être égal au montant à verser.");
+          return;
+        }
+
+        const payload = { employeeId, typePayementId, mois, montant: montantAVerser, payments };
+        validerBtn.disabled = true;
+
+        fetch("/employees/payement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "success") {
+              showToast(data.message || "Paiement enregistré.", "success");
+              setTimeout(() => { window.location.href = "/employee/paiement"; }, 1200);
+            } else {
+              showToast("Erreur : " + data.message, "error");
+              validerBtn.disabled = false;
+            }
+          })
+          .catch(() => {
+            showToast("Erreur de communication avec le serveur.", "error");
+            validerBtn.disabled = false;
+          });
+      });
+
+      saveAdvanceBtn.addEventListener("click", function () {
+        const typeLibelle = avanceTypeSelect.value;
+        const montantAVerser = parseFloat(avanceMontantInput.value) || 0;
+        const employeeId = parseInt(employeeSelect.value);
+        const mois = moisInput.value;
+
+        if (!employeeId || !mois || !typeLibelle || montantAVerser <= 0) {
+          alert("Paramètres invalides pour l'avance / sanction.");
+          return;
+        }
+
+        const selectedOption = Array.from(typeSelect.options).find((opt) => (opt.getAttribute("data-libelle") || "").toLowerCase() === typeLibelle.toLowerCase());
+        if (!selectedOption) {
+          alert("Le type sélectionné n'est pas configuré dans le système.");
+          return;
+        }
+
+        const payments = [];
+        getPaymentRows().forEach((row) => {
+          const caisseId = parseInt(row.querySelector(".pay-type").value);
+          const montant = parseFloat(row.querySelector(".pay-amount").value) || 0;
+          if (caisseId && montant > 0) payments.push({ caisseId, montant });
+        });
+
+        const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
+        if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
+          alert("Le total des caisses doit matcher le montant de l'avance/sanction.");
+          return;
+        }
+
+        const payload = { employeeId, typePayementId: parseInt(selectedOption.value), mois, montant: montantAVerser, payments };
+        
+        fetch("/employees/payement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+          .then(r => r.json())
+          .then(data => {
+            if(data.status === "success") {
+              showToast("Enregistré avec succès !", "success");
+              setTimeout(() => { window.location.href = "/employee/paiement"; }, 1200);
+            } else {
+              showToast("Erreur: " + data.message, "error");
+            }
+          });
+      });
+
+      function showToast(message, type) {
+        toast.textContent = message;
+        toast.className = "toast-message show" + (type === "error" ? " error" : "");
+        setTimeout(() => { toast.classList.remove("show"); }, 4000);
+      }
+
+      getPaymentRows().forEach((row) => attachRowEvents(row));
+      updateRemoveButtons();
+      updateGlobalDisplay();
+    })();
+  </script>
+</body>
+</html>

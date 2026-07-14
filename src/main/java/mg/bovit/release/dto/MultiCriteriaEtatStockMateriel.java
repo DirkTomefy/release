@@ -17,13 +17,13 @@ public class MultiCriteriaEtatStockMateriel {
 
 
     public LocalDate getDateDebut() {
-        return dateDebut;
+        return dateDebut == null ? LocalDate.now().withDayOfMonth(1) : dateDebut;
     }
     public void setDateDebut(LocalDate dateDebut) {
         this.dateDebut = dateDebut;
     }
     public LocalDate getDateFin() {
-        return dateFin;
+        return dateFin == null ? LocalDate.now() : dateFin;
     }
     public void setDateFin(LocalDate dateFin) {
         this.dateFin = dateFin;

@@ -184,41 +184,74 @@ public class VenteService {
         }
     }
 
-    public VenteStatsDTO getVenteStats(LocalDate dateDebut, LocalDate dateFin, Long raceId) {
-    Long totalVentes = venteBovinRepository.countVentesWithFilters(dateDebut, dateFin);
+    public VenteStatsDTO /*SIG*/ getVenteStats(LocalDate dateDebut, LocalDate dateFin, Long raceId, String mode) {
+        Long totalVentes = venteBovinRepository.countVentesWithFilters(dateDebut, dateFin, raceId);
 
-    List<Object[]> grouped = bovinRepository.findVenteStatsGroupedByMonth(dateDebut, dateFin, raceId);
+        List<String> labels = new ArrayList<>();
+        List<Double> montants = new ArrayList<>();
+        List<Long> counts = new ArrayList<>();
+        List<Double> benefices = new ArrayList<>();
 
-    List<String> labels = new ArrayList<>();
-    List<Double> montants = new ArrayList<>();
-    List<Long> counts = new ArrayList<>();
+        Double montantTotal = 0.0;
+        Long totalBovins = 0L;
+        Double totalBenefice = 0.0;
 
-    Double montantTotal = 0.0;
-    Long totalBovins = 0L;
+        if ("vente".equalsIgnoreCase(mode)) {
+            List<Object[]> grouped = venteBovinRepository.findVenteStatsGroupedByVente(dateDebut, dateFin, raceId);
 
-    for (Object[] row : grouped) {
-        String mois = (String) row[0];        // déjà formaté en "YYYY-MM"
-        Double montant = (Double) row[1];
-        Long count = (Long) row[2];
+            for (Object[] row : grouped) {
+                Long venteId = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+                Object dateValue = row[1];
+                String dateVente = dateValue != null ? dateValue.toString() : "";
+                Number montantValue = (Number) row[2];
+                Double montant = montantValue != null ? montantValue.doubleValue() : 0.0;
+                Long count = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+                Number beneficeValue = (Number) row[4];
+                Double benefice = beneficeValue != null ? beneficeValue.doubleValue() : 0.0;
 
-        labels.add(mois);
-        montants.add(montant);
-        counts.add(count);
+                labels.add("Vente #" + venteId + " (" + dateVente + ")");
+                montants.add(montant);
+                counts.add(count);
+                benefices.add(benefice);
 
-        montantTotal += montant;
-        totalBovins += count;
+                montantTotal += montant;
+                totalBovins += count;
+                totalBenefice += benefice;
+            }
+        } else {
+            List<Object[]> grouped = bovinRepository.findVenteStatsGroupedByMonth(dateDebut, dateFin, raceId);
+
+            for (Object[] row : grouped) {
+                String mois = (String) row[0];        // déjà formaté en "YYYY-MM"
+                Number montantValue = (Number) row[1];
+                Double montant = montantValue != null ? montantValue.doubleValue() : 0.0;
+                Long count = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                Number beneficeValue = (Number) row[3];
+                Double benefice = beneficeValue != null ? beneficeValue.doubleValue() : 0.0;
+
+                labels.add(mois);
+                montants.add(montant);
+                counts.add(count);
+                benefices.add(benefice);
+
+                montantTotal += montant;
+                totalBovins += count;
+                totalBenefice += benefice;
+            }
+        }
+
+        VenteStatsDTO dto = new VenteStatsDTO();
+        dto.setTotalVentes(totalVentes);
+        dto.setTotalBovinsVendus(totalBovins);
+        dto.setMontantTotal(montantTotal);
+        dto.setTotalBenefice(totalBenefice);
+        dto.setLabels(labels);
+        dto.setMontants(montants);
+        dto.setCounts(counts);
+        dto.setBenefices(benefices);
+
+        return dto;
     }
-
-    VenteStatsDTO dto = new VenteStatsDTO();
-    dto.setTotalVentes(totalVentes);
-    dto.setTotalBovinsVendus(totalBovins);
-    dto.setMontantTotal(montantTotal);
-    dto.setLabels(labels);
-    dto.setMontants(montants);
-    dto.setCounts(counts);
-
-    return dto;
-}
 
     public Optional<VenteBovin> findById(Long id){
         return venteBovinRepository.findById(id);

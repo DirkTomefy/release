@@ -1,20 +1,21 @@
 package mg.bovit.release.controller;
 
-import mg.bovit.release.dto.EmployeeContratDTO;
-import mg.bovit.release.service.EmployeeService;
-import mg.bovit.release.repository.CaisseRepository;
-import mg.bovit.release.repository.TypePayementEmployeeRepository;
-import mg.bovit.release.service.PayementEmployeeService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import mg.bovit.release.dto.EmployeeContratDTO;
+import mg.bovit.release.repository.CaisseRepository;
+import mg.bovit.release.repository.TypePayementEmployeeRepository;
+import mg.bovit.release.service.EmployeeService;
+import mg.bovit.release.service.PayementEmployeeService;
 
 @Controller
 public class EmployeeController {
@@ -76,5 +77,17 @@ public class EmployeeController {
     public String listEmployee(Model model) {
         model.addAttribute("employees", employeeService.findAllEmployees());
         return "employee/list";
+    }
+
+    @GetMapping("/employee/contrat/{id}")
+    public String listContratsByEmployee(@PathVariable("id") Long employeeId, Model model) {
+        try {
+            model.addAttribute("contrats", employeeService.getContratsByEmployeeId(employeeId));
+            model.addAttribute("id", employeeId);
+            return "employee/contrat";
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage", e.getReason());
+            return "error";
+        }
     }
 }

@@ -1,21 +1,21 @@
 package mg.bovit.release.service;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import mg.bovit.release.dto.EmployeeContratDTO;
 import mg.bovit.release.model.Contrat;
 import mg.bovit.release.model.Employee;
 import mg.bovit.release.repository.ContratRepository;
 import mg.bovit.release.repository.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.sql.Timestamp;
-import java.util.List;
-
-import java.time.LocalDate;
-import java.time.Period;
 
 @Service
 public class EmployeeService {
@@ -59,5 +59,10 @@ public class EmployeeService {
     }
     public List<Employee> findAllEmployees() {
     return employeeRepository.findAll();
+    }
+    public List<Contrat> getContratsByEmployeeId(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employé introuvable avec l'ID : " + employeeId));
+        return contratRepository.findByEmployee(employee);
     }
 }
