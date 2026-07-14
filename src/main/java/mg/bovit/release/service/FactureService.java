@@ -1,23 +1,43 @@
 package mg.bovit.release.service;
 
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import mg.bovit.release.model.*;
-import mg.bovit.release.repository.FactureDetailRepository;
-import mg.bovit.release.repository.FactureRepository;
-import mg.bovit.release.repository.VenteBovinRepository;
-import mg.bovit.release.repository.VenteDetailRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.borders.Border;
+import com.itextpdf.layout.borders.SolidBorder;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.LineSeparator;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Text;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.layout.properties.VerticalAlignment;
+
+import mg.bovit.release.model.Bovin;
+import mg.bovit.release.model.Facture;
+import mg.bovit.release.model.FactureDetail;
+import mg.bovit.release.model.VenteBovin;
+import mg.bovit.release.model.VenteDetail;
+import mg.bovit.release.repository.FactureDetailRepository;
+import mg.bovit.release.repository.FactureRepository;
+import mg.bovit.release.repository.VenteBovinRepository;
+import mg.bovit.release.repository.VenteDetailRepository;
 
 @Service
 public class FactureService {
@@ -131,47 +151,154 @@ public class FactureService {
     }
 
     // Génération du PDF (méthode publique pour le téléchargement)
+    // Génération du PDF (méthode publique pour le téléchargement)
     public byte[] generatePdf(Facture facture) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
         PdfDocument pdfDoc = new PdfDocument(writer);
-        Document document = new Document(pdfDoc);
-
-        // Titre
-        document.add(new Paragraph("FACTURE")
-                .setFontSize(20));
-
-        // Informations
-        document.add(new Paragraph("N° facture : " + facture.getNumeroFacture()));
-        document.add(new Paragraph("Code : " + facture.getCodeFacture()));
-        document.add(new Paragraph("Date : " + facture.getDateFacture().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
-        document.add(new Paragraph("Client : " + facture.getVente().getClient().getNom() + " " + facture.getVente().getClient().getPrenom()));
-        document.add(new Paragraph("Contact : " + facture.getVente().getClient().getContact()));
+        Document document = new Document(pdfDoc, PageSize.A4);
+        document.setMargins(40, 40, 40, 40);
+    
+        // Polices
+        PdfFont fontRegular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+        PdfFont fontBold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+    
+        // Palette de couleurs (cohérente avec le reste de l'application)
+        DeviceRgb couleurPrimaire = new DeviceRgb(31, 138, 74);
+        DeviceRgb couleurTexteClair = new DeviceRgb(255, 255, 255);
+        DeviceRgb couleurGrisClair = new DeviceRgb(245, 248, 246);
+        DeviceRgb couleurGrisTexte = new DeviceRgb(90, 90, 90);
+        DeviceRgb couleurBordure = new DeviceRgb(220, 232, 224);
+    
+        // ---------- EN-TÊTE ----------
+        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 1})).useAllAvailableWidth();
+        headerTable.setBorder(Border.NO_BORDER);
+    
+        Cell logoCell = new Cell()
+                .add(new Paragraph("BOVIT").setFont(fontBold).setFontSize(20).setFontColor(couleurPrimaire))
+                .add(new Paragraph("Gestion d'élevage bovin").setFont(fontRegular).setFontSize(9).setFontColor(couleurGrisTexte))
+                .setBorder(Border.NO_BORDER)
+                .setVerticalAlignment(VerticalAlignment.MIDDLE);
+    
+        Cell titreCell = new Cell()
+                .add(new Paragraph("FACTURE").setFont(fontBold).setFontSize(24).setFontColor(couleurPrimaire).setTextAlignment(TextAlignment.RIGHT))
+                .add(new Paragraph("N° " + facture.getNumeroFacture()).setFont(fontRegular).setFontSize(10).setTextAlignment(TextAlignment.RIGHT))
+                .setBorder(Border.NO_BORDER)
+                .setVerticalAlignment(VerticalAlignment.MIDDLE);
+    
+        headerTable.addCell(logoCell);
+        headerTable.addCell(titreCell);
+        document.add(headerTable);
+    
+        document.add(new LineSeparator(new SolidLine(1.2f))
+                .setMarginTop(10).setMarginBottom(15).setStrokeColor(couleurPrimaire));
+    
+        // ---------- INFOS FACTURE / CLIENT ----------
+        Table infoTable = new Table(UnitValue.createPercentArray(new float[]{1, 1})).useAllAvailableWidth();
+        infoTable.setBorder(Border.NO_BORDER);
+    
+        Cell infoFactureCell = new Cell()
+                .setBorder(Border.NO_BORDER)
+                .add(ligneLibelleValeur("Code facture", facture.getCodeFacture(), fontBold, fontRegular, couleurGrisTexte))
+                .add(ligneLibelleValeur("Date", facture.getDateFacture().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), fontBold, fontRegular, couleurGrisTexte));
+    
+        Cell infoClientCell = new Cell()
+                .setBorder(Border.NO_BORDER)
+                .add(ligneLibelleValeur("Client",
+                        facture.getVente().getClient().getNom() + " " + facture.getVente().getClient().getPrenom(),
+                        fontBold, fontRegular, couleurGrisTexte))
+                .add(ligneLibelleValeur("Contact", facture.getVente().getClient().getContact(), fontBold, fontRegular, couleurGrisTexte));
+    
+        infoTable.addCell(infoFactureCell);
+        infoTable.addCell(infoClientCell);
+        document.add(infoTable);
         document.add(new Paragraph("\n"));
-
-        // Tableau
-        Table table = new Table(4);
-        table.addCell("N°");
-        table.addCell("Bovin (race)");
-        table.addCell("Prix unitaire");
-        table.addCell("Total");
-
+    
+        // ---------- TABLEAU DES BOVINS ----------
+        Table table = new Table(UnitValue.createPercentArray(new float[]{10, 45, 20, 25})).useAllAvailableWidth();
+    
+        table.addHeaderCell(enteteCellule("N°", fontBold, couleurPrimaire, couleurTexteClair, TextAlignment.CENTER));
+        table.addHeaderCell(enteteCellule("Bovin (race)", fontBold, couleurPrimaire, couleurTexteClair, TextAlignment.LEFT));
+        table.addHeaderCell(enteteCellule("Prix unitaire", fontBold, couleurPrimaire, couleurTexteClair, TextAlignment.RIGHT));
+        table.addHeaderCell(enteteCellule("Total", fontBold, couleurPrimaire, couleurTexteClair, TextAlignment.RIGHT));
+    
         int i = 1;
         for (FactureDetail fd : facture.getDetails()) {
-            table.addCell(String.valueOf(i++));
-            table.addCell(fd.getVenteDetail().getBovin().getRace().getNom());
-            table.addCell(String.format("%.2f", fd.getPrixUnitaire()));
-            table.addCell(String.format("%.2f", fd.getPrixUnitaire() * fd.getQuantite()));
+            DeviceRgb fondLigne = (i % 2 == 0) ? couleurGrisClair : new DeviceRgb(255, 255, 255);
+            String race = fd.getVenteDetail().getBovin().getRace() != null
+                    ? fd.getVenteDetail().getBovin().getRace().getNom()
+                    : "-";
+            double totalLigne = fd.getPrixUnitaire() * fd.getQuantite();
+    
+            table.addCell(donneeCellule(String.valueOf(i), fontRegular, fondLigne, TextAlignment.CENTER));
+            table.addCell(donneeCellule(race, fontRegular, fondLigne, TextAlignment.LEFT));
+            table.addCell(donneeCellule(formatMontant(fd.getPrixUnitaire()), fontRegular, fondLigne, TextAlignment.RIGHT));
+            table.addCell(donneeCellule(formatMontant(totalLigne), fontRegular, fondLigne, TextAlignment.RIGHT));
+            i++;
         }
-
-        table.addCell("");
-        table.addCell("");
-        table.addCell("Total général");
-        table.addCell(String.format("%.2f", facture.getMontantTotal()));
-
         document.add(table);
+    
+        // ---------- TOTAL GÉNÉRAL ----------
+        Table totalTable = new Table(UnitValue.createPercentArray(new float[]{55, 20, 25})).useAllAvailableWidth();
+        totalTable.setMarginTop(10);
+    
+        totalTable.addCell(new Cell().setBorder(Border.NO_BORDER));
+        totalTable.addCell(new Cell()
+                .add(new Paragraph("TOTAL").setFont(fontBold).setFontSize(12))
+                .setBorder(Border.NO_BORDER)
+                .setBackgroundColor(couleurGrisClair)
+                .setPadding(8)
+                .setTextAlignment(TextAlignment.RIGHT));
+        totalTable.addCell(new Cell()
+                .add(new Paragraph(formatMontant(facture.getMontantTotal())).setFont(fontBold).setFontSize(12).setFontColor(couleurPrimaire))
+                .setBorder(Border.NO_BORDER)
+                .setBackgroundColor(couleurGrisClair)
+                .setPadding(8)
+                .setTextAlignment(TextAlignment.RIGHT));
+        document.add(totalTable);
+    
+        // ---------- PIED DE PAGE ----------
+        document.add(new Paragraph("\n"));
+        document.add(new LineSeparator(new SolidLine(0.5f)).setStrokeColor(couleurBordure).setMarginTop(20));
+        document.add(new Paragraph("Merci pour votre confiance.")
+                .setFont(fontRegular).setFontSize(9).setFontColor(couleurGrisTexte)
+                .setTextAlignment(TextAlignment.CENTER).setMarginTop(10));
+    
         document.close();
-
         return baos.toByteArray();
+    }
+    
+    // ---------- Méthodes utilitaires de mise en forme ----------
+    
+    private Paragraph ligneLibelleValeur(String libelle, String valeur, PdfFont fontBold, PdfFont fontRegular, DeviceRgb couleurLibelle) {
+        return new Paragraph()
+                .add(new Text(libelle + " : ").setFont(fontBold).setFontSize(9).setFontColor(couleurLibelle))
+                .add(new Text(valeur != null ? valeur : "-").setFont(fontRegular).setFontSize(10))
+                .setMarginBottom(4);
+    }
+    
+    private Cell enteteCellule(String texte, PdfFont font, DeviceRgb fond, DeviceRgb couleurTexte, TextAlignment align) {
+        return new Cell()
+                .add(new Paragraph(texte).setFont(font).setFontColor(couleurTexte).setFontSize(10))
+                .setBackgroundColor(fond)
+                .setPadding(8)
+                .setTextAlignment(align)
+                .setBorder(Border.NO_BORDER);
+    }
+    
+    private Cell donneeCellule(String texte, PdfFont font, DeviceRgb fond, TextAlignment align) {
+        return new Cell()
+                .add(new Paragraph(texte).setFont(font).setFontSize(10))
+                .setBackgroundColor(fond)
+                .setPadding(7)
+                .setTextAlignment(align)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(230, 230, 230), 0.5f))
+                .setBorderTop(Border.NO_BORDER)
+                .setBorderLeft(Border.NO_BORDER)
+                .setBorderRight(Border.NO_BORDER);
+    }
+    
+    private String formatMontant(double montant) {
+        return String.format("%,.2f", montant).replace(",", " ");
     }
 }
