@@ -37,13 +37,7 @@ public class MouvementController {
     @Autowired
     private CaisseService caisseService;
 
-    @GetMapping("/")
-    public String listMouvements(Model model) {
-        List<MouvementStock> mouvements = mouvementStockService.findAll();
-        model.addAttribute("mouvements", mouvements);
-        return "mouvement/list";
-    }
-
+    
     @GetMapping("/form")
     public String showFormUnique(Model model) {
         List<MaterielType> materielTypes = materielTypeService.findAll();
