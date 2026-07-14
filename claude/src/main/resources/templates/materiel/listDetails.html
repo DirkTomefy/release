@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détails du matériel</title>
+  
+  <th:block th:replace="~{fragments/common :: assets}"></th:block>
+</head>
+<body>
+
+  <th:block th:replace="~{fragments/common :: navbar('materiel')}"></th:block>
+
+  <div class="container py-4">
+    
+    <div class="d-flex align-items-center mb-4">
+      <a href="/materiel/liste" class="btn btn-soft-primary me-3">
+        <i class="bi bi-arrow-left"></i> Retour à la liste
+      </a>
+      <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+        <i class="bi bi-info-circle me-2" style="color:#7a9e5a;"></i>Fiche Détails Matériel
+      </h1>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-semibold mb-3" style="color:#5b4b3a;" th:text="${materielStock.getMateriel().getLibelle()}">Nom du Matériel</h2>
+        
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="info-block">
+              <span class="text-muted small d-block mb-1">Type de matériel</span>
+              <span class="fw-medium text-dark" th:text="${materielStock.getMateriel().getType().getLibelle()}">Alimentation</span>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="info-block">
+              <span class="text-muted small d-block mb-1">Type de gestion</span>
+              <span class="fw-medium text-dark" th:text="${materielStock.getMateriel().getTypeGestion()}">UNITAIRE</span>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="info-block d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small d-block mb-1">Quantité restante globale</span>
+                <span class="fw-semibold text-dark fs-5" th:text="${materielStock.getQuantiteRestant()}">150</span>
+              </div>
+              <span class="badge badge-actif"><i class="bi bi-box-seam me-1"></i> En Stock</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <h3 class="h6 text-muted fw-semibold text-uppercase" style="letter-spacing: 0.05em;">
+        <i class="bi bi-journal-text me-1"></i> Historique détaillé des mouvements d'entrée
+      </h3>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-borderless mb-0">
+          <thead>
+            <tr>
+              <th style="width: 80px;" class="ps-4">ID</th>
+              <th>Prix unitaire</th>
+              <th>Quantité initiale</th>
+              <th>Quantité restante</th>
+              <th class="pe-4">Date d'entrée</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="mvt : ${mouvementStocks}">
+              <td class="text-muted ps-4" th:text="${mvt.getId()}">1</td>
+              
+              <td>
+                <span class="fw-medium" th:text="${mvt.getPrixUnitaire() + ' Ar'}"></span>
+              </td>
+              
+              <td th:text="${mvt.getQuantite()}"></td>
+              
+              <td>
+                <span class="fw-semibold text-dark" th:text="${mvt.getQteRestant()}"></span>
+              </td>
+              
+              <td class="text-muted pe-4" th:text="${#dates.format(mvt.getDateMouvement(), 'dd/MM/yyyy')}">12/03/2026</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

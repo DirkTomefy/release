@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventaire Global</title>
+  
+  <th:block th:replace="~{fragments/common :: assets}"></th:block>
+
+</head>
+<body>
+
+  <th:block th:replace="~{fragments/common :: navbar('inventaire')}"></th:block>
+
+  <div class="container py-5">
+    
+    <div class="mb-4">
+      <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
+        <i class="bi bi-boxes me-2" style="color:#7a9e5a;"></i>Inventaire global du matériel
+      </h1>
+      <p class="text-muted small mb-0">Sélectionnez les matériels à ajuster et validez l'ensemble.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <form id="globalInventaireForm">
+            
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="libelle" class="form-label small text-muted fw-medium">Libellé / Référence inventaire</label>
+              <input type="text" id="libelle" name="libelle" class="form-control" placeholder="Ex: Regularisation de stock">
+            </div>
+            <div class="col-md-6">
+              <label for="date_inventaire" class="form-label small text-muted fw-medium">Date d'inventaire</label>
+              <input type="date" id="date_inventaire" name="date_inventaire" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="row g-2 align-items-end bg-light p-3 rounded-3 mb-4 border border-light-subtle">
+            <div class="col-md-4">
+              <label for="materielTypeId" class="form-label small text-muted fw-medium">Type de matériel</label>
+              <select id="materielTypeId" class="form-select">
+                <option value="">-- Choisir un type --</option>
+                <option th:each="type : ${materielTypes}" 
+                        th:value="${type.id}" 
+                        th:text="${type.libelle}">Type</option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label for="materielId" class="form-label small text-muted fw-medium">Choisir un matériel</label>
+              <select id="materielId" class="form-select">
+                <option value="">-- Sélectionner un matériel --</option>
+                <option th:each="stock : ${stocks}" 
+                        th:value="${stock.materiel.id}" 
+                        th:data-stock="${stock.quantiteRestant}"
+                        th:text="${stock.materiel.libelle}">Matériel</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <button type="button" id="addMaterielBtn" class="btn btn-soft-primary w-100">
+                <i class="bi bi-plus-circle me-1"></i> Ajouter
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive mb-4">
+            <table class="table align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Matériel</th>
+                  <th style="width: 160px;">Qté en Stock</th>
+                  <th style="width: 180px;">Qté Réelle Constatée</th>
+                  <th>Observations / Notes</th>
+                  <th style="width: 60px;"></th>
+                </tr>
+              </thead>
+              <tbody id="inventaireRows">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="text-end border-top pt-3">
+            <button type="button" id="validerBtn" class="btn btn-soft-primary">
+              <i class="bi bi-check-circle me-1"></i> Valider l'inventaire global
+            </button>
+          </div>
+          
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast-message"></div>
+
+<script th:inline="javascript">
+    // script asynchrone pour mettre a jour les materiels selon le type selectionne
+    document.getElementById('materielTypeId').addEventListener('change', function () {
+        const typeId = this.value;
+        const materielSelect = document.getElementById('materielId');
+        
+        if (!typeId) {
+            resetMaterielOptions();
+            return;
+        }
+
+        fetch('/api/materiels/type/' + typeId)
+            .then(response => response.json())
+            .then(data => {
+                materielSelect.innerHTML = '';
+                data.forEach(materiel => {
+                    const option = document.createElement('option');
+                    option.value = materiel.id;
+                    option.textContent = materiel.libelle;
+                    materielSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Erreur lors de la recuperation des materiels :', error));
+    });
+
+    const initialStocks = /*[[${stocks}]]*/ [];
+
+    function resetMaterielOptions() {
+        const materielSelect = document.getElementById('materielId');
+        materielSelect.innerHTML = '<option value="">-- Sélectionner un matériel --</option>';
+        initialStocks.forEach(stock => {
+            const option = document.createElement('option');
+            option.value = stock.materiel.id;
+            option.textContent = stock.materiel.libelle;
+            materielSelect.appendChild(option);
+        });
+    }
+
+    // gestion de l'ajout multiple et de la validation globale
+    document.addEventListener('DOMContentLoaded', function() {
+      const dateInput = document.getElementById('date_inventaire');
+      const validerBtn = document.getElementById('validerBtn');
+      const addMaterielBtn = document.getElementById('addMaterielBtn');
+      const materielTypeId = document.getElementById('materielTypeId');
+      const materielSelect = document.getElementById('materielId');
+      const inventaireRows = document.getElementById('inventaireRows');
+      const toast = document.getElementById('toast');
+
+      if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+      }
+
+      // ajouter un materiel dans le tableau
+      addMaterielBtn.addEventListener('click', function() {
+        const selectedOption = materielSelect.options[materielSelect.selectedIndex];
+        if (!selectedOption) return;
+
+        const id = selectedOption.value;
+        const libelle = selectedOption.text;
+        
+        if (!id || id === "") {
+          showToast('Veuillez selectionner un matériel valide.', 'error');
+          return;
+        }
+
+        if (document.querySelector(`.materiel-row[data-id="${id}"]`)) {
+          showToast('Ce matériel est déjà présent dans la liste.', 'error');
+          return;
+        }
+
+        let stockActuel = 0.0;
+        
+        initialStocks.forEach(stock => {
+          if (stock.materiel && stock.materiel.id == id) {
+            stockActuel = stock.quantiteRestant !== undefined && stock.quantiteRestant !== null ? stock.quantiteRestant : 0.0;
+          }          
+        });
+
+        const row = document.createElement('tr');
+        row.className = 'materiel-row';
+        row.setAttribute('data-id', id);
+        row.style.animation = 'fadeIn 0.25s ease';
+        
+        row.innerHTML = `
+          <td><span class="fw-medium text-dark">${libelle}</span></td>
+          <td><input type="number" class="form-control qte-initiale" value="${stockActuel}" readonly></td>
+          <td><input type="number" class="form-control qte-finale" placeholder="Ex: 12" step="0.01" required></td>
+          <td><input type="text" class="form-control observation-row" placeholder="R.A.S."></td>
+          <td>
+            <button type="button" class="btn btn-soft-danger btn-remove-row">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+
+        inventaireRows.appendChild(row);
+
+        row.querySelector('.btn-remove-row').addEventListener('click', function() {
+          row.remove();
+        });
+
+        materielSelect.value = '';
+      });
+
+      // action de validation globale
+      validerBtn.addEventListener('click', function() {
+        const dateInventaire = dateInput.value;
+        const libelle = document.getElementById('libelle').value;
+
+        if (!dateInventaire) {
+          showToast('Veuillez spécifier la date de l\'inventaire.', 'error');
+          return;
+        }
+
+        const payload = {
+          dateInventaire: dateInventaire,
+          libelle: libelle,
+          details: []
+        };
+
+        const rows = document.querySelectorAll('.materiel-row');
+        let validationError = false;
+
+        rows.forEach(row => {
+          const materielId = parseInt(row.dataset.id);
+          const qteInitiale = parseFloat(row.querySelector('.qte-initiale').value) || 0.0;
+          const qteFinaleVal = row.querySelector('.qte-finale').value;
+
+          if (qteFinaleVal === '') {
+            validationError = true;
+            row.querySelector('.qte-finale').classList.add('is-invalid');
+          } else {
+            row.querySelector('.qte-finale').classList.remove('is-invalid');
+            const qteFinale = parseFloat(qteFinaleVal);
+            const observations = row.querySelector('.observation-row').value;
+
+            payload.details.push({
+              materielId: materielId,
+              quantiteInitiale: qteInitiale,
+              quantiteFinale: qteFinale,
+              observations: observations
+            });
+          }
+        });
+
+        if (validationError) {
+          showToast('Veuillez renseigner toutes les quantités réelles constatées.', 'error');
+          return;
+        }
+
+        if (payload.details.length === 0) {
+          showToast('Ajoutez au moins un matériel au tableau avant de valider.', 'error');
+          return;
+        }
+
+        fetch('/inventaire/form/valider', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content || ''
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            showToast(data.message, 'success');
+            inventaireRows.innerHTML = '';
+            document.getElementById('libelle').value = '';
+            materielTypeId.value = '';
+            resetMaterielOptions();
+            dateInput.value = new Date().toISOString().split('T')[0];
+          } else {
+            showToast('Erreur : ' + data.message, 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Erreur réseau :', error);
+          showToast('Erreur de communication avec le serveur.', 'error');
+        });
+      });
+
+      function showToast(message, type) {
+        toast.textContent = message;
+        toast.className = 'toast-message show' + (type === 'error' ? ' error' : '');
+        setTimeout(() => { toast.classList.remove('show'); }, 6000);
+      }
+    });
+  </script>
+</body>
+</html>

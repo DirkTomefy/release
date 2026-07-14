@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · Gestion du troupeau</title>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+</head>
+  <th:block th:replace="~{fragments/common :: navbar('contrat')}"></th:block>
+
+<body>
+    <!-- ========== PAGE LISTE CONTRATS ========== -->
+    <div id="listContratPage">
+        <div class="container py-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
+                        <i class="bi bi-file-earmark-text-fill me-2" style="color:#7a9e5a;"></i>
+                        Liste des contrats
+                    </h1>
+                    <p class="text-muted mb-0">Consultez les contrats enregistrés et ajoutez-en de nouveaux.</p>
+                </div>
+                <a href="#formContratPage" class="btn btn-soft-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Nouveau contrat
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Employé</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Salaire</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(contrats)}">
+                                    <td colspan="4" class="text-center text-muted">Aucun contrat enregistré.</td>
+                                </tr>
+                                <tr th:each="contratItem : ${contrats}">
+                                    <td th:text="${contratItem.employee != null ? contratItem.employee.nom + ' ' + contratItem.employee.prenom : '-'}"></td>
+                                    <td th:text="${contratItem.dateDebut != null ? #dates.format(contratItem.dateDebut, 'dd/MM/yyyy') : '-'}"></td>
+                                    <td th:text="${contratItem.dateFin != null ? #dates.format(contratItem.dateFin, 'dd/MM/yyyy') : '-'}"></td>
+                                    <td th:text="${#numbers.formatDecimal(contratItem.salaire, 0, 'COMMA', 2, 'POINT') + ' Ar'}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== PAGE AJOUT CONTRAT ========== -->
+    <div id="formContratPage">
+
+        <div class="container py-4">
+
+            <!-- Titre -->
+            <div class="d-flex align-items-center mb-4">
+                <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+                    <i class="bi bi-file-earmark-plus-fill me-2" style="color:#7a9e5a;"></i>
+                    Nouveau contrat
+                </h1>
+
+            </div>
+
+            <form th:action="@{/contrat/save}" th:object="${contrat}" method="post">
+                <div th:if="${errorMessage != null}" class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span th:text="${errorMessage}"></span>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;"><i class="bi bi-person-fill me-2"></i> Employé</h5>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Employé</label>
+                                <select class="form-select" name="employeeId" required>
+                                    <option value="">Sélectionner un employé...</option>
+                                    <option th:each="emp : ${employees}" 
+                                            th:value="${emp.id}" 
+                                            th:text="${emp.nom + ' ' + emp.prenom}"
+                                            th:selected="${selectedEmployeeId != null and selectedEmployeeId == emp.id}">
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="mb-4 fw-semibold" style="color:#5b4b3a;"><i class="bi bi-file-earmark-text-fill me-2"></i> Informations du contrat</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Date de début</label>
+                                <input type="date" id="dateDebut" th:field="*{dateDebut}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de fin</label>
+                                <input type="date" id="dateFin" th:field="*{dateFin}" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Salaire mensuel (Ar)</label>
+                                <input type="number" th:field="*{salaire}" class="form-control" placeholder="Ex : 800000" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="#listContratPage" class="btn btn-light me-2">Annuler</a>
+                    <button type="submit" class="btn btn-soft-primary">
+                        <i class="bi bi-check-circle me-1"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+
+        </div>
+
+    </div>
+<script>
+        const dateDebut = document.getElementById('dateDebut');
+        const dateFin = document.getElementById('dateFin');
+
+        dateDebut.addEventListener('change', function() {
+            if (this.value) {
+                dateFin.min = this.value;
+            }
+        });
+    </script>
+</body>
+
+</html>

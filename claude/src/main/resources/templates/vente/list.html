@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Élevage · Gestion des ventes</title>
+        <th:block th:replace="~{fragments/common :: assets}"></th:block>
+</head>
+<body>
+
+<!-- Navbar -->
+    <th:block th:replace="~{fragments/common :: navbar('vente')}"></th:block>
+
+<!-- Contenu principal -->
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
+            <i class="bi bi-cart-fill me-2" style="color:#c4a35a;"></i>Liste des ventes
+        </h1>
+        <a href="/vente/new" class="btn btn-soft-primary">
+            <i class="bi bi-plus-circle me-1"></i> Nouvelle vente
+        </a>
+    </div>
+
+    <!-- Formulaire de recherche / filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="searchForm" class="row g-3 align-items-end">
+                <input type="hidden" name="page" value="0" />
+                
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date début</label>
+                    <input type="date" name="dateDebut" class="form-control" id="dateDebut">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date fin</label>
+                    <input type="date" name="dateFin" class="form-control" id="dateFin">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Client</label>
+                    <select name="clientId" class="form-select" id="clientId">
+                        <option value="">Tous</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.nom + ' ' + c.prenom}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Race</label>
+                    <select name="raceId" class="form-select" id="raceId">
+                        <option value="">Toutes</option>
+                        <option th:each="r : ${races}" th:value="${r.id}" th:text="${r.nom}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Lignes par page</label>
+                    <select name="size" class="form-select" id="size">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-soft-primary w-100">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-soft-warning w-100" onclick="resetFilters()">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Barre de résumé -->
+        <div class="summary-bar d-flex flex-wrap align-items-center justify-content-between">
+            <div class="text-muted small">
+                <span id="totalElements">0</span> ventes
+                <span class="ms-2">| Page <span id="currentPage">1</span> / <span id="totalPages">1</span></span>
+            </div>
+            <div class="text-muted small">
+                <i class="bi bi-file-pdf"></i> 
+                <span class="badge badge-facture-existe" id="factureCount">0</span> facturées
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des ventes -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+                <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Contact</th>
+                    <th class="text-center">Nb bovins</th>
+                    <th class="text-end">Montant total</th>
+                    <th class="text-center">Facture</th>
+                    <th class="text-end" style="width: 250px;">Actions</th>
+                </tr>
+                </thead>
+                <tbody id="venteBody">
+                    <!-- Les données seront chargées via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mt-4" aria-label="Pagination">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- La pagination sera générée par JavaScript -->
+        </ul>
+    </nav>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentPage = 0;
+    let totalPages = 0;
+
+    // Fonction pour charger les ventes
+    function loadVentes(page) {
+        const formData = new FormData(document.getElementById('searchForm'));
+        const params = new URLSearchParams(formData);
+        
+        // Ajouter la page et les paramètres de pagination
+        params.set('page', page || 0);
+        
+        // Si size n'est pas défini, mettre 10 par défaut
+        if (!params.has('size')) {
+            params.set('size', '10');
+        }
+
+        // Afficher un indicateur de chargement
+        document.getElementById('venteBody').innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-2">Chargement des ventes...</p>
+                </td>
+            </tr>
+        `;
+
+        fetch('/vente/list/data?' + params.toString())
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('venteBody');
+                tbody.innerHTML = '';
+                
+                if (data.content.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                                Aucune vente trouvée
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    data.content.forEach(v => {
+                        // Déterminer l'affichage de la facture
+                        let factureBadge = '';
+                        let factureButton = '';
+                        
+                        if (v.factureExistante) {
+                            factureBadge = `<span class="badge badge-facture-existe"><i class="bi bi-check-circle-fill"></i> ${v.codeFacture || 'Facturée'}</span>`;
+                            factureButton = `
+                                <button class="btn btn-soft-success btn-action" onclick="telechargerFacture(${v.id})">
+                                    <i class="bi bi-download"></i> Télécharger
+                                </button>
+                            `;
+                        } else {
+                            factureBadge = `<span class="badge badge-facture-absent"><i class="bi bi-x-circle-fill"></i> Non facturée</span>`;
+                            factureButton = `
+                                <button class="btn btn-soft-primary btn-action" onclick="genererFacture(${v.id})">
+                                    <i class="bi bi-file-earmark-pdf"></i> Générer
+                                </button>
+                            `;
+                        }
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="text-muted">${v.id}</td>
+                                <td>${formatDate(v.dateVente)}</td>
+                                <td>
+                                    <strong>${v.clientNom} ${v.clientPrenom}</strong>
+                                </td>
+                                <td>${v.contact || '-'}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">${v.nombreBovins}</span>
+                                </td>
+                                <td class="text-end fw-semibold" style="color: #4a6b3a;">
+                                    ${v.montantTotal ? v.montantTotal.toFixed(2) : '0.00'} Ar
+                                </td>
+                                <td class="text-center">${factureBadge}</td>
+                                <td class="text-end">
+                                    <a href="/vente/${v.id}/details" class="btn btn-soft-info btn-action me-1">
+                                        <i class="bi bi-eye"></i> Détails
+                                    </a>
+                                    ${factureButton}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Mettre à jour la pagination
+                currentPage = data.number;
+                totalPages = data.totalPages;
+                document.getElementById('totalElements').textContent = data.totalElements;
+                document.getElementById('currentPage').textContent = data.number + 1;
+                document.getElementById('totalPages').textContent = data.totalPages;
+                
+                // Compter les factures
+                const factureCount = data.content.filter(v => v.factureExistante).length;
+                document.getElementById('factureCount').textContent = factureCount;
+
+                // Générer la pagination
+                generatePagination(data);
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('venteBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger py-4">
+                            <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                            Erreur lors du chargement des données
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    // Fonction pour générer la pagination
+    function generatePagination(data) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        // Bouton précédent
+        const prevLi = document.createElement('li');
+        prevLi.className = 'page-item' + (data.first ? ' disabled' : '');
+        prevLi.innerHTML = `
+            <a class="page-link" href="#" onclick="loadVentes(${data.number - 1}); return false;">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        `;
+        pagination.appendChild(prevLi);
+
+        // Pages
+        const maxPages = Math.min(data.totalPages, 10);
+        const startPage = Math.max(0, data.number - Math.floor(maxPages / 2));
+        const endPage = Math.min(data.totalPages, startPage + maxPages);
+
+        for (let i = startPage; i < endPage; i++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (i === data.number ? ' active' : '');
+            li.innerHTML = `
+                <a class="page-link" href="#" onclick="loadVentes(${i}); return false;">${i + 1}</a>
+            `;
+            pagination.appendChild(li);
+        }
+
+        // Bouton suivant
+        const nextLi = document.createElement('li');
+        nextLi.className = 'page-item' + (data.last ? ' disabled' : '');
+        nextLi.innerHTML = `
+            <a class="page-link" href="#" onclick="loadVentes(${data.number + 1}); return false;">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        `;
+        pagination.appendChild(nextLi);
+    }
+
+    // Fonction pour générer une facture
+    function genererFacture(id) {
+        if (!confirm('Générer une facture pour cette vente ?')) return;
+        
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        fetch(`/vente/${id}/facture`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
+            }
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.text().then(text => {
+                    throw new Error(text || 'Erreur lors de la génération de la facture');
+                });
+            }
+            return res.blob();
+        })
+        .then(blob => {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'facture_' + id + '.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
+            // Recharger la liste pour mettre à jour le statut
+            setTimeout(() => loadVentes(currentPage), 1000);
+        })
+        .catch(error => {
+            alert('Erreur: ' + error.message);
+            console.error('Erreur:', error);
+        });
+    }
+
+    // Fonction pour télécharger une facture existante
+    function telechargerFacture(id) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        fetch(`/vente/${id}/facture`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
+            }
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.text().then(text => {
+                    throw new Error(text || 'Erreur lors du téléchargement de la facture');
+                });
+            }
+            return res.blob();
+        })
+        .then(blob => {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'facture_' + id + '.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        })
+        .catch(error => {
+            alert('Erreur: ' + error.message);
+            console.error('Erreur:', error);
+        });
+    }
+
+    // Fonction pour formater une date
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+
+    // Fonction pour réinitialiser les filtres
+    function resetFilters() {
+        document.getElementById('dateDebut').value = '';
+        document.getElementById('dateFin').value = '';
+        document.getElementById('clientId').value = '';
+        document.getElementById('raceId').value = '';
+        document.getElementById('size').value = '10';
+        loadVentes(0);
+    }
+
+    // Soumission du formulaire de recherche
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadVentes(0);
+    });
+
+    // Chargement initial
+    document.addEventListener('DOMContentLoaded', function() {
+        loadVentes(0);
+    });
+</script>
+
+</body>
+</html>
