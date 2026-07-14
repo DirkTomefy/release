@@ -1,4 +1,4 @@
--- Active: 1781977160392@@127.0.0.1@5432@bovin_db
+-- Active: 1779074118545@@127.0.0.1@5432@bovin_db
 -- ============================================================
 -- Script combiné pour l'initialisation complète de la base bovin_db
 -- Exécuter sur une base vide (ou avec DROP en tête).
@@ -29,6 +29,16 @@ DROP TABLE IF EXISTS mortalite CASCADE;
 DROP TABLE IF EXISTS bovin CASCADE;
 DROP TABLE IF EXISTS race CASCADE;
 DROP TABLE IF EXISTS caisse CASCADE;
+
+DROP TABLE IF EXISTS  facture_detail;
+DROP TABLE IF EXISTS  facture;
+DROP TABLE IF EXISTS  user_role;
+DROP TABLE IF EXISTS  users;
+DROP TABLE IF EXISTS  role;
+
+DROP TABLE IF EXISTS inventaire;
+
+DROP TABLE IF EXISTS inventaire_detail;
 
 -- ============================================================
 -- 1. Création des tables (ordre des dépendances)
@@ -395,7 +405,8 @@ JOIN bovin b ON b.id = pb.id_bovin;
 -- ============================================================
 -- Tables : INVENTAIRE et INVENTAIRE_DETAIL
 -- ============================================================
-
+DROP TABLE IF EXISTS inventaire CASCADE;
+DROP TABLE IF EXISTS inventaire_detail CASCADE;
 CREATE TABLE inventaire (
     id SERIAL PRIMARY KEY,
     date_inventaire DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -414,6 +425,8 @@ CREATE TABLE inventaire_detail (
 
 
 -- Table facture modifiée
+DROP TABLE IF EXISTS facture CASCADE;
+DROP TABLE IF EXISTS facture_detail CASCADE;
 CREATE TABLE facture (
     id SERIAL PRIMARY KEY,
     id_vente INT NOT NULL UNIQUE,
