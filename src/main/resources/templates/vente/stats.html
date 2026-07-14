@@ -15,8 +15,11 @@
 
 <div class="container py-4">
 
-    <div class="d-flex align-items-center mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
         <h4 class="mb-0"><i class="bi bi-bar-chart-fill me-2" style="color:#7a9e5a;"></i>Statistiques des ventes</h4>
+        <a href="/vente/list" class="btn btn-outline-primary">
+            <i class="bi bi-list-ul me-1"></i>Voir la liste des ventes
+        </a>
     </div>
 
     <!-- Filtres -->
@@ -30,11 +33,18 @@
                 <label class="form-label">Date fin</label>
                 <input type="date" id="dateFin" class="form-control">
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
                 <label class="form-label">Race</label>
                 <select id="raceId" class="form-select">
                     <option value="">Toutes les races</option>
                     <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Vue</label>
+                <select id="mode" class="form-select">
+                    <option value="mois">Par mois</option>
+                    <option value="vente">Par vente</option>
                 </select>
             </div>
             <div class="col-12 col-md-2 d-grid">
@@ -65,6 +75,12 @@
                 <div class="value" id="montantTotal">–</div>
             </div>
         </div>
+        <div class="col-12 col-md-4">
+            <div class="summary-card summary-benefice">
+                <div class="label"><i class="bi bi-currency-dollar me-1"></i>Bénéfice total</div>
+                <div class="value" id="totalBenefice">–</div>
+            </div>
+        </div>
     </div>
 
     <!-- Histogramme -->
@@ -84,11 +100,13 @@
     const dateDebutInput = document.getElementById('dateDebut');
     const dateFinInput = document.getElementById('dateFin');
     const raceSelect = document.getElementById('raceId');
+    const modeSelect = document.getElementById('mode');
     const btnFiltrer = document.getElementById('btnFiltrer');
 
     const totalVentesEl = document.getElementById('totalVentes');
     const totalBovinsEl = document.getElementById('totalBovins');
     const montantTotalEl = document.getElementById('montantTotal');
+    const totalBeneficeEl = document.getElementById('totalBenefice');
     const chartWrapper = document.getElementById('chartWrapper');
     const chartEmptyState = document.getElementById('chartEmptyState');
 
@@ -107,6 +125,7 @@
         if (dateDebut) params.set('dateDebut', dateDebut);
         if (dateFin) params.set('dateFin', dateFin);
         if (raceId) params.set('raceId', raceId);
+        params.set('mode', modeSelect.value);
 
         fetch('/vente/stats/data?' + params.toString())
             .then(res => res.json())
@@ -120,6 +139,7 @@
         totalVentesEl.textContent = data.totalVentes || 0;
         totalBovinsEl.textContent = data.totalBovinsVendus || 0;
         montantTotalEl.textContent = formaterMontant(data.montantTotal);
+        totalBeneficeEl.textContent = formaterMontant(data.totalBenefice);
 
         const labels = data.labels || [];
 
@@ -150,6 +170,13 @@
                         yAxisID: 'y',
                     },
                     {
+                        label: 'Bénéfice (Ar)',
+                        data: data.benefices,
+                        backgroundColor: '#f0ad4e',
+                        borderRadius: 4,
+                        yAxisID: 'y',
+                    },
+                    {
                         label: 'Nombre de bovins',
                         data: data.counts,
                         backgroundColor: '#4a7a9e',
@@ -166,11 +193,10 @@
                     tooltip: {
                         callbacks: {
                             label: (context) => {
-                                if (context.dataset.label === 'Montant (Ar)') {
-                                    return 'Montant : ' + formaterMontant(context.raw);
-                                } else {
-                                    return 'Nb bovins : ' + context.raw;
+                                if (context.dataset.label === 'Montant (Ar)' || context.dataset.label === 'Bénéfice (Ar)') {
+                                    return context.dataset.label + ' : ' + formaterMontant(context.raw);
                                 }
+                                return context.dataset.label + ' : ' + context.raw;
                             }
                         }
                     }
@@ -195,7 +221,13 @@
 
     btnFiltrer.addEventListener('click', chargerStatistiques);
 
-    // Chargement initial sans filtres (toutes les ventes)
+    // Définir les dates par défaut (début de l'année à aujourd'hui)
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    dateDebutInput.value = startOfYear.toISOString().split('T')[0];
+    dateFinInput.value = today.toISOString().split('T')[0];
+
+    // Chargement initial avec les dates par défaut
     chargerStatistiques();
 </script>
 

@@ -14,7 +14,7 @@ import mg.bovit.release.model.*;
 @Repository
 public interface BovinRepository extends JpaRepository<Bovin, Long>, JpaSpecificationExecutor<Bovin> {
       @Query(value = "SELECT TO_CHAR(DATE_TRUNC('month', b.date_vente), 'YYYY-MM') AS mois, " +
-       "SUM(b.prix_vente), COUNT(b) " +
+       "SUM(b.prix_vente), COUNT(b), COALESCE(SUM(b.prix_vente - b.prix_achat), 0) " +
        "FROM bovin b " +
        "WHERE b.date_vente IS NOT NULL " +
        "AND (CAST(:dateDebut AS DATE) IS NULL OR b.date_vente >= CAST(:dateDebut AS DATE)) " +
