@@ -90,65 +90,68 @@
 
     <!-- Tableau des bovins -->
     <div class="card">
-        <div class="table-responsive">
-            <table class="table table-borderless mb-0">
-                <thead>
-                <tr>
-                    <th style="width: 60px;">#</th>
-                    <th>Identification</th>
-                    <th>Race</th>
-                    <th>Date achat</th>
-                    <th>Prix achat</th>
-                    <th>Poids achat</th>
-                    <th>Poids actuel</th>
-                    <th>Dernière pesée</th>
-                    <th>Statut</th>
-                    <th class="text-end" style="width: 120px;">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="bovin : ${bovinPage.content}">
-                    <td class="text-muted" th:text="${bovin.id}">1</td>
-                    <td>
-                        <span class="fw-medium">Bovin #<span th:text="${bovin.id}"></span></span><br>
-                        <small class="text-muted" th:text="'Acheté le ' + ${#dates.format(bovin.dateAchat, 'dd/MM/yyyy')}"></small>
-                    </td>
-                    <td th:text="${bovin.raceNom}">Limousine</td>
-                    <td th:text="${#dates.format(bovin.dateAchat, 'dd/MM/yyyy')}">12/03/2020</td>
-                    <td th:text="${#numbers.formatDecimal(bovin.prixAchat, 0, 2)}">1500.00</td>
-                    <td class="poids-achat" th:text="${#numbers.formatDecimal(bovin.poidsAchat, 0, 1)} + ' kg'">250.0 kg</td>
-                    <td class="poids-actuel">
-                        <span th:if="${bovin.poidsActuel != null}" th:text="${#numbers.formatDecimal(bovin.poidsActuel, 0, 1)} + ' kg'">320.5 kg</span>
-                        <span th:if="${bovin.poidsActuel == null}" class="text-muted">-</span>
-                    </td>
-                    <td>
-                        <span th:if="${bovin.dateDernierPese != null}" th:text="${#dates.format(bovin.dateDernierPese, 'dd/MM/yyyy')}">15/06/2026</span>
-                        <span th:if="${bovin.dateDernierPese == null}" class="text-muted">-</span>
-                    </td>
-                    <td>
-                        <span th:if="${bovin.dateVente == null}" class="badge badge-actif">Actif</span>
-                        <span th:if="${bovin.dateVente != null}" class="badge badge-vendu">Vendu</span>
-                    </td>
-                    <td>
-                        <div class="actions">
-                            <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form th:action="@{/bovins/delete/{id}(id=${bovin.id})}" method="post" class="d-inline"
-                                                          onsubmit="return confirm('Déclarer ce bovin comme décédé ? Il sera supprimé du registre et ajouté à la mortalité.');">
-                                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                        <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer (mortalité)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                <tr th:if="${bovinPage.content.isEmpty()}">
-                    <td colspan="10" class="text-center text-muted py-4">Aucun bovin trouvé</td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Identification</th>
+                        <th>Race</th>
+                        <th>Date achat</th>
+                        <th>Prix achat</th>
+                        <th>Poids achat</th>
+                        <th>Poids actuel</th>
+                        <th>Dernière pesée</th>
+                        <th>Statut</th>
+                        <th class="text-end" style="width: 120px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="bovin : ${bovinPage.content}">
+                        <td class="text-muted" th:text="${bovin.id}">1</td>
+                        <td>
+                            <span class="fw-medium">Bovin #<span th:text="${bovin.id}"></span></span><br>
+                            <small class="text-muted" th:text="'Acheté le ' + ${#dates.format(bovin.dateAchat, 'dd/MM/yyyy')}"></small>
+                        </td>
+                        <td th:text="${bovin.raceNom}">Limousine</td>
+                        <td th:text="${#dates.format(bovin.dateAchat, 'dd/MM/yyyy')}">12/03/2020</td>
+                        <td th:text="${#numbers.formatDecimal(bovin.prixAchat, 0, 2)}">1500.00</td>
+                        <td class="poids-achat" th:text="${#numbers.formatDecimal(bovin.poidsAchat, 0, 1)} + ' kg'">250.0 kg</td>
+                        <td class="poids-actuel">
+                            <span th:if="${bovin.poidsActuel != null}" th:text="${#numbers.formatDecimal(bovin.poidsActuel, 0, 1)} + ' kg'">320.5 kg</span>
+                            <span th:if="${bovin.poidsActuel == null}" class="text-muted">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${bovin.dateDernierPese != null}" th:text="${#dates.format(bovin.dateDernierPese, 'dd/MM/yyyy')}">15/06/2026</span>
+                            <span th:if="${bovin.dateDernierPese == null}" class="text-muted">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${bovin.dateVente == null}" class="badge badge-actif">Actif</span>
+                            <span th:if="${bovin.dateVente != null}" class="badge badge-vendu">Vendu</span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/bovins/delete/{id}(id=${bovin.id})}" method="post" class="d-inline"
+                                                              onsubmit="return confirm('Déclarer ce bovin comme décédé ? Il sera supprimé du registre et ajouté à la mortalité.');">
+                                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                            <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer (mortalité)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${bovinPage.content.isEmpty()}">
+                        <td colspan="10" class="text-center text-muted py-4">Aucun bovin trouvé</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

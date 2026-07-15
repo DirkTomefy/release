@@ -462,7 +462,6 @@ label {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: #ffffff;
   box-shadow: var(--shadow-sm);
