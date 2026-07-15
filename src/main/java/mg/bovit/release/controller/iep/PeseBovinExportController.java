@@ -48,7 +48,7 @@ public class PeseBovinExportController {
 
     @GetMapping("/excel/all")
     public void exportAllExcel(@ModelAttribute("criteria") MulticriteriaListPeseBovin criteria,
-                                HttpServletResponse response) throws IOException {
+                                HttpServletResponse response) throws IOException, Exception {
         List<PeseBovinWithDateVente> pesees = peseBovinService.searchAllForExport(criteria);
         byte[] data = PeseBovinExcelExporter.export(pesees);
         writeResponse(response, data,
