@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>🐄 Achat de bovins</title>
     <th:block th:replace="~{fragments/common :: assets}"></th:block>
     <style>
@@ -12,35 +10,28 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
       }
 
       body {
-        background: linear-gradient(145deg, #f0f6fa 0%, #dce8f0 100%);
+        background: #f9f7f4;
         min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1.5rem;
       }
 
       .card-modern {
         max-width: 1100px;
         width: 100%;
-        background: rgba(255, 255, 255, 0.78);
-        backdrop-filter: blur(12px);
-        border-radius: 48px;
-        padding: 2.8rem 3rem;
-        box-shadow:
-          0 30px 60px -15px rgba(0, 20, 30, 0.3),
-          inset 0 1px 2px rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #fff;
+        border-radius: 20px;
+        padding: 2.2rem 2.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e7e0d8;
       }
 
       @media (max-width: 768px) {
         .card-modern {
-          padding: 1.8rem 1.2rem;
-          border-radius: 32px;
+          padding: 1.5rem 1.2rem;
+          border-radius: 16px;
         }
       }
 
@@ -49,31 +40,33 @@
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2ddd6;
       }
 
       .header-section h1 {
-        font-size: 2.2rem;
+        font-size: 1.6rem;
         font-weight: 700;
-        color: #0d2a3b;
+        color: #2d2d2a;
         display: flex;
         align-items: center;
         gap: 12px;
       }
 
       .header-section h1 i {
-        color: #1f8a4a;
-        font-size: 2.2rem;
+        color: #7a9e5a;
+        font-size: 1.5rem;
       }
 
       .badge-engrais {
-        background: rgba(31, 138, 74, 0.12);
-        padding: 0.5rem 1.6rem;
-        border-radius: 100px;
-        border: 1px solid rgba(31, 138, 74, 0.25);
-        color: #0f5430;
-        font-weight: 600;
-        font-size: 0.9rem;
+        background: #e2f0da;
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        border: none;
+        color: #3d5a2e;
+        font-weight: 500;
+        font-size: 0.85rem;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -82,14 +75,14 @@
       .form-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.8rem 2.2rem;
-        margin-bottom: 1.5rem;
+        gap: 1.4rem 1.8rem;
+        margin-bottom: 1.25rem;
       }
 
       @media (max-width: 700px) {
         .form-grid {
           grid-template-columns: 1fr;
-          gap: 1.2rem;
+          gap: 1rem;
         }
       }
 
@@ -100,33 +93,30 @@
       }
 
       .field-group label {
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #1a3b4f;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #6b5e53;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
 
       .field-group label i {
-        color: #1f8a4a;
-        font-size: 0.9rem;
-        width: 20px;
+        color: #b6a88e;
+        font-size: 0.85rem;
+        width: 18px;
       }
 
       .field-group input,
       .field-group select {
-        background: white;
-        border: 1.5px solid #dce8f0;
-        border-radius: 24px;
-        padding: 0.9rem 1.4rem;
-        font-size: 1rem;
+        background: #fff;
+        border: 1px solid #e0d8cf;
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        font-size: 0.95rem;
         font-weight: 500;
-        color: #0d2a3b;
+        color: #3e3e3b;
         transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         width: 100%;
         appearance: none;
         -webkit-appearance: none;
@@ -135,39 +125,38 @@
       .field-group input:focus,
       .field-group select:focus {
         outline: none;
-        border-color: #1f8a4a;
-        box-shadow: 0 0 0 5px rgba(31, 138, 74, 0.12);
-        background: #ffffff;
+        border-color: #b6a88e;
+        box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
+        background: #fff;
       }
 
       .field-group select {
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%231f8a4a" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%237a9e5a" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
         background-repeat: no-repeat;
-        background-position: right 1.4rem center;
-        background-size: 1.2rem;
+        background-position: right 1rem center;
+        background-size: 1rem;
         cursor: pointer;
       }
 
       .field-group input[readonly] {
-        background: #f2f8fc;
+        background: #f4f1ec;
         font-weight: 600;
-        color: #0f5430;
+        color: #4a6b3a;
       }
 
       .payment-section {
         grid-column: span 2;
-        background: rgba(255, 255, 255, 0.5);
-        backdrop-filter: blur(4px);
-        border-radius: 32px;
-        padding: 1.8rem 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.8);
+        background: #faf8f5;
+        border-radius: 14px;
+        padding: 1.4rem 1.6rem;
+        border: 1px solid #e7e0d8;
         margin-top: 0.2rem;
       }
 
       @media (max-width: 700px) {
         .payment-section {
           grid-column: span 1;
-          padding: 1.2rem;
+          padding: 1.1rem;
         }
       }
 
@@ -183,38 +172,35 @@
       .payment-title {
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-weight: 700;
-        color: #0d2a3b;
-        font-size: 1rem;
+        gap: 10px;
+        font-weight: 600;
+        color: #5b4b3a;
+        font-size: 0.95rem;
       }
 
       .payment-title i {
-        color: #1f8a4a;
-        font-size: 1.2rem;
+        color: #7a9e5a;
+        font-size: 1.05rem;
       }
 
       .btn-add-payment {
-        background: #1f8a4a;
-        border: none;
-        color: white;
-        padding: 0.5rem 1.4rem;
-        border-radius: 60px;
+        background: #eef3ea;
+        color: #4a6b3a;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
         font-weight: 600;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         cursor: pointer;
         transition: 0.15s;
-        box-shadow: 0 4px 12px -4px #1f8a4a60;
-        border: 1px solid #1f8a4a;
+        border: 1px solid #d2ddc4;
       }
 
       .btn-add-payment:hover {
-        background: #14703a;
-        transform: scale(1.02);
-        box-shadow: 0 6px 18px -4px #14703a80;
+        background: #dde8d1;
+        color: #3a562c;
       }
 
       .payment-list {
@@ -226,20 +212,19 @@
       .payment-row {
         display: grid;
         grid-template-columns: 1fr 1fr auto;
-        gap: 1rem;
+        gap: 0.8rem;
         align-items: center;
-        background: white;
-        border-radius: 24px;
-        padding: 0.6rem 1.2rem 0.6rem 1.5rem;
-        border: 1.5px solid #e4eef5;
+        background: #fff;
+        border-radius: 12px;
+        padding: 0.6rem 0.9rem;
+        border: 1px solid #e7e0d8;
         transition: all 0.15s;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
         animation: fadeIn 0.25s ease;
       }
 
       .payment-row:hover {
-        border-color: #b8d5e6;
-        background: #fafffe;
+        border-color: #d2ddc4;
+        background: #fdfcfa;
       }
 
       @media (max-width: 600px) {
@@ -252,81 +237,80 @@
 
       .payment-row .pay-select select {
         width: 100%;
-        border: 1.5px solid #dce8f0;
-        border-radius: 20px;
-        padding: 0.6rem 1.2rem;
-        font-size: 0.95rem;
+        border: 1px solid #e0d8cf;
+        border-radius: 8px;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.9rem;
         font-weight: 500;
-        background: #fafdff;
+        background: #fff;
         appearance: none;
         -webkit-appearance: none;
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%231f8a4a" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%237a9e5a" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>');
         background-repeat: no-repeat;
-        background-position: right 1rem center;
-        background-size: 1rem;
+        background-position: right 0.9rem center;
+        background-size: 0.9rem;
         cursor: pointer;
         transition: 0.15s;
       }
 
       .payment-row .pay-select select:focus {
         outline: none;
-        border-color: #1f8a4a;
-        box-shadow: 0 0 0 4px rgba(31, 138, 74, 0.08);
+        border-color: #b6a88e;
+        box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
       }
 
       .payment-row .pay-montant input {
         width: 100%;
-        border: 1.5px solid #dce8f0;
-        border-radius: 20px;
-        padding: 0.6rem 1.2rem;
-        font-size: 0.95rem;
+        border: 1px solid #e0d8cf;
+        border-radius: 8px;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.9rem;
         font-weight: 500;
-        background: #fafdff;
+        background: #fff;
         transition: 0.15s;
       }
 
       .payment-row .pay-montant input:focus {
         outline: none;
-        border-color: #1f8a4a;
-        box-shadow: 0 0 0 4px rgba(31, 138, 74, 0.08);
+        border-color: #b6a88e;
+        box-shadow: 0 0 0 0.2rem rgba(122, 158, 90, 0.15);
       }
 
       .payment-row .btn-remove-pay {
         background: transparent;
-        border: 1.5px solid #f0d4d4;
-        color: #b34a3a;
-        width: 38px;
-        height: 38px;
-        border-radius: 40px;
+        border: 1px solid #f5d2d2;
+        color: #b34040;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: 0.15s;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         flex-shrink: 0;
       }
 
       .payment-row .btn-remove-pay:hover:not(:disabled) {
-        background: #fee9e7;
-        border-color: #b34a3a;
-        transform: scale(1.05);
+        background: #fef1f1;
+        border-color: #b34040;
       }
 
       .payment-row .btn-remove-pay:disabled {
-        opacity: 0.3;
+        opacity: 0.35;
         cursor: not-allowed;
         transform: none;
       }
 
       .total-highlight {
-        background: #e5f3ec;
-        border-radius: 30px;
-        padding: 1rem 2rem;
+        background: #eef3ea;
+        border-radius: 12px;
+        padding: 0.9rem 1.4rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border: 1px solid #b3d9c6;
+        border: 1px solid #d2ddc4;
         grid-column: span 2;
       }
 
@@ -344,29 +328,28 @@
       }
 
       .total-highlight span {
-        font-weight: 700;
-        color: #0d3323;
-        font-size: 1.1rem;
+        font-weight: 600;
+        color: #3a562c;
+        font-size: 1rem;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
       }
 
       .total-highlight .total-value {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #0f6e38;
-        background: white;
-        padding: 0.1rem 2rem;
-        border-radius: 60px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-        letter-spacing: 0.5px;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #3a562c;
+        background: #fff;
+        padding: 0.2rem 1.2rem;
+        border-radius: 20px;
+        letter-spacing: 0.3px;
         transition: 0.2s;
       }
 
       .total-highlight .total-value.error {
-        color: #b34a3a;
-        background: #fde8e3;
+        color: #b34040;
+        background: #fde8e8;
       }
 
       .actions-row {
@@ -387,68 +370,61 @@
       }
 
       .btn {
-        border: none;
-        background: white;
-        padding: 0.8rem 2rem;
-        border-radius: 60px;
-        font-weight: 600;
-        font-size: 0.95rem;
+        border: 1px solid #e0d8cf;
+        background: #fff;
+        padding: 0.65rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        gap: 8px;
         transition: 0.15s ease;
-        border: 1px solid #d0dee8;
-        color: #1a3b4f;
+        color: #3e3e3b;
         cursor: pointer;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(4px);
       }
 
       .btn i {
-        font-size: 1rem;
+        font-size: 0.95rem;
       }
 
       .btn-primary {
-        background: #1f8a4a;
-        border: 1px solid #1f8a4a;
-        color: white;
-        box-shadow: 0 8px 20px -6px #1f8a4a60;
+        background: #7a9e5a;
+        border-color: #7a9e5a;
+        color: #fff;
       }
 
       .btn-primary:hover {
-        background: #14703a;
-        border-color: #14703a;
-        transform: scale(1.02);
-        box-shadow: 0 12px 28px -8px #14703a80;
+        background: #638249;
+        border-color: #638249;
       }
 
       .btn-outline {
         background: transparent;
-        border: 1px solid #b6cfdd;
-        color: #1f4057;
+        border-color: #e0d8cf;
+        color: #6b5e53;
       }
 
       .btn-outline:hover {
-        background: #e6f0f6;
-        border-color: #7fa5bb;
+        background: #f0ede8;
+        color: #3e3e3b;
       }
 
       .btn-danger-outline {
         background: transparent;
-        border: 1px solid #f0c8c8;
-        color: #b34a3a;
+        border-color: #f5d2d2;
+        color: #b34040;
       }
 
       .btn-danger-outline:hover {
-        background: #fee9e7;
-        border-color: #b34a3a;
+        background: #fef1f1;
+        border-color: #b34040;
       }
 
       .btn-lg {
-        padding: 0.9rem 2.8rem;
-        font-size: 1.05rem;
+        padding: 0.8rem 2.2rem;
+        font-size: 1rem;
       }
 
       @keyframes fadeIn {
@@ -463,45 +439,44 @@
       }
 
       .pay-count-badge {
-        background: rgba(31, 138, 74, 0.12);
-        padding: 0.15rem 0.8rem;
-        border-radius: 40px;
+        background: #f0e6d3;
+        padding: 0.15rem 0.7rem;
+        border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 600;
-        color: #0f5430;
+        color: #6b4f2e;
       }
 
       .toast-message {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: white;
-        padding: 1rem 2rem;
-        border-radius: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        font-weight: 600;
+        background: #4a6b3a;
+        color: #fff;
+        padding: 0.85rem 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        font-weight: 500;
         z-index: 9999;
         display: none;
-        border-left: 6px solid #1f8a4a;
       }
 
       .toast-message.error {
-        border-left-color: #dc3545;
-        color: #b02a37;
+        background: #b34040;
       }
 
       .toast-message.show {
         display: block;
-        animation: fadeIn 0.3s ease;
+        animation: fadeInUp 0.3s ease;
       }
 
       .validation-message {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 12px;
-        padding: 0.8rem 1.2rem;
-        color: #856404;
-        font-size: 0.9rem;
+        background: #fff6e0;
+        border: 1px solid #f2dfa3;
+        border-radius: 10px;
+        padding: 0.75rem 1.1rem;
+        color: #8a6d1a;
+        font-size: 0.88rem;
         display: none;
         grid-column: span 2;
       }
@@ -511,23 +486,38 @@
       }
 
       .validation-message.success {
-        background: #d4edda;
-        border-color: #28a745;
-        color: #155724;
+        background: #e2f0da;
+        border-color: #c8ddb8;
+        color: #3d5a2e;
       }
 
       .field-group input.error {
-        border-color: #dc3545;
-        background: #fff5f5;
+        border-color: #b34040;
+        background: #fef1f1;
       }
 
       .field-group input.success {
-        border-color: #28a745;
-        background: #f0fff4;
+        border-color: #4a6b3a;
+        background: #eef3ea;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
     </style>
   </head>
   <body>
+    <th:block th:replace="~{fragments/common :: navbar('bovins')}"></th:block>
+
+    <div class="container py-5">
     <div class="card-modern">
       <!-- En-tête -->
       <div class="header-section">
@@ -614,7 +604,7 @@
               id="total"
               readonly
               value="0.00"
-              style="background: #f2f8fc; font-weight: 600; color: #0f5430"
+              style="background: #f4f1ec; font-weight: 600; color: #4a6b3a"
             />
           </div>
 
@@ -684,7 +674,7 @@
           <!-- Total paiements -->
           <div class="total-highlight">
             <span
-              ><i class="fas fa-coins" style="color: #1f8a4a"></i> Total
+              <i class="fas fa-coins" style="color: #3a562c"></i> Total
               paiements enregistrés</span
             >
             <span class="total-value" id="totalDisplay">0,00 €</span>
@@ -718,6 +708,7 @@
           </span>
         </div>
       </form>
+    </div>
     </div>
 
     <!-- Toast de notification -->
@@ -794,8 +785,8 @@
           prixTotal.toFixed(2) +
           " €)";
         totalDisplay.className = "total-value";
-        totalDisplay.style.color = "#0f6e38";
-        totalDisplay.style.background = "#e5f3ec";
+        totalDisplay.style.color = "#3a562c";
+        totalDisplay.style.background = "#eef3ea";
       } else {
         // Erreur - les montants ne correspondent pas
         message.className = "validation-message show";
@@ -809,14 +800,14 @@
           prixTotal.toFixed(2) +
           " €)";
         totalDisplay.className = "total-value error";
-        totalDisplay.style.color = "#b34a3a";
-        totalDisplay.style.background = "#fde8e3";
+        totalDisplay.style.color = "#b34040";
+        totalDisplay.style.background = "#fde8e8";
       }
     } else {
       message.className = "validation-message";
       totalDisplay.className = "total-value";
-      totalDisplay.style.color = "#0f6e38";
-      totalDisplay.style.background = "#e5f3ec";
+      totalDisplay.style.color = "#3a562c";
+      totalDisplay.style.background = "#eef3ea";
     }
 
     // Mise à jour du badge

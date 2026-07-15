@@ -99,6 +99,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Récupération du token CSRF injecté dans le <head> de la page
+    // (voir <meta name="_csrf" .../> et <meta name="_csrf_header" .../> dans fragments/common :: assets)
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
     const bovinRows = document.getElementById('bovinRows');
     const btnAddRow = document.getElementById('btnAddRow');
     const btnSubmit = document.getElementById('btnSubmit');
@@ -153,7 +158,10 @@
 
         fetch('/mortalite/save', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
+            },
             body: JSON.stringify({ bovinIds: ids })
         })
         .then(res => res.json())

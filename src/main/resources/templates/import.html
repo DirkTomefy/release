@@ -29,7 +29,8 @@
     <div class="card">
         <div class="card-body">
             <form method="post" th:action="@{/import/upload}" enctype="multipart/form-data">
-                <div class="row g-3">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Type d'import</label>
                         <select name="type" id="typeImport" class="form-select" required>

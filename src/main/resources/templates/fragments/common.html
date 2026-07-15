@@ -2,8 +2,8 @@
      Inclus via th:replace="~{fragments/common :: assets}" dans le <head> de chaque page.
      Les styles spécifiques à une page restent dans un <style> séparé, propre à cette page. -->
 <div th:fragment="assets">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -11,31 +11,97 @@
     <link th:href="@{/css/theme.css}" rel="stylesheet">
 </div>
 
-<div th:fragment="navbar(activeSection='')">
-    <nav class="navbar navbar-expand-lg py-3">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}">
-                <i class="bi bi-tree-fill me-2" style="color:#7a9e5a;"></i>Élevage Bovin
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'bovins'} ? ' active' : ''" th:href="@{/bovins}">Animaux</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'clients'} ? ' active' : ''" th:href="@{/clients}">Clients</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'races'} ? ' active' : ''" th:href="@{/races}">Races</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'vente'} ? ' active' : ''" th:href="@{/vente/list}">Ventes</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'mortalite'} ? ' active' : ''" th:href="@{/mortalite}">Mortalité</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'inventaire'} ? ' active' : ''" th:href="@{/inventaire/liste}">Inventaire</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'materiel'} ? ' active' : ''" th:href="@{/materiel/liste}">Matériel</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'peseBovin'} ? ' active' : ''" th:href="@{/peseBovin/list}">Pesées</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'caisse'} ? ' active' : ''" th:href="@{/caisse/stats}">Caisse</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'paiement'} ? ' active' : ''" th:href="@{/employee/paiement}">Paiement</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'contrat'} ? ' active' : ''" th:href="@{/contrat/list}">Contrats</a></li>
-                    <li class="nav-item"><a class="nav-link" th:classappend="${activeSection == 'employee'} ? ' active' : ''" th:href="@{/employee/list}">Employés</a></li>
-                </ul>
+<div th:fragment="sidebar(activeSection='')">
+    <aside class="app-sidebar">
+        <a class="app-sidebar__brand" th:href="@{/}">
+            <span class="fs-4" style="line-height: 1;">🐂</span>
+            <span class="app-sidebar__brand-text">
+                <strong>Élevage Bovin</strong>
+                <small>Gestion par module</small>
+            </span>
+        </a>
+
+        <nav class="app-sidebar__nav">
+            <div class="app-sidebar__group">
+                <div class="app-sidebar__group-title">Bovin</div>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'bovins'} ? ' is-active' : ''"
+                    th:href="@{/bovins}"><span class="fs-4" style="line-height: 1;">🐂</span><span>Bovins</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'clients'} ? ' is-active' : ''"
+                    th:href="@{/clients}"><i class="bi bi-people-fill"></i><span>Clients</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'races'} ? ' is-active' : ''"
+                    th:href="@{/races}"><i class="bi bi-tags-fill"></i><span>Races</span></a>
+                <a class="app-sidebar__link" th:href="@{/bovins/achat/form}"><i
+                        class="bi bi-bag-plus-fill"></i><span>Achat bovin</span></a>
             </div>
-        </div>
-    </nav>
+
+            <div class="app-sidebar__group">
+                <div class="app-sidebar__group-title">Mortalité</div>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'mortalite'} ? ' is-active' : ''"
+                    th:href="@{/mortalite}"><i class="bi bi-exclamation-triangle-fill"></i><span>Liste</span></a>
+                <a class="app-sidebar__link" th:href="@{/mortalite/new}"><i class="bi bi-plus-circle"></i><span>Nouvelle
+                        déclaration</span></a>
+                <a class="app-sidebar__link" th:href="@{/mortalite/stats}"><i
+                        class="bi bi-bar-chart-fill"></i><span>Statistiques</span></a>
+            </div>
+
+            <div class="app-sidebar__group">
+                <div class="app-sidebar__group-title">Stock</div>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'inventaire'} ? ' is-active' : ''"
+                    th:href="@{/inventaire/liste}"><i
+                        class="bi bi-clipboard2-check-fill"></i><span>Inventaires</span></a>
+                <a class="app-sidebar__link" th:href="@{/inventaire/form}"><i
+                        class="bi bi-clipboard-plus-fill"></i><span>Nouvel inventaire</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'materiel'} ? ' is-active' : ''"
+                    th:href="@{/materiel/liste}"><i class="bi bi-box-seam-fill"></i><span>Matériels</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'materiel'} ? ' is-active' : ''"
+                    th:href="@{/materiel/etatstock}"><i class="bi bi-graph-up-arrow"></i><span>État du stock</span></a>
+                <a class="app-sidebar__link" th:href="@{/mouvement/list}"><i
+                        class="bi bi-arrow-left-right"></i><span>Mouvements</span></a>
+                <a class="app-sidebar__link" th:href="@{/mouvement/form}"><i class="bi bi-plus-circle"></i><span>Nouveau
+                        mouvement</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'peseBovin'} ? ' is-active' : ''"
+                    th:href="@{/peseBovin/list}"><i class="bi bi-speedometer2"></i><span>Pesées</span></a>
+                <a class="app-sidebar__link" th:href="@{/peseBovin/form}"><i
+                        class="bi bi-plus-circle"></i><span>Nouvelle pesée</span></a>
+            </div>
+
+            <div class="app-sidebar__group">
+                <div class="app-sidebar__group-title">RH</div>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'employee'} ? ' is-active' : ''"
+                    th:href="@{/employee/list}"><i class="bi bi-person-lines-fill"></i><span>Employés</span></a>
+                <a class="app-sidebar__link" th:href="@{/employee/new}"><i
+                        class="bi bi-person-plus-fill"></i><span>Nouvel employé</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'paiement'} ? ' is-active' : ''"
+                    th:href="@{/employee/paiement}"><i class="bi bi-wallet2"></i><span>Paiements</span></a>
+                <a class="app-sidebar__link" th:href="@{/employee/alerte}"><i
+                        class="bi bi-exclamation-circle"></i><span>Non payés</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'contrat'} ? ' is-active' : ''"
+                    th:href="@{/contrat/list}"><i class="bi bi-file-earmark-text-fill"></i><span>Contrats</span></a>
+                <a class="app-sidebar__link" th:href="@{/contrat/new}"><i
+                        class="bi bi-file-earmark-plus-fill"></i><span>Nouveau contrat</span></a>
+                <a class="app-sidebar__link" th:href="@{/admin/users/new}"><i
+                        class="bi bi-shield-lock-fill"></i><span>Utilisateurs</span></a>
+            </div>
+
+            <div class="app-sidebar__group">
+                <div class="app-sidebar__group-title">Finance</div>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'vente'} ? ' is-active' : ''"
+                    th:href="@{/vente/list}"><i class="bi bi-cash-coin"></i><span>Ventes</span></a>
+                <a class="app-sidebar__link" th:href="@{/vente/new}"><i class="bi bi-receipt-cutoff"></i><span>Nouvelle
+                        vente</span></a>
+                <a class="app-sidebar__link" th:href="@{/vente/stats}"><i
+                        class="bi bi-bar-chart-line-fill"></i><span>Stats ventes</span></a>
+                <a class="app-sidebar__link" th:href="@{/caisse/stats}"><i
+                        class="bi bi-piggy-bank-fill"></i><span>Statistiques caisse</span></a>
+                <a class="app-sidebar__link" th:href="@{/caisse/historique}"><i
+                        class="bi bi-clock-history"></i><span>Historique caisse</span></a>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'import'} ? ' is-active' : ''"
+                    th:href="@{/import}"><i class="bi bi-upload"></i><span>Import général</span></a>
+            </div>
+        </nav>
+    </aside>
+</div>
+
+<div th:fragment="navbar(activeSection='')">
+    <th:block th:replace="~{fragments/common :: sidebar(${activeSection})}"></th:block>
 </div>

@@ -93,8 +93,9 @@
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="post" class="d-inline"
-                              onsubmit="return confirm('Supprimer ce client ?');">
-                            <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer">
+                                                      onsubmit="return confirm('Supprimer ce client ?');">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>

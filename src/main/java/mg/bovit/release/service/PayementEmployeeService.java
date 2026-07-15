@@ -27,8 +27,6 @@ public class PayementEmployeeService {
     private static final String LIBELLE_AVANCE = "Avance";
     private static final String LIBELLE_SANCTION = "Sanction";
 
-    // Cause de caisse appliquée automatiquement aux sorties générées
-    // par un paiement d'employé (salaire, avance ou sanction).
     private static final String CAUSE_PAYEMENT = "PAYEMENT";
 
     @Autowired
@@ -52,17 +50,8 @@ public class PayementEmployeeService {
     @Autowired
     private ContratRepository contratRepository;
 
-    /**
-     * Effectue le paiement d'un employé : répartit le montant sur une ou
-     * plusieurs caisses (choisies par l'utilisateur, comme dans bovin/achat),
-     * retire le montant de chaque caisse utilisée, enregistre un mvt_caisse
-     * par caisse, et journalise le paiement de l'employé.
-     */
     @Transactional
     public String preciterPaiement(PayementDTO dto) {
-        if (dto.getPayments() == null || dto.getPayments().isEmpty()) {
-            throw new RuntimeException("Aucune caisse sélectionnée pour ce paiement.");
-        }
         if (dto.getMois() == null || dto.getMois().isBlank()) {
             throw new RuntimeException("Le mois à payer est obligatoire.");
         }
@@ -74,78 +63,86 @@ public class PayementEmployeeService {
 
         Date mois = firstDayOfMonth(dto.getMois());
         boolean estSalaire = isSalaire(type);
+        boolean estAvance = isAvance(type);
+        boolean estSanction = isSanction(type);
+        List<PayementDTO.CaissePaymentDTO> lignesPaiement = dto.getPayments() != null ? dto.getPayments() : List.of();
 
-        // 1. Vérifier si le mois est déjà payé — UNIQUEMENT pour le type "Salaire".
-        //    Les avances et sanctions ne bloquent jamais et peuvent être multiples
-        //    sur un même mois, quel que soit leur montant par rapport au salaire
-        //    (ex : une avance de 10 000 Ar même si le salaire est de 3 000 000 Ar).
+        if (!estSanction && lignesPaiement.isEmpty()) {
+            throw new RuntimeException("Aucune caisse sélectionnée pour ce paiement.");
+        }
+
         if (estSalaire) {
             BigDecimal salaireMois = getSalaireActif(emp, mois);
             List<PayementEmployee> paiementsDuMois = payementEmployeeRepository.findByEmployeeAndMois(emp, mois);
             BigDecimal totalSalairePaye = sommeParType(paiementsDuMois, LIBELLE_SALAIRE);
             BigDecimal totalAvance = sommeParType(paiementsDuMois, LIBELLE_AVANCE);
             BigDecimal totalSanction = sommeParType(paiementsDuMois, LIBELLE_SANCTION);
-            
-            BigDecimal resteDuInitial = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
+            BigDecimal resteDuInitial = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction)
+                    .max(BigDecimal.ZERO);
             
             if (resteDuInitial.compareTo(BigDecimal.ZERO) <= 0) {
-                return "skipped"; // Le salaire de ce mois est déjà intégralement complété
+                return "skipped"; 
             }
         }
 
-        // 2. Vérifier que la somme des lignes de caisse correspond au montant annoncé
         BigDecimal montantTotal = dto.getMontant() != null ? dto.getMontant() : BigDecimal.ZERO;
-        BigDecimal sommeLignes = dto.getPayments().stream()
+        BigDecimal sommeLignes = lignesPaiement.stream()
                 .map(p -> p.getMontant() != null ? p.getMontant() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (sommeLignes.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Le montant réparti sur les caisses doit être supérieur à 0.");
-        }
-        if (montantTotal.compareTo(BigDecimal.ZERO) > 0
-                && sommeLignes.subtract(montantTotal).abs().compareTo(new BigDecimal("0.01")) > 0) {
-            throw new RuntimeException("Le total réparti sur les caisses ne correspond pas au montant à verser.");
-        }
-        if (montantTotal.compareTo(BigDecimal.ZERO) <= 0) {
-            montantTotal = sommeLignes;
-        }
-
-        // 3. Pour chaque caisse utilisée : vérifier le solde, le débiter, tracer le mouvement
-        for (PayementDTO.CaissePaymentDTO ligne : dto.getPayments()) {
-            if (ligne.getCaisseId() == null || ligne.getMontant() == null
-                    || ligne.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
-                continue;
+        if (estSanction) {
+            if (montantTotal.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Le montant de la sanction doit être supérieur à 0.");
             }
-            Caisse caisse = caisseRepository.findById(ligne.getCaisseId())
-                    .orElseThrow(() -> new RuntimeException("Caisse introuvable"));
-
-            double montantDouble = ligne.getMontant().doubleValue();
-            if (caisse.getMontant_actuelle() < montantDouble) {
-                throw new RuntimeException("Solde insuffisant dans la caisse : " + caisse.getLibelle());
+        } else {
+            if (sommeLignes.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Le montant réparti sur les caisses doit être supérieur à 0.");
             }
-
-            caisse.setMontant_actuelle(caisse.getMontant_actuelle() - montantDouble);
-            caisseRepository.save(caisse);
-
-            MvtCaisse mvt = new MvtCaisse();
-            mvt.setCaisse(caisse);
-            mvt.setDate(new Date(System.currentTimeMillis()));
-            mvt.setMontant(-montantDouble); // sortie de fonds
-            mvt.setCauseCaisse(causeCaisseRepository.findByLibelleIgnoreCase(CAUSE_PAYEMENT)
-                    .orElseThrow(() -> new RuntimeException("Cause de caisse introuvable : " + CAUSE_PAYEMENT)));
-            mvtCaisseRepository.save(mvt);
+            if (montantTotal.compareTo(BigDecimal.ZERO) > 0
+                    && sommeLignes.subtract(montantTotal).abs().compareTo(new BigDecimal("0.01")) > 0) {
+                throw new RuntimeException("Le total réparti sur les caisses ne correspond pas au montant à verser.");
+            }
+            if (montantTotal.compareTo(BigDecimal.ZERO) <= 0) {
+                montantTotal = sommeLignes;
+            }
         }
 
-        // 4. Calculer le reste dû, en tenant compte du salaire du mois et des avances/sanctions déjà enregistrées
+        if (!estSanction && (estSalaire || estAvance)) {
+            for (PayementDTO.CaissePaymentDTO ligne : lignesPaiement) {
+                if (ligne.getCaisseId() == null || ligne.getMontant() == null
+                        || ligne.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                Caisse caisse = caisseRepository.findById(ligne.getCaisseId())
+                        .orElseThrow(() -> new RuntimeException("Caisse introuvable"));
+
+                double montantDouble = ligne.getMontant().doubleValue();
+                if (caisse.getMontant_actuelle() < montantDouble) {
+                    throw new RuntimeException("Solde insuffisant dans la caisse : " + caisse.getLibelle());
+                }
+
+                caisse.setMontant_actuelle(caisse.getMontant_actuelle() - montantDouble);
+                caisseRepository.save(caisse);
+
+                MvtCaisse mvt = new MvtCaisse();
+                mvt.setCaisse(caisse);
+                mvt.setDate(new Date(System.currentTimeMillis()));
+                mvt.setMontant(-montantDouble);
+                mvt.setCauseCaisse(causeCaisseRepository.findByLibelleIgnoreCase(CAUSE_PAYEMENT)
+                        .orElseThrow(() -> new RuntimeException("Cause de caisse introuvable : " + CAUSE_PAYEMENT)));
+                mvtCaisseRepository.save(mvt);
+            }
+        }
+
         BigDecimal salaireMois = getSalaireActif(emp, mois);
         List<PayementEmployee> paiementsDuMois = payementEmployeeRepository.findByEmployeeAndMois(emp, mois);
         BigDecimal totalSalairePaye = sommeParType(paiementsDuMois, LIBELLE_SALAIRE);
         BigDecimal totalAvance = sommeParType(paiementsDuMois, LIBELLE_AVANCE);
         BigDecimal totalSanction = sommeParType(paiementsDuMois, LIBELLE_SANCTION);
-        BigDecimal resteDu = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
+        BigDecimal resteDu = salaireMois.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction)
+            .max(BigDecimal.ZERO);
 
         if (estSalaire) {
-            // Permet une tolérance pour les centimes lors du dernier paiement
             if (montantTotal.subtract(resteDu).compareTo(new BigDecimal("0.01")) > 0) {
                 throw new RuntimeException("Le montant saisi dépasse le reste dû du mois (" + resteDu + " Ar) pour cet employé.");
             }
@@ -153,7 +150,6 @@ public class PayementEmployeeService {
 
         BigDecimal restePaye = resteDu.subtract(montantTotal).max(BigDecimal.ZERO);
 
-        // 5. Enregistrer le paiement de l'employé
         PayementEmployee payement = new PayementEmployee();
         payement.setEmployee(emp);
         payement.setTypePayementEmployee(type);
@@ -166,10 +162,6 @@ public class PayementEmployeeService {
         return "success";
     }
 
-    /**
-     * Statut de paiement d'un employé pour un mois donné, utilisé par le
-     * formulaire de paiement (GET /employees/{id}/statut-paye?mois=YYYY-MM).
-     */
     public Map<String, Object> getStatutPaye(Long employeeId, String moisStr) {
         Employee emp = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
@@ -183,7 +175,8 @@ public class PayementEmployeeService {
         BigDecimal totalSanction = sommeParType(paiementsDuMois, LIBELLE_SANCTION);
 
         boolean dejaPaye = totalSalairePaye.compareTo(BigDecimal.ZERO) > 0;
-        BigDecimal resteDu = salaire.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction).max(BigDecimal.ZERO);
+        BigDecimal resteDu = salaire.subtract(totalSalairePaye).subtract(totalAvance).subtract(totalSanction)
+            .max(BigDecimal.ZERO);
 
         Map<String, Object> resultat = new HashMap<>();
         resultat.put("salaire", salaire);
@@ -194,10 +187,6 @@ public class PayementEmployeeService {
         return resultat;
     }
 
-    /**
-     * Retourne les mois pour lesquels un employé aurait dû être payé (salaire),
-     * depuis son mois d'entrée jusqu'au mois précédent (mois en cours exclu).
-     */
     public List<YearMonth> getUnpaidMonths(Employee employee) {
         YearMonth premierMoisDu = YearMonth.from(employee.getDateEntree().toLocalDate());
         YearMonth moisCourant = YearMonth.now();
@@ -213,15 +202,6 @@ public class PayementEmployeeService {
         return moisManquants;
     }
 
-    /**
-     * Alertes pour les employés dont le salaire n'a pas été payé sur un mois
-     * précédent ou plus ancien.
-     *
-     * Piège géré : un employé embauché CE mois-ci n'a par définition aucun
-     * mois précédent à son actif → aucune alerte pour lui (la boucle démarre
-     * à son mois d'embauche et s'arrête avant le mois courant, donc si
-     * moisEmbauche == moisCourant la boucle ne s'exécute jamais).
-     */
     public List<Map<String, Object>> getAlertesNonPayes() {
         List<Employee> allEmployees = employeeRepository.findAll();
         List<Map<String, Object>> alertes = new ArrayList<>();
@@ -244,8 +224,6 @@ public class PayementEmployeeService {
         return alertes;
     }
 
-    // ================= Helpers =================
-
     private boolean moisSalairePaye(Employee employee, YearMonth mois) {
         Date premierJour = Date.valueOf(mois.atDay(1));
         return payementEmployeeRepository.findByEmployeeAndMois(employee, premierJour).stream()
@@ -254,6 +232,14 @@ public class PayementEmployeeService {
 
     private boolean isSalaire(TypePayementEmployee type) {
         return type.getLibelle() != null && type.getLibelle().equalsIgnoreCase(LIBELLE_SALAIRE);
+    }
+
+    private boolean isAvance(TypePayementEmployee type) {
+        return type.getLibelle() != null && type.getLibelle().equalsIgnoreCase(LIBELLE_AVANCE);
+    }
+
+    private boolean isSanction(TypePayementEmployee type) {
+        return type.getLibelle() != null && type.getLibelle().equalsIgnoreCase(LIBELLE_SANCTION);
     }
 
     private BigDecimal sommeParType(List<PayementEmployee> paiements, String libelle) {
@@ -265,10 +251,6 @@ public class PayementEmployeeService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    /**
-     * Salaire du contrat actif pour un mois donné, proratisé si le contrat
-     * commence ou se termine au cours du mois.
-     */
     public BigDecimal calculerSalairePourMois(Contrat contrat, YearMonth mois) {
         if (contrat == null || contrat.getDateDebut() == null || contrat.getSalaire() == null) {
             return BigDecimal.ZERO;

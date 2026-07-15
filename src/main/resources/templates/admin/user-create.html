@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Créer un utilisateur · Bovin Élevage</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
     <style>
         * {
             font-family: 'Inter', system-ui, sans-serif;
@@ -15,9 +13,14 @@
         body {
             background: linear-gradient(135deg, #f4f1ec 0%, #e8e3dc 100%);
             min-height: 100vh;
+        }
+
+        .auth-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
+            padding: 2rem 1rem;
         }
 
         .auth-card {
@@ -156,6 +159,9 @@
 </head>
 <body>
 
+<th:block th:replace="~{fragments/common :: navbar('')}"></th:block>
+
+<div class="auth-wrapper">
 <div class="auth-card">
     <div class="auth-header">
         <div class="logo">
@@ -202,6 +208,7 @@
             <i class="bi bi-check2-circle me-1"></i> Créer l'utilisateur
         </button>
     </form>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

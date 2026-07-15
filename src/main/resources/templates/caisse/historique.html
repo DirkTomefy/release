@@ -5,29 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caisse · Historique des mouvements</title>
         <th:block th:replace="~{fragments/common :: assets}"></th:block>
-    <style>
-        .table thead th { background-color: #faf8f5; font-weight: 500; color: #6b5e53; border-bottom: 2px solid #e2ddd6; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.04em; }
-        .table tbody td { vertical-align: middle; border-bottom: 1px solid #f0ede8; padding-top: 0.85rem; padding-bottom: 0.85rem; }
-        .badge-entree { background-color: #eef6ec; color: #2f5024; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
-        .badge-sortie { background-color: #fdeeee; color: #8a2f2f; border-radius: 20px; padding: 0.4em 1em; font-weight: 500; font-size: 0.8rem; }
-        .badge-cause { background-color: #f1f0fb; color: #37356b; border-radius: 20px; padding: 0.4em 0.9em; font-weight: 500; font-size: 0.78rem; }
-        .montant-entree { color: #2f5024; font-weight: 600; }
-        .montant-sortie { color: #8a2f2f; font-weight: 600; }
-        .summary-bar { background-color: #f8f6f2; border-top: 1px solid #e7e0d8; padding: 0.75rem 1.25rem; border-radius: 0 0 12px 12px; }
-        .export-group{display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid var(--border);border-radius:10px;padding:.35rem .5rem;box-shadow:0 2px 10px rgba(0,0,0,0.03)}
-        .export-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .85rem;border-radius:8px;font-weight:600;font-size:.9rem;border:1px solid transparent;text-decoration:none;transition:all .15s ease;color:#fff}
-        .export-btn i{font-size:1rem}
-        .export-btn-excel{background:#1b5e20;border-color:#1b5e20}
-        .export-btn-excel:hover{background:#144a17;transform:translateY(-1px)}
-        .export-btn-pdf{background:#b71c1c;border-color:#b71c1c}
-        .export-btn-pdf:hover{background:#7f0000;transform:translateY(-1px)}
-        .row-action{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#5c5c56;text-decoration:none;transition:all .15s ease;font-size:.95rem}
-        .row-action:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,0.04)}
-        .row-action-excel{color:#2e7d32;border-color:#c8e6c9;background:#f1f8e9}
-        .row-action-excel:hover{background:#c8e6c9;color:#1b5e20}
-        .row-action-pdf{color:#c62828;border-color:#ffcdd2;background:#ffebee}
-        .row-action-pdf:hover{background:#ffcdd2;color:#7f0000}
-    </style>
 </head>
 <body>
 
@@ -36,8 +13,8 @@
 <div class="container py-4">
 
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-        <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
-            <i class="bi bi-clock-history me-2" style="color:#7a9e5a;"></i>Historique des mouvements de caisse
+        <h1 class="h4 fw-semibold mb-0">
+            <i class="bi bi-clock-history me-2"></i>Historique des mouvements de caisse
         </h1>
         <div class="d-flex gap-2">
             <a href="/caisse/stats" class="btn btn-outline-secondary">

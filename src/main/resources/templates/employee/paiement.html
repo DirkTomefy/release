@@ -30,7 +30,7 @@
         <p class="text-muted mb-0">Enregistrez les salaires, avances ou sanctions mensuelles.</p>
       </div>
       <div>
-        <a th:href="@{/employee/alertes}" class="btn btn-soft-primary">
+        <a th:href="@{/employee/alerte}" class="btn btn-soft-primary">
           <i class="bi bi-exclamation-triangle-fill me-1"></i> Voir non-payées
         </a>
       </div>
@@ -199,8 +199,21 @@
     <option th:each="caisse : ${caisses}" th:value="${caisse.id}" th:text="${caisse.libelle}"></option>
   </select>
 
+  <select id="allTypePayementTemplate" style="display: none;">
+    <option th:each="type : ${typesPayement}"
+            th:value="${type.id}"
+            th:text="${type.libelle}"
+            th:attr="data-libelle=${type.libelle}">
+    </option>
+  </select>
+
   <script th:inline="javascript">
     (function () {
+      // Récupération du token CSRF injecté dans le <head> de la page
+      // (voir <meta name="_csrf" .../> et <meta name="_csrf_header" .../> dans fragments/common :: assets)
+      const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
       const employeeSelect = document.getElementById("employeeSelect");
       const moisInput = document.getElementById("moisPaye");
       const typeSelect = document.getElementById("typePayementId");
@@ -223,6 +236,7 @@
       const avanceMotifInput = document.getElementById("avanceMotif");
       const toast = document.getElementById("toast");
       const caisseOptionsTemplate = document.getElementById("caisseOptionsTemplate");
+      const allTypePayementTemplate = document.getElementById("allTypePayementTemplate");
 
       let rowCounter = 1;
       let statutMois = null;
@@ -429,7 +443,10 @@
 
         fetch("/employees/payement", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
+          },
           body: JSON.stringify(payload),
         })
           .then((response) => response.json())
@@ -453,13 +470,15 @@
         const montantAVerser = parseFloat(avanceMontantInput.value) || 0;
         const employeeId = parseInt(employeeSelect.value);
         const mois = moisInput.value;
+        const estAvance = (typeLibelle || "").toLowerCase() === "avance";
+        const estSanction = (typeLibelle || "").toLowerCase() === "sanction";
 
         if (!employeeId || !mois || !typeLibelle || montantAVerser <= 0) {
           alert("Paramètres invalides pour l'avance / sanction.");
           return;
         }
 
-        const selectedOption = Array.from(typeSelect.options).find((opt) => (opt.getAttribute("data-libelle") || "").toLowerCase() === typeLibelle.toLowerCase());
+        const selectedOption = Array.from(allTypePayementTemplate.options).find((opt) => (opt.getAttribute("data-libelle") || "").toLowerCase() === typeLibelle.toLowerCase());
         if (!selectedOption) {
           alert("Le type sélectionné n'est pas configuré dans le système.");
           return;
@@ -473,16 +492,35 @@
         });
 
         const sommeCaisses = payments.reduce((s, p) => s + p.montant, 0);
-        if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
-          alert("Le total des caisses doit matcher le montant de l'avance/sanction.");
-          return;
+        if (estAvance) {
+          if (payments.length === 0) {
+            alert("Pour une avance, sélectionnez au moins une caisse avec un montant.");
+            return;
+          }
+          if (Math.abs(sommeCaisses - montantAVerser) > 0.01) {
+            alert("Le total des caisses doit matcher le montant de l'avance.");
+            return;
+          }
         }
 
-        const payload = { employeeId, typePayementId: parseInt(selectedOption.value), mois, montant: montantAVerser, payments };
+        if (estSanction && payments.length > 0) {
+          showToast("Info : les lignes de caisse sont ignorées pour une sanction.", "success");
+        }
+
+        const payload = {
+          employeeId,
+          typePayementId: parseInt(selectedOption.value),
+          mois,
+          montant: montantAVerser,
+          payments: estSanction ? [] : payments
+        };
         
         fetch("/employees/payement", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}),
+          },
           body: JSON.stringify(payload),
         })
           .then(r => r.json())
@@ -505,6 +543,7 @@
       getPaymentRows().forEach((row) => attachRowEvents(row));
       updateRemoveButtons();
       updateGlobalDisplay();
+      refreshStatutMois();
     })();
   </script>
 </body>
