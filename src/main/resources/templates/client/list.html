@@ -31,20 +31,20 @@
             <form th:action="@{/clients}" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="page" value="0" />
 
-                <div class="col-md-4">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Recherche globale</label>
                     <input type="text" name="search" class="form-control"
                            placeholder="Nom, prénom ou contact..." th:value="${criteria.search}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Nom</label>
                     <input type="text" name="nom" class="form-control" th:value="${criteria.nom}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Contact</label>
                     <input type="text" name="contact" class="form-control" th:value="${criteria.contact}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Lignes / page</label>
                     <select name="size" class="form-select">
                         <option value="5" th:selected="${criteria.size == 5}">5</option>
@@ -53,10 +53,15 @@
                         <option value="50" th:selected="${criteria.size == 50}">50</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-soft-primary w-100">
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-soft-primary">
                         <i class="bi bi-funnel"></i> Filtrer
                     </button>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/clients}" class="btn btn-outline-secondary">
+                        Reset
+                    </a>
                 </div>
             </form>
         </div>
@@ -71,46 +76,51 @@
 
     <!-- Tableau -->
     <div class="card">
-        <div class="table-responsive">
-            <table class="table table-borderless mb-0">
-                <thead>
-                <tr>
-                    <th style="width: 60px;">#</th>
-                    <th>Nom</th>
-                    <th>Prénom</th>
-                    <th>Contact</th>
-                    <th class="text-end" style="width: 120px;">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="client : ${clientPage.content}">
-                    <td class="text-muted" th:text="${client.id}">1</td>
-                    <td class="fw-medium" th:text="${client.nom}">Rakoto</td>
-                    <td th:text="${client.prenom}">Jean</td>
-                    <td th:text="${client.contact}">034 00 000 00</td>
-                    <td class="text-end">
-                        <a th:href="@{/clients/form/{id}(id=${client.id})}" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="post" class="d-inline"
-                                                      onsubmit="return confirm('Supprimer ce client ?');">
-                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                    <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                <tr th:if="${clientPage.content.isEmpty()}">
-                    <td colspan="5" class="text-center text-muted py-4">Aucun client trouvé</td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Contact</th>
+                        <th class="text-end" style="width: 120px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="client : ${clientPage.content}">
+                        <td class="text-muted" th:text="${client.id}">1</td>
+                        <td class="fw-medium" th:text="${client.nom}">Rakoto</td>
+                        <td th:text="${client.prenom}">Jean</td>
+                        <td th:text="${client.contact}">034 00 000 00</td>
+                        <td>
+                            <div class="actions">
+                                <a th:href="@{/clients/form/{id}(id=${client.id})}" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="post" class="d-inline"
+                                                              onsubmit="return confirm('Supprimer ce client ?');">
+                                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                            <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${clientPage.content.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-4">Aucun client trouvé</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <!-- Pagination -->
-    <nav class="mt-4" aria-label="Pagination">
+    <nav th:if="${clientPage.totalElements > 0}" class="mt-4" aria-label="Pagination">
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${clientPage.first} ? 'disabled'">
                 <a class="page-link" th:href="@{/clients(page=${clientPage.number - 1}, size=${criteria.size}, search=${criteria.search}, nom=${criteria.nom}, contact=${criteria.contact})}">
