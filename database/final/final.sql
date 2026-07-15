@@ -179,8 +179,10 @@ CREATE TABLE mouvement_stock (
     quantite DOUBLE PRECISION NOT NULL CHECK (quantite > 0),
     prix_unitaire DOUBLE PRECISION,
     qte_restant DOUBLE PRECISION,
-    CONSTRAINT fk_mouvement_stock_materiel FOREIGN KEY (id_materiel) REFERENCES materiel(id) ON DELETE RESTRICT
+    CONSTRAINT fk_mouvement_stock_materiel FOREIGN KEY (id_materiel) REFERENCES materiel(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_qte_restant_nonneg CHECK (qte_restant IS NULL OR qte_restant >= 0)
 );
+
 
 CREATE TABLE mvt_stock_paiement (
     id SERIAL PRIMARY KEY,

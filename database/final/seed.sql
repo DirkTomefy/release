@@ -72,9 +72,9 @@ INSERT INTO race (nom, descriptions) VALUES
 -- 3. Caisses (montants en Ariary)
 -- ============================================================
 INSERT INTO caisse (libelle, montant_actuelle) VALUES
-    ('Caisse principale', 15000000.00),    -- 15 millions Ar
-    ('Caisse d''épargne', 8000000.00),     -- 8 millions Ar
-    ('Fonds d''investissement', 20000000.00); -- 20 millions Ar
+    ('Caisse principale', 15000000.00),
+    ('Caisse d''épargne', 8000000.00),
+    ('Fonds d''investissement', 20000000.00);
 
 -- ============================================================
 -- 4. Causes de mouvements de caisse
@@ -82,8 +82,8 @@ INSERT INTO caisse (libelle, montant_actuelle) VALUES
 INSERT INTO cause_caisse (libelle) VALUES
     ('STOCK'),
     ('ACHAT_BOVIN'),
-    ('ACHAT_MATERIEL'),
-    ('PAYEMENT_EMPLOYE'),
+    ('ACHAT'),
+    ('PAYEMENT'),
     ('VENTE'),
     ('AUTRE');
 
@@ -104,30 +104,30 @@ JOIN cause_caisse cc ON cc.libelle = 'STOCK';
 -- ============================================================
 INSERT INTO bovin (id_race, date_achat, date_vente, prix_achat, prix_vente, poids_achat, poids_vente) VALUES
     (1, '2020-03-12', NULL, 1500000.00, NULL, 100, NULL),
-    (2, '2019-07-05', '2021-06-15', 1800000.00, 5000000.00, 120, NULL),
-    (3, '2021-01-20', '2022-03-10', 1200000.00, 4500000.00, 95, NULL),
+    (2, '2019-07-05', NULL, 1800000.00, NULL, 120, NULL),
+    (3, '2021-01-20', NULL, 1200000.00, NULL, 95, NULL),
     (4, '2022-06-14', NULL, 950000.00, NULL, 88, NULL),
     (5, '2023-09-01', NULL, 1100000.00, NULL, 92, NULL),
-    (6, '2020-11-20', '2021-12-01', 1400000.00, 5200000.00, 105, NULL),
+    (6, '2020-11-20', NULL, 1400000.00, NULL, 105, NULL),
     (7, '2018-08-25', NULL, 2000000.00, NULL, 130, NULL),
-    (8, '2021-05-10', '2023-02-28', 1600000.00, 6000000.00, 115, NULL),
+    (8, '2021-05-10', NULL, 1600000.00, NULL, 115, NULL),
     (1, '2022-10-03', NULL, 780000.00, NULL, 82, NULL),
     (2, '2023-02-15', NULL, 1300000.00, NULL, 98, NULL),
-    (3, '2020-09-05', '2022-08-12', 1750000.00, 7000000.00, 125, NULL),
+    (3, '2020-09-05', NULL, 1750000.00, NULL, 125, NULL),
     (4, '2023-01-20', NULL, 1200000.00, NULL, 96, NULL),
-    (5, '2021-11-15', '2023-05-01', 900000.00, 3800000.00, 90, NULL),
+    (5, '2021-11-15', NULL, 900000.00, NULL, 90, NULL),
     (6, '2019-12-10', NULL, 1600000.00, NULL, 110, NULL),
     (7, '2022-04-22', NULL, 1100000.00, NULL, 94, NULL),
-    (8, '2020-07-08', '2022-11-20', 1400000.00, 5500000.00, 108, NULL);
+    (8, '2020-07-08', NULL, 1400000.00, NULL, 108, NULL);
 
 -- ============================================================
--- 7. Pesées initiales pour chaque bovin (à la date d'achat + 1 jour)
+-- 7. Pesées initiales pour chaque bovin
 -- ============================================================
 INSERT INTO pese_bovin (id_bovin, date_pese, poids_apres)
 SELECT
     b.id,
     b.date_achat + INTERVAL '1 day',
-    b.poids_achat + (random() * 5 - 2) -- léger écart
+    b.poids_achat + (random() * 5 - 2)
 FROM bovin b;
 
 -- ============================================================
@@ -146,7 +146,7 @@ INSERT INTO client (nom, prenom, contact) VALUES
     ('Rafidimanana', 'Aina', '0342785409');
 
 -- ============================================================
--- 9. Ventes de bovins (avec date_vente)
+-- 9. Ventes de bovins
 -- ============================================================
 INSERT INTO vente_bovin (id_client, description, date_vente) VALUES
     (1, 'Achat pour élevage familial à Ambatondrazaka', '2025-01-18'),
@@ -159,7 +159,7 @@ INSERT INTO vente_bovin (id_client, description, date_vente) VALUES
     (4, 'Vente directe marché de gros', '2025-06-30');
 
 -- ============================================================
--- 10. Détails des ventes (bovins vendus)
+-- 10. Détails des ventes
 -- ============================================================
 INSERT INTO vente_detail (id_vente, id_bovin) VALUES
     (1, 2),
@@ -173,9 +173,13 @@ INSERT INTO vente_detail (id_vente, id_bovin) VALUES
     (7, 5),
     (8, 10);
 
--- Mise à jour des dates de vente et prix_vente des bovins concernés
-UPDATE bovin SET date_vente = v.date_vente, prix_vente = 
-    CASE b.id
+-- ============================================================
+-- 11. Mise à jour des bovins vendus
+-- ============================================================
+UPDATE bovin b
+SET
+    date_vente = v.date_vente,
+    prix_vente = CASE b.id
         WHEN 2 THEN 5000000
         WHEN 3 THEN 4500000
         WHEN 6 THEN 5200000
@@ -186,13 +190,22 @@ UPDATE bovin SET date_vente = v.date_vente, prix_vente =
         WHEN 16 THEN 5500000
         WHEN 5 THEN 4800000
         WHEN 10 THEN 4200000
-    END
-FROM vente_bovin v, vente_detail vd, bovin b
-WHERE v.id = vd.id_vente AND vd.id_bovin = b.id
-AND b.id IN (2,3,6,8,11,13,15,16,5,10);
+    END,
+    poids_vente = COALESCE(
+        (SELECT poids_apres
+         FROM pese_bovin pb
+         WHERE pb.id_bovin = b.id
+         ORDER BY pb.date_pese DESC
+         LIMIT 1),
+        b.poids_achat
+    )
+FROM vente_bovin v
+JOIN vente_detail vd ON vd.id_vente = v.id
+WHERE b.id = vd.id_bovin
+  AND b.id IN (2,3,6,8,11,13,15,16,5,10);
 
 -- ============================================================
--- 11. Mouvements de caisse liés aux ventes (paiements reçus)
+-- 12. Mouvements de caisse liés aux ventes
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
@@ -206,7 +219,7 @@ JOIN bovin b ON b.id = vd.id_bovin
 WHERE b.prix_vente IS NOT NULL;
 
 -- ============================================================
--- 12. Matériel (avec unité dans le libellé)
+-- 13. Matériel
 -- ============================================================
 INSERT INTO type_materiel (libelle) VALUES
     ('Aliment'),
@@ -228,30 +241,116 @@ INSERT INTO materiel (libelle, id_type_materiel, type_gestion) VALUES
     ('Corde (mètre)', 4, 'LIFO');
 
 -- ============================================================
--- 13. Mouvements de stock (entrées initiales)
+-- 14. Mouvements de stock (entrées et sorties) - CORRIGÉ
 -- ============================================================
+
+-- Fixer une graine pour la reproductibilité
+SELECT setseed(0.42);
+
+-- Génération des entrées : 3 par matériel, dates réparties sur les 6 derniers mois
+WITH entree AS (
+    SELECT
+        m.id AS id_materiel,
+        (CURRENT_DATE - ( (4 - gs.num) * 50 + 20 + (random()*30)::int) * interval '1 day')::date AS date_mvt,
+        floor(random() * 80 + 20)::int AS qte,
+        floor(random() * 5000 + 500)::numeric(10,2) AS prix
+    FROM materiel m
+    CROSS JOIN generate_series(1, 3) AS gs(num)
+),
+-- Stock total par matériel
+stock_total AS (
+    SELECT id_materiel, SUM(qte) AS total_qte
+    FROM entree
+    GROUP BY id_materiel
+),
+-- Génération des sorties : 2 par matériel, dates après la dernière entrée
+sortie_base AS (
+    SELECT
+        e.id_materiel,
+        (SELECT MAX(date_mvt) FROM entree WHERE id_materiel = e.id_materiel) 
+            + (gs.num * 15 + 5 + (random()*20)::int) * interval '1 day' AS date_mvt,
+        floor(random() * 40 + 10)::int AS qte_demande,
+        gs.num AS num_sortie
+    FROM (SELECT DISTINCT id_materiel FROM entree) e
+    CROSS JOIN generate_series(1, 2) AS gs(num)
+),
+-- Ajustement des quantités de sortie : chaque sortie est limitée à un pourcentage du total
+sortie_ajustee AS (
+    SELECT
+        sb.id_materiel,
+        sb.date_mvt,
+        sb.num_sortie,
+        LEAST(sb.qte_demande, (st.total_qte * 0.8)::int) AS qte_brut,   -- limite à 80% du total
+        st.total_qte
+    FROM sortie_base sb
+    JOIN stock_total st ON sb.id_materiel = st.id_materiel
+),
+-- Répartition : la première sortie prend 60% de la quantité brute, la seconde le reste
+sortie_finale AS (
+    SELECT
+        sa.id_materiel,
+        sa.date_mvt,
+        sa.num_sortie,
+        CASE
+            WHEN sa.num_sortie = 1 THEN LEAST(sa.qte_brut, (sa.total_qte * 0.6)::int)
+            ELSE LEAST(sa.qte_brut, sa.total_qte - COALESCE(
+                (SELECT SUM(qte_brut) FROM sortie_ajustee WHERE id_materiel = sa.id_materiel AND num_sortie = 1), 0
+            ))
+        END AS qte
+    FROM sortie_ajustee sa
+)
+-- Insertion des mouvements (entrées puis sorties, triées par date)
 INSERT INTO mouvement_stock (id_materiel, date_mouvement, type_mouvement, quantite, prix_unitaire, qte_restant)
 SELECT
-    m.id,
-    CURRENT_DATE - (random() * 30)::int * INTERVAL '1 day',
+    id_materiel,
+    date_mvt,
     'ENTREE',
-    (random() * 100 + 10)::int,
-    (random() * 5000 + 500)::numeric(10,2),
-    (random() * 100 + 10)::int
-FROM materiel m;
+    qte,
+    prix,
+    0  -- sera mis à jour après
+FROM entree
+UNION ALL
+SELECT
+    id_materiel,
+    date_mvt,
+    'SORTIE',
+    qte,
+    NULL,
+    0
+FROM sortie_finale
+WHERE qte > 0
+ORDER BY id_materiel, date_mvt;
+
+-- Mise à jour du stock restant par cumul (entrées ajoutées, sorties soustraites)
+WITH cumul AS (
+    SELECT
+        id,
+        id_materiel,
+        SUM(CASE WHEN type_mouvement = 'ENTREE' THEN quantite ELSE -quantite END)
+            OVER (PARTITION BY id_materiel ORDER BY date_mouvement, id) AS stock_cumul
+    FROM mouvement_stock
+)
+UPDATE mouvement_stock ms
+SET qte_restant = c.stock_cumul
+FROM cumul c
+WHERE ms.id = c.id;
+
+-- Vérification (aucune ligne négative)
+-- SELECT * FROM mouvement_stock WHERE qte_restant < 0;
 
 -- ============================================================
--- 14. Paiements des mouvements de stock (depuis caisse)
+-- 15. Paiements des mouvements de stock (uniquement entrées)
 -- ============================================================
 INSERT INTO mvt_stock_paiement (id_mouvement_stock, id_caisse, montant)
 SELECT
     ms.id,
-    (SELECT id FROM caisse ORDER BY random() LIMIT 1),
-    ms.quantite * ms.prix_unitaire
-FROM mouvement_stock ms;
+    (SELECT id FROM caisse ORDER BY random() LIMIT 1) AS id_caisse,
+    ms.quantite * ms.prix_unitaire AS montant
+FROM mouvement_stock ms
+WHERE ms.type_mouvement = 'ENTREE';
 
 -- ============================================================
--- 15. Inventaire de matériel (état initial)
+-- 16. Inventaire de matériel (état final)
 -- ============================================================
 INSERT INTO inventaire (date_inventaire, libelle) VALUES
     (CURRENT_DATE, 'Inventaire initial');
@@ -260,56 +359,93 @@ INSERT INTO inventaire_detail (id_inventaire, id_materiel, quantite_initiale, qu
 SELECT
     (SELECT id FROM inventaire WHERE libelle = 'Inventaire initial'),
     m.id,
-    (SELECT qte_restant FROM mouvement_stock WHERE id_materiel = m.id ORDER BY date_mouvement DESC LIMIT 1),
-    (SELECT qte_restant FROM mouvement_stock WHERE id_materiel = m.id ORDER BY date_mouvement DESC LIMIT 1),
+    COALESCE(
+        (SELECT qte_restant FROM mouvement_stock WHERE id_materiel = m.id ORDER BY date_mouvement DESC, id DESC LIMIT 1),
+        0
+    ) AS quantite_initiale,
+    COALESCE(
+        (SELECT qte_restant FROM mouvement_stock WHERE id_materiel = m.id ORDER BY date_mouvement DESC, id DESC LIMIT 1),
+        0
+    ) AS quantite_finale,
     'Stock initial'
 FROM materiel m;
 
 -- ============================================================
--- 16. Employés et contrats (date_fin non NULL)
+-- 17. Employés et contrats
 -- ============================================================
 INSERT INTO employee (nom, prenom, date_naissance, date_entree) VALUES
     ('Rakoto', 'Jean', '1990-05-15', '2020-01-10'),
     ('Rasoa', 'Marie', '1985-08-22', '2019-06-01'),
     ('Andrianina', 'David', '1995-11-30', '2021-03-15');
 
--- Contrats avec date_fin obligatoire
 INSERT INTO contrat (date_debut, date_fin, id_employee, salaire) VALUES
-    ('2020-01-10', '2022-01-09', 1, 350000.00),   -- Contrat terminé
-    ('2019-06-01', '2023-05-31', 2, 400000.00),   -- Contrat terminé
-    ('2021-03-15', '2026-03-14', 3, 300000.00);   -- Contrat en cours
+    ('2020-01-10', '2022-01-09', 1, 350000.00),
+    ('2019-06-01', '2023-05-31', 2, 400000.00),
+    ('2021-03-15', '2026-03-14', 3, 300000.00);
 
 -- ============================================================
--- 17. Paiements employés (exemple)
+-- 18. Paiements employés (mensuels)
 -- ============================================================
+WITH mois_contrat AS (
+    SELECT
+        e.id AS employee_id,
+        c.id AS contrat_id,
+        c.salaire,
+        generate_series(
+            date_trunc('month', c.date_debut)::date,
+            date_trunc('month', c.date_fin)::date,
+            interval '1 month'
+        )::date AS mois
+    FROM employee e
+    JOIN contrat c ON c.id_employee = e.id
+),
+paiements_salaire AS (
+    SELECT
+        employee_id,
+        (SELECT id FROM type_payement_employee WHERE libelle = 'Salaire') AS type_id,
+        (date_trunc('month', mois) + interval '1 month' - interval '1 day')::date AS date_payement,
+        0 AS reste_paye,
+        mois,
+        salaire AS montant
+    FROM mois_contrat
+)
+INSERT INTO payement_employee (id_employee, id_type_payement_employee, date_payement, reste_paye, mois, montant)
+SELECT
+    employee_id,
+    type_id,
+    date_payement,
+    reste_paye,
+    mois,
+    montant
+FROM paiements_salaire
+ORDER BY employee_id, mois;
+
+-- Avances (exemples)
 INSERT INTO payement_employee (id_employee, id_type_payement_employee, date_payement, reste_paye, mois, montant)
 SELECT
     e.id,
-    (SELECT id FROM type_payement_employee WHERE libelle = 'Salaire'),
-    CURRENT_DATE - (random() * 30)::int * INTERVAL '1 day',
-    0,
-    date_trunc('month', CURRENT_DATE - (random() * 30)::int * INTERVAL '1 day')::date,
-    c.salaire
+    (SELECT id FROM type_payement_employee WHERE libelle = 'Avance'),
+    (date_trunc('month', CURRENT_DATE - (random() * 180)::int * interval '1 day') + interval '1 month' - interval '1 day')::date,
+    (random() * 50000 + 10000)::numeric(12,2) AS reste_paye,
+    date_trunc('month', CURRENT_DATE - (random() * 180)::int * interval '1 day')::date AS mois,
+    (random() * 100000 + 50000)::numeric(12,2) AS montant
 FROM employee e
-JOIN contrat c ON c.id_employee = e.id
-WHERE c.date_fin >= CURRENT_DATE; -- Seulement les contrats en cours pour les paiements récents
-
--- Ajout de quelques paiements pour les anciens contrats (exemple)
-INSERT INTO payement_employee (id_employee, id_type_payement_employee, date_payement, reste_paye, mois, montant)
-SELECT
-    e.id,
-    (SELECT id FROM type_payement_employee WHERE libelle = 'Salaire'),
-    c.date_debut + INTERVAL '1 month',
-    0,
-    date_trunc('month', c.date_debut + INTERVAL '1 month')::date,
-    c.salaire
-FROM employee e
-JOIN contrat c ON c.id_employee = e.id
-WHERE c.date_fin < CURRENT_DATE
-AND e.id IN (1,2); -- pour les deux anciens employés
+WHERE random() < 0.4
+LIMIT 5;
 
 -- ============================================================
--- 18. Factures (pour les ventes)
+-- 19. Mouvements de caisse pour paiements employés
+-- ============================================================
+INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
+SELECT
+    pe.date_payement,
+    -pe.montant,
+    (SELECT id FROM caisse WHERE libelle = 'Caisse principale'),
+    (SELECT id FROM cause_caisse WHERE libelle = 'PAYEMENT')
+FROM payement_employee pe;
+
+-- ============================================================
+-- 20. Factures
 -- ============================================================
 INSERT INTO facture (id_vente, numero_facture, code_facture, date_facture, montant_total)
 SELECT

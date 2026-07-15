@@ -121,9 +121,15 @@ public class PeseBovinService {
     public PeseBovin createOrUpdatePeseBovin(PeseBovinRequest request) throws Exception {
         // 1. Vérifier que le bovin existe
         Bovin bovin = bovinService.findById(request.getBovinId());
+
+      
         if (bovin == null) {
             throw new Exception("Bovin introuvable avec l'ID : " + request.getBovinId());
         }
+
+        if(bovin.getPoids_vente()!=null)
+            throw new Exception("Ce bovin est déja vendu");
+        
 
         // 2. Récupérer la dernière pesée du bovin
         PeseBovin latestPese = getLatestPeseByBovin(bovin.getId());
