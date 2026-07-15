@@ -44,8 +44,9 @@ CREATE TABLE caisse (
     id SERIAL PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL,
     id_caisse_parent INTEGER,
+    montant_actuelle DOUBLE PRECISION NOT NULL,
     CONSTRAINT fk_caisse_parent FOREIGN KEY (id_caisse_parent) REFERENCES caisse(id),
-    montant_actuelle DOUBLE PRECISION NOT NULL
+    CONSTRAINT ck_montant_non_negatif CHECK (montant_actuelle >= 0)
 );
 
 CREATE TABLE cause_caisse(
@@ -64,10 +65,10 @@ CREATE TABLE bovin (
     id_race INTEGER NOT NULL,
     date_achat DATE NOT NULL,
     date_vente DATE,
-    prix_achat DOUBLE PRECISION NOT NULL,
-    prix_vente DOUBLE PRECISION,
-    poids_achat DOUBLE PRECISION NOT NULL,
-    poids_vente DOUBLE PRECISION,
+    prix_achat DOUBLE PRECISION NOT NULL CHECK (prix_achat >= 0),
+    prix_vente DOUBLE PRECISION CHECK (prix_vente IS NULL OR prix_vente >= 0),
+    poids_achat DOUBLE PRECISION NOT NULL CHECK (poids_achat >= 0),
+    poids_vente DOUBLE PRECISION CHECK (poids_vente IS NULL OR poids_vente >= 0),
     CONSTRAINT fk_bovin_race FOREIGN KEY (id_race) REFERENCES race(id)
 );
 
@@ -75,15 +76,15 @@ CREATE TABLE pese_bovin (
     id SERIAL PRIMARY KEY,
     id_bovin INTEGER NOT NULL,
     date_pese DATE NOT NULL,
-    poids_apres DOUBLE PRECISION NOT NULL,
+    poids_apres DOUBLE PRECISION NOT NULL CHECK (poids_apres >= 0),
     CONSTRAINT fk_bovin_poids FOREIGN KEY (id_bovin) REFERENCES bovin(id)
 );
 
 CREATE TABLE mortalite (
     id SERIAL PRIMARY KEY,
     id_race INTEGER NOT NULL,
-    prix_achat DOUBLE PRECISION NOT NULL,
-    poids_mort DOUBLE PRECISION NOT NULL,
+    prix_achat DOUBLE PRECISION NOT NULL CHECK (prix_achat >= 0),
+    poids_mort DOUBLE PRECISION NOT NULL CHECK (poids_mort >= 0),
     date DATE NOT NULL,
     CONSTRAINT fk_mortalite_race FOREIGN KEY (id_race) REFERENCES race(id)
 );
