@@ -26,25 +26,29 @@
         </a>
     </div>
 
+    <div id="errorAlert" class="alert alert-danger" style="display: none; margin-bottom: 15px;" role="alert">
+        <span id="errorMessageText"></span>
+    </div>
+
     <!-- Filtres -->
     <div class="card p-3 p-md-4 mb-4">
         <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-3">
+            <div class="col-auto">
                 <label class="form-label">Date min</label>
                 <input type="date" id="dateDebut" class="form-control">
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-auto">
                 <label class="form-label">Date max</label>
                 <input type="date" id="dateFin" class="form-control">
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-auto">
                 <label class="form-label">Race</label>
                 <select id="raceId" class="form-select">
                     <option value="">Toutes les races</option>
                     <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
                 </select>
             </div>
-            <div class="col-12 col-md-2 d-grid">
+            <div class="col-auto">
                 <button id="btnFiltrer" type="button" class="btn btn-soft-primary">
                     <i class="bi bi-funnel-fill me-1"></i>Filtrer
                 </button>
@@ -98,10 +102,33 @@
         return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value || 0) + ' Ar';
     }
 
+    // Fonction utilitaire pour afficher ou masquer les erreurs
+    function afficherErreur(message) {
+        if (message) {
+            errorMessageText.textContent = message;
+            errorAlert.style.display = 'block';
+        } else {
+            errorAlert.style.display = 'none';
+        }
+    }
+
     function chargerStatistiques() {
         const dateDebut = dateDebutInput.value;
         const dateFin = dateFinInput.value;
         const raceId = raceSelect.value;
+
+        // --- VALIDATION CÔTÉ FRONTEND ---
+        if (dateDebut && dateFin) {
+            const debut = new Date(dateDebut);
+            const fin = new Date(dateFin);
+            if (fin < debut) {
+                afficherErreur("La date de fin doit être après la date de début.");
+                return; // Bloque l'exécution et l'envoi de la requête
+            }
+        }
+
+        // Tout est correct, on efface les anciennes alertes
+        afficherErreur(null);
 
         const params = new URLSearchParams();
         if (dateDebut) params.set('dateDebut', dateDebut);
@@ -109,9 +136,17 @@
         if (raceId) params.set('raceId', raceId);
 
         fetch('/mortalite/stats/data?' + params.toString())
-            .then(res => res.json())
+            .then(res => {
+                // Si le serveur répond avec une erreur (ex: 400 Bad Request)
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.error || "Erreur serveur"); });
+                }
+                return res.json();
+            })
             .then(data => afficherResultats(data))
-            .catch(() => alert("Impossible de charger les statistiques de mortalité."));
+            .catch((error) => {
+                afficherErreur(error.message || "Impossible de charger les statistiques.");
+            });
     }
 
     function afficherResultats(data) {
