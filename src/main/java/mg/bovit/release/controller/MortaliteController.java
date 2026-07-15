@@ -67,7 +67,7 @@ public class MortaliteController {
     // (input id_bovin). Une liste des bovins encore vivants est affichée
     // à titre indicatif pour l'aider à retrouver les bons identifiants.
     @GetMapping("/new")
-    public String showInsertForm(Model model) {
+    public String showInsertForm(Model model) throws Exception {
         MultiCriteriaFormBovinList criteria = new MultiCriteriaFormBovinList();
         criteria.setStatut("non_vendu");
         criteria.setSize(1000);

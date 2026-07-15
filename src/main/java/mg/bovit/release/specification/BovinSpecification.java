@@ -11,7 +11,24 @@ import mg.bovit.release.model.sqlview.BovinWithPoids;
 
 public class BovinSpecification {
 
-    public static Specification<BovinWithPoids> fromForm(MultiCriteriaFormBovinList form) {
+    public static Specification<BovinWithPoids> fromForm(MultiCriteriaFormBovinList form) throws Exception {
+        // verify if prix is incorrect
+        if (form.getPrixAchatMax() != null && form.getPrixAchatMin() != null && form.getPrixAchatMax() < form.getPrixAchatMin()) {
+            throw new Exception("Le prix min ou égal doit être inférieur au prix max.");
+        }
+        // verify if poids is negatif
+        if (form.getPoidsMax() != null && form.getPoidsMax() < 0) {
+            throw new Exception("Le poids max ne doit pas être négatif");
+        }
+        if (form.getPoidsMin() != null && form.getPoidsMin() < 0) {
+            throw new Exception("Le poids min ne doit pas être négatif");
+        }
+
+        // verify if poids is incorrect
+        if (form.getPoidsMax() != null && form.getPoidsMin() != null && form.getPoidsMax() < form.getPoidsMin()) {
+            throw new Exception("Le poids min ou égal doit être inférieur au poids max.");
+        }
+
         return (root, query, cb) -> {
             Predicate predicate = cb.conjunction();
 
