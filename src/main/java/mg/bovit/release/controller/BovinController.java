@@ -98,6 +98,13 @@ import java.util.List;
                 race.setId(request.getRaceId());
                 bovin.setRace(race);
 
+                // verifier si quantite est est null ou < 0
+                if (request.getQuantite() == null || request.getQuantite() <= 0) {
+                    return ResponseEntity.badRequest().body(
+                        Map.of("status", "error", "message", "La quantite de bovin ne devrait pas être inférieur ou égal à 0")
+                    );
+                }
+
                 Double poidsAchat = request.getPoidsAchat();
                 if (poidsAchat == null || poidsAchat <= 0) {
                     return ResponseEntity.badRequest().body(
@@ -115,24 +122,24 @@ import java.util.List;
                 }
 
                 List<Caisse> caisses = new ArrayList<>();
-            if (request.getPayments() != null) {
-                for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
-                    Caisse caisse = new Caisse();
-                    caisse.setId(pDto.getCaisseId());
-                    caisse.setMontant_actuelle(pDto.getMontant());
-                    caisses.add(caisse);
+                if (request.getPayments() != null) {
+                    for (BuyBovinRequest.CaissePaymentDTO pDto : request.getPayments()) {
+                        Caisse caisse = new Caisse();
+                        caisse.setId(pDto.getCaisseId());
+                        caisse.setMontant_actuelle(pDto.getMontant());
+                        caisses.add(caisse);
+                    }
                 }
+
+                // Passer le prix unitaire au service
+                bovinService.buyBovin(bovin, caisses, request.getQuantite(), prixUnitaire);
+
+                return ResponseEntity.ok(Map.of("status", "success", "message", "Achat enregistré avec succès !"));
+
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
             }
-
-            // Passer le prix unitaire au service
-            bovinService.buyBovin(bovin, caisses, request.getQuantite(), prixUnitaire);
-
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Achat enregistré avec succès !"));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
         }
-    }
 
         // Suppression d'un bovin : déclare automatiquement sa mortalité
         // (insertion dans la table mortalite) avant de le supprimer de bovin.
