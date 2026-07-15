@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord financier</title>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .summary-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem 1.8rem;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid #6c757d;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            height: 100%;
+        }
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        .summary-card .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3e50;
+            margin-top: 4px;
+        }
+        .summary-card .icon {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .summary-card.depenses { border-left-color: #dc3545; }
+        .summary-card.recettes { border-left-color: #28a745; }
+        .summary-card.benefice.positive { border-left-color: #28a745; }
+        .summary-card.benefice.negative { border-left-color: #dc3545; }
+        .summary-card.benefice .value.positive { color: #28a745; }
+        .summary-card.benefice .value.negative { color: #dc3545; }
+        .summary-card .sub-info {
+            font-size: 0.75rem;
+            color: #adb5bd;
+            margin-top: 6px;
+        }
+
+        .chart-wrapper {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            height: 100%;
+        }
+        .chart-wrapper .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .chart-wrapper .chart-header h5 {
+            font-weight: 600;
+            color: #2d3e50;
+            margin: 0;
+        }
+        .chart-wrapper .chart-header .badge-count {
+            font-size: 0.75rem;
+            background: #f1f3f5;
+            color: #495057;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+        }
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin-top: 10px;
+        }
+        .chart-container .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #adb5bd;
+        }
+        .chart-container .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        .chart-container .empty-state p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .filter-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .filter-card .form-label {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #495057;
+        }
+
+        /* Animation de chargement */
+        .spinner-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .spinner-overlay.show {
+            display: flex;
+        }
+        .chart-wrapper {
+            position: relative;
+        }
+
+        .btn-soft-primary {
+            background: #e9ecef;
+            border: none;
+            color: #2d3e50;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+        .btn-soft-primary:hover {
+            background: #dee2e6;
+        }
+        .btn-soft-primary i {
+            margin-right: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .summary-card .value { font-size: 1.5rem; }
+            .chart-container { height: 220px; }
+        }
+    </style>
+</head>
+<body>
+
+    <th:block th:replace="~{fragments/common :: navbar('finance')}"></th:block>
+
+    <div class="container py-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="mb-0 fw-semibold" style="color:#2d3e50;">
+                    <i class="bi bi-graph-up-arrow me-2" style="color:#7a9e5a;"></i>Tableau de bord financier
+                </h4>
+                <p class="text-muted small mb-0">Suivi des recettes, dépenses et bénéfices</p>
+            </div>
+            <a th:href="@{/caisse/historique}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-clock-history me-1"></i>Voir l'historique
+            </a>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filter-card mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label"><i class="bi bi-calendar3 me-1"></i>Date début</label>
+                    <input type="date" id="dateDebut" class="form-control">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label"><i class="bi bi-calendar3 me-1"></i>Date fin</label>
+                    <input type="date" id="dateFin" class="form-control">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label"><i class="bi bi-clock me-1"></i>Période rapide</label>
+                    <select id="periodeRapide" class="form-select">
+                        <option value="year">Cette année</option>
+                        <option value="month">Ce mois</option>
+                        <option value="last3">3 derniers mois</option>
+                        <option value="last6">6 derniers mois</option>
+                        <option value="all">Tout</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button id="btnFiltrer" type="button" class="btn btn-soft-primary flex-grow-1">
+                        <i class="bi bi-funnel-fill me-1"></i>Filtrer
+                    </button>
+                    <button id="btnReset" type="button" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cartes récapitulatives -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="summary-card depenses">
+                    <span class="icon">📤</span>
+                    <div class="label"><i class="bi bi-arrow-down-circle me-1" style="color:#dc3545;"></i>Dépenses totales</div>
+                    <div class="value" id="totalDepenses">–</div>
+                    <div class="sub-info" id="depensesSub">Période sélectionnée</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="summary-card recettes">
+                    <span class="icon">📥</span>
+                    <div class="label"><i class="bi bi-arrow-up-circle me-1" style="color:#28a745;"></i>Recettes totales</div>
+                    <div class="value" id="totalRecettes">–</div>
+                    <div class="sub-info" id="recettesSub">Période sélectionnée</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="summary-card benefice" id="beneficeCard">
+                    <span class="icon">💹</span>
+                    <div class="label"><i class="bi bi-wallet2 me-1"></i>Bénéfice total</div>
+                    <div class="value" id="totalBenefice">–</div>
+                    <div class="sub-info" id="beneficeSub">Période sélectionnée</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row g-4">
+            <div class="col-12 col-lg-6">
+                <div class="chart-wrapper" id="depensesWrapper">
+                    <div class="chart-header">
+                        <h5><i class="bi bi-bar-chart-fill me-2" style="color:#dc3545;"></i>Dépenses mensuelles</h5>
+                        <span class="badge-count" id="depensesCount">0 mois</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="depensesChart"></canvas>
+                        <div class="empty-state" id="depensesEmpty" style="display:none;">
+                            <i class="bi bi-inbox"></i>
+                            <p>Aucune dépense enregistrée sur cette période</p>
+                        </div>
+                    </div>
+                    <div class="spinner-overlay" id="depensesSpinner">
+                        <div class="spinner-border text-secondary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="chart-wrapper" id="beneficesWrapper">
+                    <div class="chart-header">
+                        <h5><i class="bi bi-graph-up me-2" style="color:#f0ad4e;"></i>Bénéfices mensuels</h5>
+                        <span class="badge-count" id="beneficesCount">0 mois</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="beneficesChart"></canvas>
+                        <div class="empty-state" id="beneficesEmpty" style="display:none;">
+                            <i class="bi bi-inbox"></i>
+                            <p>Aucune donnée sur cette période</p>
+                        </div>
+                    </div>
+                    <div class="spinner-overlay" id="beneficesSpinner">
+                        <div class="spinner-border text-secondary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="text-center text-muted small mt-4">
+            <i class="bi bi-info-circle me-1"></i>
+            Les données sont mises à jour en temps réel depuis les mouvements de caisse.
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        (function() {
+            const dateDebutInput = document.getElementById('dateDebut');
+            const dateFinInput = document.getElementById('dateFin');
+            const periodeRapide = document.getElementById('periodeRapide');
+            const btnFiltrer = document.getElementById('btnFiltrer');
+            const btnReset = document.getElementById('btnReset');
+
+            const totalDepensesEl = document.getElementById('totalDepenses');
+            const totalRecettesEl = document.getElementById('totalRecettes');
+            const totalBeneficeEl = document.getElementById('totalBenefice');
+            const beneficeCard = document.getElementById('beneficeCard');
+            const depensesSub = document.getElementById('depensesSub');
+            const recettesSub = document.getElementById('recettesSub');
+            const beneficeSub = document.getElementById('beneficeSub');
+            const depensesCount = document.getElementById('depensesCount');
+            const beneficesCount = document.getElementById('beneficesCount');
+
+            const depensesSpinner = document.getElementById('depensesSpinner');
+            const beneficesSpinner = document.getElementById('beneficesSpinner');
+            const depensesEmpty = document.getElementById('depensesEmpty');
+            const beneficesEmpty = document.getElementById('beneficesEmpty');
+
+            let depensesChart = null;
+            let beneficesChart = null;
+            let isLoading = false;
+
+            function formaterMontant(valeur) {
+                return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(valeur || 0) + ' Ar';
+            }
+
+            function formaterDate(isoDate) {
+                if (!isoDate) return '';
+                const d = new Date(isoDate);
+                return d.toLocaleDateString('fr-FR');
+            }
+
+            function setPeriodeRapide() {
+                const value = periodeRapide.value;
+                const today = new Date();
+                let debut = new Date(today.getFullYear(), 0, 1);
+                let fin = new Date(today);
+
+                switch(value) {
+                    case 'month':
+                        debut = new Date(today.getFullYear(), today.getMonth(), 1);
+                        break;
+                    case 'last3':
+                        debut = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+                        break;
+                    case 'last6':
+                        debut = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+                        break;
+                    case 'all':
+                        debut = new Date(2000, 0, 1);
+                        break;
+                    case 'year':
+                    default:
+                        debut = new Date(today.getFullYear(), 0, 1);
+                        break;
+                }
+
+                dateDebutInput.value = debut.toISOString().split('T')[0];
+                dateFinInput.value = fin.toISOString().split('T')[0];
+                chargerDonnees();
+            }
+
+            function chargerDonnees() {
+                if (isLoading) return;
+                isLoading = true;
+
+                // Afficher les spinners
+                depensesSpinner.classList.add('show');
+                beneficesSpinner.classList.add('show');
+
+                const dateDebut = dateDebutInput.value;
+                const dateFin = dateFinInput.value;
+
+                const params = new URLSearchParams();
+                if (dateDebut) params.set('dateDebut', dateDebut);
+                if (dateFin) params.set('dateFin', dateFin);
+
+                fetch('/finance/data?' + params.toString())
+                    .then(res => {
+                        if (!res.ok) throw new Error('Erreur réseau');
+                        return res.json();
+                    })
+                    .then(data => {
+                        afficherResultats(data);
+                        // Mettre à jour les sous-titres
+                        const labelDebut = dateDebut ? formaterDate(dateDebut) : 'début';
+                        const labelFin = dateFin ? formaterDate(dateFin) : 'aujourd\'hui';
+                        const periode = `Du ${labelDebut} au ${labelFin}`;
+                        depensesSub.textContent = periode;
+                        recettesSub.textContent = periode;
+                        beneficeSub.textContent = periode;
+                    })
+                    .catch(() => {
+                        showError("Impossible de charger les données financières.");
+                    })
+                    .finally(() => {
+                        isLoading = false;
+                        depensesSpinner.classList.remove('show');
+                        beneficesSpinner.classList.remove('show');
+                    });
+            }
+
+            function afficherResultats(data) {
+                // Mise à jour des cartes
+                totalDepensesEl.textContent = formaterMontant(data.totalSorties || 0);
+                totalRecettesEl.textContent = formaterMontant(data.totalEntrees || 0);
+                const benefice = data.totalBenefice || 0;
+                totalBeneficeEl.textContent = formaterMontant(benefice);
+
+                // Gestion des classes pour la carte bénéfice
+                beneficeCard.className = 'summary-card benefice' + (benefice >= 0 ? ' positive' : ' negative');
+                totalBeneficeEl.className = 'value' + (benefice >= 0 ? ' positive' : ' negative');
+
+                const labels = data.labels || [];
+                const hasData = labels.length > 0 && data.sorties.some(v => v > 0 || data.entrees.some(e => e > 0));
+
+                // Mise à jour des compteurs
+                depensesCount.textContent = labels.length + ' mois';
+                beneficesCount.textContent = labels.length + ' mois';
+
+                // Gestion des vides
+                if (!hasData) {
+                    document.getElementById('depensesChart').style.display = 'none';
+                    depensesEmpty.style.display = 'flex';
+                    document.getElementById('beneficesChart').style.display = 'none';
+                    beneficesEmpty.style.display = 'flex';
+                    if (depensesChart) { depensesChart.destroy(); depensesChart = null; }
+                    if (beneficesChart) { beneficesChart.destroy(); beneficesChart = null; }
+                    return;
+                }
+
+                document.getElementById('depensesChart').style.display = 'block';
+                depensesEmpty.style.display = 'none';
+                document.getElementById('beneficesChart').style.display = 'block';
+                beneficesEmpty.style.display = 'none';
+
+                // Dépenses (sorties)
+                const ctx1 = document.getElementById('depensesChart').getContext('2d');
+                if (depensesChart) depensesChart.destroy();
+                depensesChart = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Dépenses (Ar)',
+                            data: data.sorties || [],
+                            backgroundColor: '#dc3545',
+                            borderRadius: 4,
+                            hoverBackgroundColor: '#c82333',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => 'Dépenses : ' + formaterMontant(context.raw)
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    callback: (value) => formaterMontant(value),
+                                    maxTicksLimit: 6,
+                                }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+
+                // Bénéfices
+                const ctx2 = document.getElementById('beneficesChart').getContext('2d');
+                if (beneficesChart) beneficesChart.destroy();
+                const beneficeData = data.benefices || [];
+                beneficesChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Bénéfice (Ar)',
+                            data: beneficeData,
+                            backgroundColor: beneficeData.map(v => v >= 0 ? '#28a745' : '#dc3545'),
+                            borderRadius: 4,
+                            hoverBackgroundColor: beneficeData.map(v => v >= 0 ? '#1e7e34' : '#bd2130'),
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => 'Bénéfice : ' + formaterMontant(context.raw)
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    callback: (value) => formaterMontant(value),
+                                    maxTicksLimit: 6,
+                                }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function showError(message) {
+                // Toast simple
+                const toast = document.createElement('div');
+                toast.className = 'alert alert-danger position-fixed top-0 end-0 m-3';
+                toast.style.zIndex = '9999';
+                toast.style.maxWidth = '400px';
+                toast.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + message;
+                document.body.appendChild(toast);
+                setTimeout(() => { toast.remove(); }, 4000);
+            }
+
+            // Événements
+            btnFiltrer.addEventListener('click', chargerDonnees);
+            btnReset.addEventListener('click', function() {
+                const today = new Date();
+                const startOfYear = new Date(today.getFullYear(), 0, 1);
+                dateDebutInput.value = startOfYear.toISOString().split('T')[0];
+                dateFinInput.value = today.toISOString().split('T')[0];
+                periodeRapide.value = 'year';
+                chargerDonnees();
+            });
+            periodeRapide.addEventListener('change', setPeriodeRapide);
+
+            // Entrée "Enter" dans les champs de date
+            dateDebutInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') chargerDonnees(); });
+            dateFinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') chargerDonnees(); });
+
+            // Dates par défaut : début de l'année
+            const today = new Date();
+            const startOfYear = new Date(today.getFullYear(), 0, 1);
+            dateDebutInput.value = startOfYear.toISOString().split('T')[0];
+            dateFinInput.value = today.toISOString().split('T')[0];
+
+            // Chargement initial
+            setTimeout(chargerDonnees, 100);
+        })();
+    </script>
+
+</body>
+</html>

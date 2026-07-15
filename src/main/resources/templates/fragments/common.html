@@ -85,6 +85,9 @@
 
             <div class="app-sidebar__group">
                 <div class="app-sidebar__group-title">Finance</div>
+                <!-- NOUVEAU LIEN : Tableau de bord financier -->
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'finance'} ? ' is-active' : ''"
+                    th:href="@{/finance}"><i class="bi bi-graph-up-arrow"></i><span>Tableau de bord</span></a>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'vente'} ? ' is-active' : ''"
                     th:href="@{/vente/list}"><i class="bi bi-cash-coin"></i><span>Ventes</span></a>
                 <a class="app-sidebar__link" th:href="@{/vente/new}"><i class="bi bi-receipt-cutoff"></i><span>Nouvelle
