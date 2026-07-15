@@ -36,7 +36,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -98,7 +97,7 @@ public class VenteController {
         model.addAttribute("clients", clients);
         model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
-        model.addAttribute("buyRequest", new VenteInsertDto());
+        model.addAttribute("venteForm", new VenteInsertDto());
         model.addAttribute("caisses", caisseService.findAll());
 
         return "vente/form";
