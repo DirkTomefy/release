@@ -98,7 +98,7 @@ public class VenteController {
         model.addAttribute("clients", clients);
         model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
-        model.addAttribute("venteForm", new VenteInsertDto());
+        model.addAttribute("buyRequest", new VenteInsertDto());
         model.addAttribute("caisses", caisseService.findAll());
 
         return "vente/form";
