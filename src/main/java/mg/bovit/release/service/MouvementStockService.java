@@ -2,7 +2,6 @@ package mg.bovit.release.service;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +19,6 @@ import mg.bovit.release.dto.MultiCriteriaEtatStockMateriel;
 import mg.bovit.release.model.Caisse;
 import mg.bovit.release.model.CauseCaisse;
 import mg.bovit.release.model.Materiel;
-import mg.bovit.release.model.MaterielType;
 import mg.bovit.release.model.MouvementCaisse;
 import mg.bovit.release.model.MouvementStock;
 import mg.bovit.release.model.MouvementStockPaiement;
@@ -173,64 +171,21 @@ public class MouvementStockService {
         return new MaterielStockDto(materielRepository.findById(idMateriel).get(), reste);
     }
 
-    // ===================== Nouvelles méthodes pour les listes de stock =====================
+    // ===================== Méthodes pour les listes de stock (utilisées par le contrôleur) =====================
 
-    // Liste de tous les matériels avec leur stock actuel (dernier qteRestant)
+    // Liste de tous les matériels avec leur stock actuel (somme des qteRestant des entrées)
     public List<MaterielStockDto> findAllMaterielStockRestant() {
-        List<Object[]> rows = mouvementStockRepository.findAllMaterielWithLastStock();
-        List<MaterielStockDto> result = new ArrayList<>();
-        for (Object[] row : rows) {
-            Long id = ((Number) row[0]).longValue();
-            String libelle = (String) row[1];
-            Long typeId = ((Number) row[2]).longValue();
-            String typeLibelle = (String) row[3];
-            Double qteRestant = ((Number) row[4]).doubleValue();
-
-            MaterielType type = new MaterielType();
-            type.setId(typeId);
-            type.setLibelle(typeLibelle);
-
-            Materiel materiel = new Materiel();
-            materiel.setId(id);
-            materiel.setLibelle(libelle);
-            materiel.setType(type);
-
-            result.add(new MaterielStockDto(materiel, qteRestant));
-        }
-        return result;
+        return mouvementStockRepository.findAllMaterielStockRestant();
     }
 
-    // Stock actuel d'un matériel spécifique (dernier qteRestant ou calcul entrées - sorties)
+    // Stock actuel d'un matériel spécifique (somme des qteRestant des entrées)
     public MaterielStockDto findMaterielStockRestantById(Long materielId) {
-        Materiel materiel = materielRepository.findById(materielId)
-                .orElseThrow(() -> new RuntimeException("Matériel introuvable"));
-        double stock = mouvementStockRepository.getStockActuelByMaterielId(materielId);
-        return new MaterielStockDto(materiel, stock);
+        return mouvementStockRepository.findMaterielStockRestantById(materielId);
     }
 
     // Liste des matériels d'un type donné avec leur stock actuel
     public List<MaterielStockDto> findMaterielStockRestantByTypeId(Long typeId) {
-        List<Object[]> rows = mouvementStockRepository.findMaterielStockRestantByTypeIdNative(typeId);
-        List<MaterielStockDto> result = new ArrayList<>();
-        for (Object[] row : rows) {
-            Long id = ((Number) row[0]).longValue();
-            String libelle = (String) row[1];
-            Long typeId2 = ((Number) row[2]).longValue();
-            String typeLibelle = (String) row[3];
-            Double qteRestant = ((Number) row[4]).doubleValue();
-
-            MaterielType type = new MaterielType();
-            type.setId(typeId2);
-            type.setLibelle(typeLibelle);
-
-            Materiel materiel = new Materiel();
-            materiel.setId(id);
-            materiel.setLibelle(libelle);
-            materiel.setType(type);
-
-            result.add(new MaterielStockDto(materiel, qteRestant));
-        }
-        return result;
+        return mouvementStockRepository.findMaterielStockRestantByTypeId(typeId);
     }
 
     // ===================== Méthodes CRUD de base =====================
@@ -265,7 +220,7 @@ public class MouvementStockService {
         mouvement.setMateriel(materiel);
         mouvement.setTypeMouvement("ENTREE");
         mouvement.setQuantite(payload.getQuantite());
-        mouvement.setQteRestant(payload.getQuantite()); // initialiser 
+        mouvement.setQteRestant(payload.getQuantite()); // initialisation
         mouvement.setPrixUnitaire(payload.getPrixUnitaire());
         mouvement.setDateMouvement(Date.valueOf(payload.getDateMouvement()));
 
@@ -307,7 +262,7 @@ public class MouvementStockService {
         Long materielId = payload.getMaterielId();
         Double quantiteASortir = payload.getQuantite();
 
-        // Vérification du stock disponible via la nouvelle méthode
+        // Vérification du stock disponible via la méthode de calcul entrées - sorties
         Double totalRestant = mouvementStockRepository.getStockActuelByMaterielId(materielId);
         if (totalRestant < quantiteASortir) {
             throw new RuntimeException("Quantité insuffisante. Disponible: " + totalRestant + ", Demandée: " + quantiteASortir);

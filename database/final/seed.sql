@@ -27,7 +27,7 @@ DELETE FROM employee;
 DELETE FROM race;
 DELETE FROM type_payement_employee;
 
--- Réinitialisation des séquences (optionnel)
+-- Réinitialisation des séquences
 ALTER SEQUENCE caisse_id_seq RESTART WITH 1;
 ALTER SEQUENCE cause_caisse_id_seq RESTART WITH 1;
 ALTER SEQUENCE race_id_seq RESTART WITH 1;
@@ -69,12 +69,12 @@ INSERT INTO race (nom, descriptions) VALUES
     ('Abondance', 'Race laitière des Alpes');
 
 -- ============================================================
--- 3. Caisses (montants en Ariary)
+-- 3. Caisses (montants en Ariary) – Commencent à 0
 -- ============================================================
 INSERT INTO caisse (libelle, montant_actuelle) VALUES
-    ('Caisse principale', 15000000.00),
-    ('Caisse d''épargne', 8000000.00),
-    ('Fonds d''investissement', 20000000.00);
+    ('Caisse principale', 0.00),
+    ('Caisse d''épargne', 0.00),
+    ('Fonds d''investissement', 0.00);
 
 -- ============================================================
 -- 4. Causes de mouvements de caisse
@@ -88,7 +88,7 @@ INSERT INTO cause_caisse (libelle) VALUES
     ('AUTRE');
 
 -- ============================================================
--- 5. Mouvements initiaux de caisse (pour solde initial)
+-- 5. Mouvements initiaux de caisse (solde initial = 0)
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
@@ -205,7 +205,7 @@ WHERE b.id = vd.id_bovin
   AND b.id IN (2,3,6,8,11,13,15,16,5,10);
 
 -- ============================================================
--- 12. Mouvements de caisse liés aux ventes
+-- 12. Mouvements de caisse liés aux ventes (ENTRÉES d'argent)
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
@@ -241,29 +241,28 @@ INSERT INTO materiel (libelle, id_type_materiel, type_gestion) VALUES
     ('Corde (mètre)', 4, 'LIFO');
 
 -- ============================================================
--- 14. Mouvements de stock (entrées et sorties) - CORRIGÉ
+-- 14. Mouvements de stock (entrées et sorties) avec qte_restant <= quantite
 -- ============================================================
 
 -- Fixer une graine pour la reproductibilité
 SELECT setseed(0.42);
 
--- Génération des entrées : 3 par matériel, dates réparties sur les 6 derniers mois
+-- Insertion des entrées et sorties en une seule requête
 WITH entree AS (
     SELECT
         m.id AS id_materiel,
         (CURRENT_DATE - ( (4 - gs.num) * 50 + 20 + (random()*30)::int) * interval '1 day')::date AS date_mvt,
         floor(random() * 80 + 20)::int AS qte,
-        floor(random() * 5000 + 500)::numeric(10,2) AS prix
+        floor(random() * 5000 + 500)::numeric(10,2) AS prix,
+        gs.num AS num_entree
     FROM materiel m
     CROSS JOIN generate_series(1, 3) AS gs(num)
 ),
--- Stock total par matériel
 stock_total AS (
     SELECT id_materiel, SUM(qte) AS total_qte
     FROM entree
     GROUP BY id_materiel
 ),
--- Génération des sorties : 2 par matériel, dates après la dernière entrée
 sortie_base AS (
     SELECT
         e.id_materiel,
@@ -274,32 +273,28 @@ sortie_base AS (
     FROM (SELECT DISTINCT id_materiel FROM entree) e
     CROSS JOIN generate_series(1, 2) AS gs(num)
 ),
--- Ajustement des quantités de sortie : chaque sortie est limitée à un pourcentage du total
 sortie_ajustee AS (
     SELECT
         sb.id_materiel,
         sb.date_mvt,
         sb.num_sortie,
-        LEAST(sb.qte_demande, (st.total_qte * 0.8)::int) AS qte_brut,   -- limite à 80% du total
-        st.total_qte
+        LEAST(sb.qte_demande, (st.total_qte * 0.8)::int) AS qte_brut
     FROM sortie_base sb
     JOIN stock_total st ON sb.id_materiel = st.id_materiel
 ),
--- Répartition : la première sortie prend 60% de la quantité brute, la seconde le reste
 sortie_finale AS (
     SELECT
         sa.id_materiel,
         sa.date_mvt,
         sa.num_sortie,
         CASE
-            WHEN sa.num_sortie = 1 THEN LEAST(sa.qte_brut, (sa.total_qte * 0.6)::int)
-            ELSE LEAST(sa.qte_brut, sa.total_qte - COALESCE(
-                (SELECT SUM(qte_brut) FROM sortie_ajustee WHERE id_materiel = sa.id_materiel AND num_sortie = 1), 0
-            ))
+            WHEN sa.num_sortie = 1 THEN LEAST(sa.qte_brut, (SELECT total_qte FROM stock_total WHERE id_materiel = sa.id_materiel) * 0.6)::int
+            ELSE LEAST(sa.qte_brut, (SELECT total_qte FROM stock_total WHERE id_materiel = sa.id_materiel) - 
+                COALESCE((SELECT SUM(qte_brut) FROM sortie_ajustee WHERE id_materiel = sa.id_materiel AND num_sortie = 1), 0))
         END AS qte
     FROM sortie_ajustee sa
+    WHERE sa.qte_brut > 0
 )
--- Insertion des mouvements (entrées puis sorties, triées par date)
 INSERT INTO mouvement_stock (id_materiel, date_mouvement, type_mouvement, quantite, prix_unitaire, qte_restant)
 SELECT
     id_materiel,
@@ -307,7 +302,7 @@ SELECT
     'ENTREE',
     qte,
     prix,
-    0  -- sera mis à jour après
+    qte
 FROM entree
 UNION ALL
 SELECT
@@ -321,22 +316,50 @@ FROM sortie_finale
 WHERE qte > 0
 ORDER BY id_materiel, date_mvt;
 
--- Mise à jour du stock restant par cumul (entrées ajoutées, sorties soustraites)
-WITH cumul AS (
-    SELECT
-        id,
-        id_materiel,
-        SUM(CASE WHEN type_mouvement = 'ENTREE' THEN quantite ELSE -quantite END)
-            OVER (PARTITION BY id_materiel ORDER BY date_mouvement, id) AS stock_cumul
-    FROM mouvement_stock
-)
-UPDATE mouvement_stock ms
-SET qte_restant = c.stock_cumul
-FROM cumul c
-WHERE ms.id = c.id;
-
--- Vérification (aucune ligne négative)
--- SELECT * FROM mouvement_stock WHERE qte_restant < 0;
+-- Mise à jour des qte_restant des entrées en fonction des sorties (FIFO/LIFO)
+DO $$
+DECLARE
+    mat RECORD;
+    sortie RECORD;
+    reste_a_sortir DOUBLE PRECISION;
+    entree_row RECORD;
+    gestion_type TEXT;
+BEGIN
+    FOR mat IN 
+        SELECT DISTINCT ms.id_materiel, m.type_gestion
+        FROM mouvement_stock ms
+        JOIN materiel m ON m.id = ms.id_materiel
+        WHERE ms.type_mouvement = 'ENTREE'
+    LOOP
+        gestion_type := mat.type_gestion;
+        FOR sortie IN 
+            SELECT id, quantite, date_mouvement 
+            FROM mouvement_stock 
+            WHERE id_materiel = mat.id_materiel AND type_mouvement = 'SORTIE'
+            ORDER BY date_mouvement, id
+        LOOP
+            reste_a_sortir := sortie.quantite;
+            FOR entree_row IN 
+                SELECT id, qte_restant 
+                FROM mouvement_stock 
+                WHERE id_materiel = mat.id_materiel AND type_mouvement = 'ENTREE' AND qte_restant > 0
+                ORDER BY 
+                    CASE WHEN gestion_type = 'FIFO' THEN date_mouvement END ASC,
+                    CASE WHEN gestion_type = 'LIFO' THEN date_mouvement END DESC,
+                    id
+            LOOP
+                IF reste_a_sortir <= 0 THEN EXIT; END IF;
+                IF entree_row.qte_restant >= reste_a_sortir THEN
+                    UPDATE mouvement_stock SET qte_restant = qte_restant - reste_a_sortir WHERE id = entree_row.id;
+                    reste_a_sortir := 0;
+                ELSE
+                    UPDATE mouvement_stock SET qte_restant = 0 WHERE id = entree_row.id;
+                    reste_a_sortir := reste_a_sortir - entree_row.qte_restant;
+                END IF;
+            END LOOP;
+        END LOOP;
+    END LOOP;
+END $$;
 
 -- ============================================================
 -- 15. Paiements des mouvements de stock (uniquement entrées)
@@ -344,13 +367,25 @@ WHERE ms.id = c.id;
 INSERT INTO mvt_stock_paiement (id_mouvement_stock, id_caisse, montant)
 SELECT
     ms.id,
-    (SELECT id FROM caisse ORDER BY random() LIMIT 1) AS id_caisse,
+    (SELECT id FROM caisse WHERE libelle = 'Caisse principale'),
     ms.quantite * ms.prix_unitaire AS montant
 FROM mouvement_stock ms
 WHERE ms.type_mouvement = 'ENTREE';
 
 -- ============================================================
--- 16. Inventaire de matériel (état final)
+-- 16. Mouvements de caisse pour les paiements de stock (DÉPENSES)
+-- ============================================================
+INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
+SELECT
+    ms.date_mouvement,
+    - (ms.quantite * ms.prix_unitaire),
+    (SELECT id FROM caisse WHERE libelle = 'Caisse principale'),
+    (SELECT id FROM cause_caisse WHERE libelle = 'STOCK')
+FROM mouvement_stock ms
+WHERE ms.type_mouvement = 'ENTREE';
+
+-- ============================================================
+-- 17. Inventaire de matériel (état final)
 -- ============================================================
 INSERT INTO inventaire (date_inventaire, libelle) VALUES
     (CURRENT_DATE, 'Inventaire initial');
@@ -360,18 +395,18 @@ SELECT
     (SELECT id FROM inventaire WHERE libelle = 'Inventaire initial'),
     m.id,
     COALESCE(
-        (SELECT qte_restant FROM mouvement_stock WHERE id_materiel = m.id ORDER BY date_mouvement DESC, id DESC LIMIT 1),
+        (SELECT SUM(qte_restant) FROM mouvement_stock WHERE id_materiel = m.id AND type_mouvement = 'ENTREE'),
         0
     ) AS quantite_initiale,
     COALESCE(
-        (SELECT qte_restant FROM mouvement_stock WHERE id_materiel = m.id ORDER BY date_mouvement DESC, id DESC LIMIT 1),
+        (SELECT SUM(qte_restant) FROM mouvement_stock WHERE id_materiel = m.id AND type_mouvement = 'ENTREE'),
         0
     ) AS quantite_finale,
     'Stock initial'
 FROM materiel m;
 
 -- ============================================================
--- 17. Employés et contrats
+-- 18. Employés et contrats
 -- ============================================================
 INSERT INTO employee (nom, prenom, date_naissance, date_entree) VALUES
     ('Rakoto', 'Jean', '1990-05-15', '2020-01-10'),
@@ -384,7 +419,7 @@ INSERT INTO contrat (date_debut, date_fin, id_employee, salaire) VALUES
     ('2021-03-15', '2026-03-14', 3, 300000.00);
 
 -- ============================================================
--- 18. Paiements employés (mensuels)
+-- 19. Paiements employés (mensuels) – TOUS les mois de chaque contrat
 -- ============================================================
 WITH mois_contrat AS (
     SELECT
@@ -420,21 +455,21 @@ SELECT
 FROM paiements_salaire
 ORDER BY employee_id, mois;
 
--- Avances (exemples)
+-- Avances (exemples, réduites pour ne pas grever le solde)
 INSERT INTO payement_employee (id_employee, id_type_payement_employee, date_payement, reste_paye, mois, montant)
 SELECT
     e.id,
     (SELECT id FROM type_payement_employee WHERE libelle = 'Avance'),
-    (date_trunc('month', CURRENT_DATE - (random() * 180)::int * interval '1 day') + interval '1 month' - interval '1 day')::date,
-    (random() * 50000 + 10000)::numeric(12,2) AS reste_paye,
-    date_trunc('month', CURRENT_DATE - (random() * 180)::int * interval '1 day')::date AS mois,
-    (random() * 100000 + 50000)::numeric(12,2) AS montant
+    (date_trunc('month', CURRENT_DATE - (random() * 30)::int * interval '1 day') + interval '1 month' - interval '1 day')::date,
+    (random() * 20000 + 5000)::numeric(12,2) AS reste_paye,
+    date_trunc('month', CURRENT_DATE - (random() * 30)::int * interval '1 day')::date AS mois,
+    (random() * 30000 + 10000)::numeric(12,2) AS montant
 FROM employee e
-WHERE random() < 0.4
-LIMIT 5;
+WHERE random() < 0.3
+LIMIT 3;
 
 -- ============================================================
--- 19. Mouvements de caisse pour paiements employés
+-- 20. Mouvements de caisse pour paiements employés (DÉPENSES)
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
@@ -445,7 +480,7 @@ SELECT
 FROM payement_employee pe;
 
 -- ============================================================
--- 20. Factures
+-- 21. Factures
 -- ============================================================
 INSERT INTO facture (id_vente, numero_facture, code_facture, date_facture, montant_total)
 SELECT

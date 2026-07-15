@@ -180,7 +180,8 @@ CREATE TABLE mouvement_stock (
     prix_unitaire DOUBLE PRECISION,
     qte_restant DOUBLE PRECISION,
     CONSTRAINT fk_mouvement_stock_materiel FOREIGN KEY (id_materiel) REFERENCES materiel(id) ON DELETE RESTRICT,
-    CONSTRAINT chk_qte_restant_nonneg CHECK (qte_restant IS NULL OR qte_restant >= 0)
+    CONSTRAINT chk_qte_restant_nonneg CHECK (qte_restant IS NULL OR qte_restant >= 0),
+    CONSTRAINT chk_qte_restant_le_quantite CHECK (qte_restant IS NULL OR qte_restant <= quantite)
 );
 
 
@@ -258,9 +259,9 @@ INSERT INTO race (nom, descriptions) VALUES
     ('Abondance', 'Race laitière des Alpes');
 
 INSERT INTO caisse (libelle, montant_actuelle) VALUES
-    ('Caisse principale', 15000.00),
-    ('Caisse d''épargne', 8000.00),
-    ('Fonds d''investissement', 20000.00);
+    ('Caisse principale', 0.00),
+    ('Caisse d''épargne', 0.00),
+    ('Fonds d''investissement', 0.00);
 
 INSERT INTO cause_caisse (libelle) VALUES
     ('STOCK'),
