@@ -174,22 +174,22 @@ INSERT INTO vente_detail (id_vente, id_bovin) VALUES
     (8, 10);
 
 -- ============================================================
--- 11. Mise à jour des bovins vendus
+-- 11. Mise à jour des bovins vendus – prix_vente × 10 pour garantir des entrées importantes
 -- ============================================================
 UPDATE bovin b
 SET
     date_vente = v.date_vente,
     prix_vente = CASE b.id
-        WHEN 2 THEN 5000000
-        WHEN 3 THEN 4500000
-        WHEN 6 THEN 5200000
-        WHEN 8 THEN 6000000
-        WHEN 11 THEN 7000000
-        WHEN 13 THEN 3800000
-        WHEN 15 THEN 4100000
-        WHEN 16 THEN 5500000
-        WHEN 5 THEN 4800000
-        WHEN 10 THEN 4200000
+        WHEN 2 THEN 50000000
+        WHEN 3 THEN 45000000
+        WHEN 6 THEN 52000000
+        WHEN 8 THEN 60000000
+        WHEN 11 THEN 70000000
+        WHEN 13 THEN 38000000
+        WHEN 15 THEN 41000000
+        WHEN 16 THEN 55000000
+        WHEN 5 THEN 48000000
+        WHEN 10 THEN 42000000
     END,
     poids_vente = COALESCE(
         (SELECT poids_apres
@@ -205,18 +205,45 @@ WHERE b.id = vd.id_bovin
   AND b.id IN (2,3,6,8,11,13,15,16,5,10);
 
 -- ============================================================
--- 12. Mouvements de caisse liés aux ventes (ENTRÉES d'argent)
+-- 12. Mouvements de caisse liés aux ventes (répartition : 80% principale, 15% épargne, 5% investissement)
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
     v.date_vente,
-    b.prix_vente,
+    CAST(b.prix_vente * 0.8 AS NUMERIC(15,2)),
     (SELECT id FROM caisse WHERE libelle = 'Caisse principale'),
     (SELECT id FROM cause_caisse WHERE libelle = 'VENTE')
 FROM vente_bovin v
 JOIN vente_detail vd ON vd.id_vente = v.id
 JOIN bovin b ON b.id = vd.id_bovin
+WHERE b.prix_vente IS NOT NULL
+UNION ALL
+SELECT
+    v.date_vente,
+    CAST(b.prix_vente * 0.15 AS NUMERIC(15,2)),
+    (SELECT id FROM caisse WHERE libelle = 'Caisse d''épargne'),
+    (SELECT id FROM cause_caisse WHERE libelle = 'VENTE')
+FROM vente_bovin v
+JOIN vente_detail vd ON vd.id_vente = v.id
+JOIN bovin b ON b.id = vd.id_bovin
+WHERE b.prix_vente IS NOT NULL
+UNION ALL
+SELECT
+    v.date_vente,
+    CAST(b.prix_vente * 0.05 AS NUMERIC(15,2)),
+    (SELECT id FROM caisse WHERE libelle = 'Fonds d''investissement'),
+    (SELECT id FROM cause_caisse WHERE libelle = 'VENTE')
+FROM vente_bovin v
+JOIN vente_detail vd ON vd.id_vente = v.id
+JOIN bovin b ON b.id = vd.id_bovin
 WHERE b.prix_vente IS NOT NULL;
+
+-- Mise à jour des soldes des caisses après les entrées
+UPDATE caisse SET montant_actuelle = (
+    SELECT COALESCE(SUM(montant), 0)
+    FROM mvt_caisse
+    WHERE id_caisse = caisse.id
+);
 
 -- ============================================================
 -- 13. Matériel
@@ -362,7 +389,7 @@ BEGIN
 END $$;
 
 -- ============================================================
--- 15. Paiements des mouvements de stock (uniquement entrées)
+-- 15. Paiements des mouvements de stock (enregistrement des paiements)
 -- ============================================================
 INSERT INTO mvt_stock_paiement (id_mouvement_stock, id_caisse, montant)
 SELECT
@@ -373,16 +400,31 @@ FROM mouvement_stock ms
 WHERE ms.type_mouvement = 'ENTREE';
 
 -- ============================================================
--- 16. Mouvements de caisse pour les paiements de stock (DÉPENSES)
+-- 16. Mouvements de caisse pour les achats de stock (répartition : 60% principale, 40% épargne)
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
     ms.date_mouvement,
-    - (ms.quantite * ms.prix_unitaire),
+    - CAST(ms.quantite * ms.prix_unitaire * 0.6 AS NUMERIC(15,2)),
     (SELECT id FROM caisse WHERE libelle = 'Caisse principale'),
     (SELECT id FROM cause_caisse WHERE libelle = 'STOCK')
 FROM mouvement_stock ms
+WHERE ms.type_mouvement = 'ENTREE'
+UNION ALL
+SELECT
+    ms.date_mouvement,
+    - CAST(ms.quantite * ms.prix_unitaire * 0.4 AS NUMERIC(15,2)),
+    (SELECT id FROM caisse WHERE libelle = 'Caisse d''épargne'),
+    (SELECT id FROM cause_caisse WHERE libelle = 'STOCK')
+FROM mouvement_stock ms
 WHERE ms.type_mouvement = 'ENTREE';
+
+-- Mise à jour des soldes après achats de stock
+UPDATE caisse SET montant_actuelle = (
+    SELECT COALESCE(SUM(montant), 0)
+    FROM mvt_caisse
+    WHERE id_caisse = caisse.id
+);
 
 -- ============================================================
 -- 17. Inventaire de matériel (état final)
@@ -455,7 +497,7 @@ SELECT
 FROM paiements_salaire
 ORDER BY employee_id, mois;
 
--- Avances (exemples, réduites pour ne pas grever le solde)
+-- Avances (exemples, réduites)
 INSERT INTO payement_employee (id_employee, id_type_payement_employee, date_payement, reste_paye, mois, montant)
 SELECT
     e.id,
@@ -469,7 +511,7 @@ WHERE random() < 0.3
 LIMIT 3;
 
 -- ============================================================
--- 20. Mouvements de caisse pour paiements employés (DÉPENSES)
+-- 20. Mouvements de caisse pour paiements employés (dépenses sur principale)
 -- ============================================================
 INSERT INTO mvt_caisse (date, montant, id_caisse, id_cause_caisse)
 SELECT
@@ -478,6 +520,13 @@ SELECT
     (SELECT id FROM caisse WHERE libelle = 'Caisse principale'),
     (SELECT id FROM cause_caisse WHERE libelle = 'PAYEMENT')
 FROM payement_employee pe;
+
+-- Mise à jour des soldes après paiements employés
+UPDATE caisse SET montant_actuelle = (
+    SELECT COALESCE(SUM(montant), 0)
+    FROM mvt_caisse
+    WHERE id_caisse = caisse.id
+);
 
 -- ============================================================
 -- 21. Factures
