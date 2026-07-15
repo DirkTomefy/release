@@ -10,6 +10,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.jpa.domain.Specification;
+
 import mg.bovit.release.dto.MultiCriteriaFormBovinList;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.Caisse;
@@ -140,7 +142,7 @@ public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite, Double pri
 }
 
     // Nouvelle méthode de recherche paginée et filtrée (utilisant la vue)
-    public Page<BovinWithPoids> searchBovinsWithPoids(MultiCriteriaFormBovinList form) {
+    public Page<BovinWithPoids> searchBovinsWithPoids(MultiCriteriaFormBovinList form) throws Exception {
         // Construction du tri
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
@@ -159,7 +161,9 @@ public void buyBovin(Bovin bovin, List<Caisse> caisses, int quantite, Double pri
                 Sort.by(direction, sortField)
         );
 
-        return bovinWithPoidsRepository.findAll(BovinSpecification.fromForm(form), pageable);
+        Specification<BovinWithPoids> bovinSpecs = BovinSpecification.fromForm(form);
+
+        return bovinWithPoidsRepository.findAll(bovinSpecs, pageable);
     }            
 
     public List<Bovin> findAll() {

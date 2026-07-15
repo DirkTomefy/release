@@ -76,7 +76,7 @@ public class VenteController {
 
     // Page d'insertion d'une vente
     @GetMapping("/new")
-    public String showInsertForm(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria, Model model) {
+    public String showInsertForm(@ModelAttribute("criteria") MultiCriteriaFormBovinList criteria, Model model) throws Exception {
         if (criteria == null) {
             criteria = new MultiCriteriaFormBovinList();
         }
