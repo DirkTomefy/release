@@ -27,6 +27,10 @@
         </div>
     </div>
 
+    <!-- Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
     <!-- Filtres de recherche -->
     <div class="card mb-4">
         <div class="card-body">
@@ -34,7 +38,7 @@
                 <input type="hidden" name="page" value="0" />
                 <input type="hidden" name="size" th:value="${criteria.size}" />
 
-                <div class="col-md-3">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Race</label>
                     <select name="raceId" class="form-select">
                         <option value="">Toutes</option>
@@ -42,20 +46,20 @@
                                 th:selected="${criteria.raceId != null && criteria.raceId == r.id}"></option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Date min</label>
                     <input type="date" name="dateMin" class="form-control" th:value="${criteria.dateMin}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Date max</label>
                     <input type="date" name="dateMax" class="form-control" th:value="${criteria.dateMax}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <button type="submit" class="btn btn-soft-primary w-100">
                         <i class="bi bi-funnel"></i> Filtrer
                     </button>
                 </div>
-                <div class="col-md-1">
+                <div class="col-auto">
                     <a href="/mortalite" class="btn btn-outline-secondary w-100" title="Réinitialiser">
                         <i class="bi bi-x-lg"></i>
                     </a>
@@ -73,37 +77,40 @@
 
     <!-- Tableau des mortalités -->
     <div class="card">
-        <div class="table-responsive">
-            <table class="table table-borderless mb-0">
-                <thead>
-                <tr>
-                    <th style="width: 60px;">#</th>
-                    <th>Race</th>
-                    <th>Prix d'achat</th>
-                    <th>Poids au décès</th>
-                    <th>Date</th>
-                    <th class="text-end">Statut</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="m : ${mortalitePage.content}">
-                    <td class="text-muted" th:text="${m.id}">1</td>
-                    <td th:text="${m.race.nom}">Limousine</td>
-                    <td th:text="${#numbers.formatDecimal(m.prix_achat, 0, 2)}">1500.00</td>
-                    <td th:text="${#numbers.formatDecimal(m.poids_mort, 0, 1)} + ' kg'">280.0 kg</td>
-                    <td th:text="${#dates.format(m.date, 'dd/MM/yyyy')}">15/06/2026</td>
-                    <td class="text-end"><span class="badge badge-mortalite">Décédé</span></td>
-                </tr>
-                <tr th:if="${mortalitePage.content.isEmpty()}">
-                    <td colspan="6" class="text-center text-muted py-4">Aucune mortalité enregistrée</td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Race</th>
+                        <th>Prix d'achat</th>
+                        <th>Poids au décès</th>
+                        <th>Date</th>
+                        <th class="text-end">Statut</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m : ${mortalitePage.content}">
+                        <td class="text-muted" th:text="${m.id}">1</td>
+                        <td th:text="${m.race.nom}">Limousine</td>
+                        <td th:text="${#numbers.formatDecimal(m.prix_achat, 0, 2)}">1500.00</td>
+                        <td th:text="${#numbers.formatDecimal(m.poids_mort, 0, 1)} + ' kg'">280.0 kg</td>
+                        <td th:text="${#dates.format(m.date, 'dd/MM/yyyy')}">15/06/2026</td>
+                        <td class="text-end"><span class="badge badge-mortalite">Décédé</span></td>
+                    </tr>
+                    <tr th:if="${mortalitePage.content.isEmpty()}">
+                        <td colspan="6" class="text-center text-muted py-4">Aucune mortalité enregistrée</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <!-- Pagination -->
-    <nav class="mt-4" aria-label="Pagination">
+    <nav th:if="${mortalitePage.totalElements > 0}" class="mt-4" aria-label="Pagination">
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${mortalitePage.first} ? 'disabled'">
                 <a class="page-link" th:href="@{/mortalite(page=${mortalitePage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, dateMin=${criteria.dateMin}, dateMax=${criteria.dateMax})}">

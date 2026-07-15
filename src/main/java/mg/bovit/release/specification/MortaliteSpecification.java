@@ -10,7 +10,12 @@ import java.time.LocalDate;
 
 public class MortaliteSpecification {
 
-    public static Specification<Mortalite> fromCriteria(MortaliteCriteria criteria) {
+    public static Specification<Mortalite> fromCriteria(MortaliteCriteria criteria) throws Exception {
+        // verify if date is correct
+        if (criteria.getDateMax() != null && criteria.getDateMin() != null && LocalDate.parse(criteria.getDateMax()).isBefore(LocalDate.parse(criteria.getDateMin()))) {
+            throw new Exception("La date max doit être après la date min");
+        }
+
         return (root, query, cb) -> {
             Predicate predicate = cb.conjunction();
 

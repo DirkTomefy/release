@@ -1,6 +1,7 @@
 package mg.bovit.release.controller;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,12 +54,22 @@ public class MortaliteController {
             criteria.setSize(10);
         }
 
-        Page<Mortalite> mortalitePage = mortaliteService.findPaginated(criteria);
-        List<Race> races = raceService.findAll();
+        try {
+            // Utilisation de la nouvelle méthode qui utilise la vue
+            Page<Mortalite> mortalitePage = mortaliteService.findPaginated(criteria);
+            List<Race> races = raceService.findAll();
+            
+            model.addAttribute("mortalitePage", mortalitePage);
+            model.addAttribute("races", races);
+            
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());            
+            model.addAttribute("bovinPage", Page.empty());
+            model.addAttribute("races", Collections.emptyList());
+        }
 
-        model.addAttribute("mortalitePage", mortalitePage);
-        model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
+
         return "mortalite/list";
     }
 

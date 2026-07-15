@@ -109,7 +109,7 @@ public class MortaliteService {
         }
     }
 
-    public Page<Mortalite> findPaginated(MortaliteCriteria criteria) {
+    public Page<Mortalite> findPaginated(MortaliteCriteria criteria) throws Exception {
         Specification<Mortalite> spec = MortaliteSpecification.fromCriteria(criteria);
         Pageable pageable = PageRequest.of(
                 criteria.getPage(),
