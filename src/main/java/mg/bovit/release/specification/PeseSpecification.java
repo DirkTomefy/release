@@ -21,7 +21,7 @@ public class PeseSpecification {
         }
 
         // verif date
-        if (form.getDatePeseMax().isBefore(form.getDatePeseMin())) {
+        if (form.getDatePeseMax() != null && form.getDatePeseMin() != null && form.getDatePeseMax().isBefore(form.getDatePeseMin())) {
             throw new Exception("La date max doit être après la date min");
         }
 
