@@ -11,9 +11,17 @@ import java.time.LocalDate;
 public class MortaliteSpecification {
 
     public static Specification<Mortalite> fromCriteria(MortaliteCriteria criteria) throws Exception {
-        // verify if date is correct
-        if (criteria.getDateMax() != null && criteria.getDateMin() != null && LocalDate.parse(criteria.getDateMax()).isBefore(LocalDate.parse(criteria.getDateMin()))) {
-            throw new Exception("La date max doit être après la date min");
+        boolean hasDateMin = criteria.getDateMin() != null && !criteria.getDateMin().isBlank();
+        boolean hasDateMax = criteria.getDateMax() != null && !criteria.getDateMax().isBlank();
+
+        // 1. Vérification de la cohérence des dates
+        if (hasDateMin && hasDateMax) {
+            LocalDate min = LocalDate.parse(criteria.getDateMin());
+            LocalDate max = LocalDate.parse(criteria.getDateMax());
+            
+            if (max.isBefore(min)) {
+                throw new Exception("La date max doit être après la date min");
+            }
         }
 
         return (root, query, cb) -> {

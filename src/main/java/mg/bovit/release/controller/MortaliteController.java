@@ -64,7 +64,7 @@ public class MortaliteController {
             
         } catch (Exception e) {
             model.addAttribute("errorMessage", e.getMessage());            
-            model.addAttribute("bovinPage", Page.empty());
+            model.addAttribute("mortalitePage", Page.empty());
             model.addAttribute("races", Collections.emptyList());
         }
 
