@@ -46,6 +46,10 @@
         </div>
     </div>
 
+    <!-- Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
     <div class="card mb-4">
         <div class="card-body">
             <form th:action="@{/peseBovin/list}" method="get" class="row g-3 align-items-end">
@@ -54,15 +58,15 @@
 
                 
                 
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Date debut </label>
                     <input type="date" name="datePeseMin" class="form-control" th:value="${criteria.datePeseMin}" >
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Date fin</label>
                     <input type="date" name="datePeseMax" class="form-control" th:value="${criteria.datePeseMax}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Statut</label>
                     <select name="statut" class="form-select">
                         <option value="tous" th:selected="${criteria.statut == null || criteria.statut == 'tous'}">Tous</option>
@@ -70,15 +74,15 @@
                         <option value="vendu" th:selected="${criteria.statut == 'vendu'}">Vendu</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Poids min</label>
                     <input type="number" step="0.01" name="poidsApresMin" class="form-control" th:value="${criteria.poidsApresMin}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Poids max</label>
                     <input type="number" step="0.01" name="poidsApresMax" class="form-control" th:value="${criteria.poidsApresMax}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <button type="submit" class="btn btn-soft-primary w-100" title="Filtrer">
                         <i class="bi bi-funnel"></i> Filtrer
                     </button>
@@ -107,59 +111,62 @@
         </div>
     </div> 
 
-    <div class="card table-container">
-        <div class="table-responsive">
-            <table class="table table-borderless mb-0">
-                <thead>
-                <tr>
-                    <th style="width: 60px;">#</th>
-                    <th>ID Bovin</th>
-                    <th>Date de pesée</th>
-                    <th>Poids (kg)</th>
-                    <th class="text-end" style="width: 180px;">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="peseBovin : ${pesesBovin}">
-                    <td class="text-muted" th:text="${peseBovin.id}">1</td>
-                    <td>
-                        <span class="fw-medium">Bovin #<span th:text="${peseBovin.bovin.id}"></span></span><br>
-                        <small class="text-muted" th:text="'Race : ' + ${peseBovin.bovin.race?.nom}"></small>
-                    </td>
-                    <td th:text="${#dates.format(peseBovin.date_pese, 'dd/MM/yyyy')}">-</td>
-                    <td th:text="${#numbers.formatDecimal(peseBovin.poids_apres, 0, 2)}">-</td>
-                    <td class="text-end">
-                        <a th:href="@{'/peseBovin/detail/' + ${peseBovin.bovin.id}}" 
-                           class="row-action btn-soft-success me-1" 
-                           title="Voir les statistiques d'évolution">
-                            <i class="bi bi-graph-up"></i>
-                        </a>
-                        <a th:href="@{'/peseBovin/form/' + ${peseBovin.id}}" 
-                           class="row-action btn-soft-warning me-1" 
-                           title="Modifier">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a th:href="@{'/peseBovin/export/excel/' + ${peseBovin.id}}" 
-                           class="row-action row-action-excel me-1" 
-                           title="Exporter en Excel">
-                            <i class="bi bi-file-earmark-excel"></i>
-                        </a>
-                        <a th:href="@{'/peseBovin/export/pdf/' + ${peseBovin.id}}" 
-                           class="row-action row-action-pdf" 
-                           title="Exporter en PDF">
-                            <i class="bi bi-file-earmark-pdf"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr th:if="${pesesBovin == null || pesesBovin.isEmpty()}">
-                    <td colspan="5" class="text-center text-muted py-4">Aucune pesée trouvée</td>
-                </tr>
-                </tbody>
-            </table>
+    <div class="card">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>ID Bovin</th>
+                        <th>Date de pesée</th>
+                        <th>Poids (kg)</th>
+                        <th class="text-end" style="width: 180px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${pesePage.content}">
+                        <td class="text-muted" th:text="${p.id}">1</td>
+                        <td>
+                            <span class="fw-medium">Bovin #<span th:text="${p.bovin.id}"></span></span><br>
+                            <small class="text-muted" th:text="'Race : ' + ${p.bovin.race?.nom}"></small>
+                        </td>
+                        <td th:text="${#dates.format(p.date_pese, 'dd/MM/yyyy')}">-</td>
+                        <td th:text="${#numbers.formatDecimal(p.poids_apres, 0, 2)}">-</td>
+                        <td class="text-end">
+                            <a th:href="@{'/peseBovin/detail/' + ${p.bovin.id}}" 
+                               class="row-action btn-soft-success me-1" 
+                               title="Voir les statistiques d'évolution">
+                                <i class="bi bi-graph-up"></i>
+                            </a>
+                            <a th:href="@{'/peseBovin/form/' + ${p.id}}" 
+                               class="row-action btn-soft-warning me-1" 
+                               title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{'/peseBovin/export/excel/' + ${p.id}}" 
+                               class="row-action row-action-excel me-1" 
+                               title="Exporter en Excel">
+                                <i class="bi bi-file-earmark-excel"></i>
+                            </a>
+                            <a th:href="@{'/peseBovin/export/pdf/' + ${p.id}}" 
+                               class="row-action row-action-pdf" 
+                               title="Exporter en PDF">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${pesePage.content.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-4">Aucune pesée trouvée</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <nav class="mt-4" aria-label="Pagination" th:if="${pesePage != null && pesePage.totalPages > 1}">
+    <nav class="mt-4" aria-label="Pagination" th:if="${pesePage != null && pesePage.totalPages > 0}">
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${pesePage.first} ? 'disabled'">
                 <a class="page-link px-3" th:href="@{/peseBovin/list(page=${pesePage.number - 1}, size=${criteria.size}, raceId=${criteria.raceId}, datePeseMin=${criteria.datePeseMin}, datePeseMax=${criteria.datePeseMax}, statut=${criteria.statut}, poidsApresMin=${criteria.poidsApresMin}, poidsApresMax=${criteria.poidsApresMax})}">Précédent</a>

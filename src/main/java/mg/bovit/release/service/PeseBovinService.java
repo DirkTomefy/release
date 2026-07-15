@@ -70,7 +70,7 @@ public class PeseBovinService {
         return peseBovinRepository.findAll();
     }
 
-    public Page<PeseBovinWithDateVente> searchPeseBovins(MulticriteriaListPeseBovin form) {
+    public Page<PeseBovinWithDateVente> searchPeseBovins(MulticriteriaListPeseBovin form) throws Exception {
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
         if (form.getSort() != null && !form.getSort().isEmpty()) {
@@ -98,7 +98,7 @@ public class PeseBovinService {
         return peseBovinWIthDateVenteRepository.findById(id).orElse(null);
     }
 
-    public List<PeseBovinWithDateVente> searchAllForExport(MulticriteriaListPeseBovin form) {
+    public List<PeseBovinWithDateVente> searchAllForExport(MulticriteriaListPeseBovin form) throws Exception {
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
         if (form.getSort() != null && !form.getSort().isEmpty()) {
