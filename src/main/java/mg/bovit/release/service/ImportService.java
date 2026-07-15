@@ -146,73 +146,109 @@ public class ImportService {
     // 2. IMPORT BOVINS + PESÉES
     // ------------------------------------------------------------
     @Transactional(rollbackFor = Exception.class)
-    public void importBovinsEtPesees(MultipartFile file) throws Exception {
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
-            Sheet bovinSheet = workbook.getSheet("Bovin");
-            Sheet peseeSheet = workbook.getSheet("Pesee");
+public void importBovinsEtPesees(MultipartFile file) throws Exception {
+    try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+        Sheet bovinSheet = workbook.getSheet("Bovin");
+        Sheet peseeSheet = workbook.getSheet("Pesee");
 
-            Map<String, Bovin> bovins = new HashMap<>();
-            if (bovinSheet != null && bovinSheet.getPhysicalNumberOfRows() > 1) {
-                logger.info("Import des bovins à partir de la feuille 'Bovin'");
-                for (Row row : bovinSheet) {
-                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
-                    Double refDouble = getDoubleCell(row, 0);
-                    String ref = (refDouble == null) ? "" : String.valueOf(refDouble.longValue());
-                    String raceNom = getStringCell(row, 1);
-                    Date dateAchat = parseDate(getStringCell(row, 2), "Bovin", row);
-                    Date dateVente = getStringCell(row, 3).isEmpty() ? null : parseDate(getStringCell(row, 3), "Bovin", row);
-                    Double prixAchat = getDoubleCell(row, 4);
-                    Double prixVente = getDoubleCell(row, 5);
-                    Double poidsAchat = getDoubleCell(row, 6);
-                    Double poidsVente = getDoubleCell(row, 7);
+        Map<String, Bovin> bovins = new HashMap<>();
+        Map<Long, Date> derniereDatePeseParBovin = new HashMap<>(); // pour suivre les dates pendant l'import
 
-                    Race race = getOrCreateRace(raceNom, row);
+        // --- Import des bovins (inchangé) ---
+        if (bovinSheet != null && bovinSheet.getPhysicalNumberOfRows() > 1) {
+            logger.info("Import des bovins à partir de la feuille 'Bovin'");
+            for (Row row : bovinSheet) {
+                if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
+                Double refDouble = getDoubleCell(row, 0);
+                String ref = (refDouble == null) ? "" : String.valueOf(refDouble.longValue());
+                String raceNom = getStringCell(row, 1);
+                Date dateAchat = parseDate(getStringCell(row, 2), "Bovin", row);
+                Date dateVente = getStringCell(row, 3).isEmpty() ? null : parseDate(getStringCell(row, 3), "Bovin", row);
+                Double prixAchat = getDoubleCell(row, 4);
+                Double prixVente = getDoubleCell(row, 5);
+                Double poidsAchat = getDoubleCell(row, 6);
+                Double poidsVente = getDoubleCell(row, 7);
 
-                    Bovin bovin = new Bovin();
-                    bovin.setRace(race);
-                    bovin.setDate_achat(dateAchat);
-                    bovin.setDate_vente(dateVente);
-                    bovin.setPrix_achat(prixAchat);
-                    bovin.setPrix_vente(prixVente);
-                    bovin.setPoids_achat(poidsAchat);
-                    bovin.setPoids_vente(poidsVente);
-                    bovins.put(ref, bovinRepository.save(bovin));
-                    logger.debug("Bovin créé avec ref : {}", ref);
-                }
-            } else {
-                logger.info("Feuille 'Bovin' vide ou absente, aucun bovin créé.");
+                Race race = getOrCreateRace(raceNom, row);
+                Bovin bovin = new Bovin();
+                bovin.setRace(race);
+                bovin.setDate_achat(dateAchat);
+                bovin.setDate_vente(dateVente);
+                bovin.setPrix_achat(prixAchat);
+                bovin.setPrix_vente(prixVente);
+                bovin.setPoids_achat(poidsAchat);
+                bovin.setPoids_vente(poidsVente);
+                bovins.put(ref, bovinRepository.save(bovin));
+                logger.debug("Bovin créé avec ref : {}", ref);
             }
-
-            if (peseeSheet != null && peseeSheet.getPhysicalNumberOfRows() > 1) {
-                logger.info("Import des pesées à partir de la feuille 'Pesee'");
-                for (Row row : peseeSheet) {
-                    if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
-                    Double bovinRefDouble = getDoubleCell(row, 0);
-                    String bovinRef = (bovinRefDouble == null) ? "" : String.valueOf(bovinRefDouble.longValue());
-                    Date datePese = parseDate(getStringCell(row, 1), "Pesee", row);
-                    Double poidsApres = getDoubleCell(row, 2);
-
-                    Bovin bovin = bovins.get(bovinRef);
-                    if (bovin == null) {
-                        Long id = Long.parseLong(bovinRef);
-                        bovin = bovinRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Bovin introuvable avec l'ID : " + bovinRef));
-                    }
-
-                    PeseBovin pesee = new PeseBovin();
-                    pesee.setBovin(bovin);
-                    pesee.setDate_pese(datePese);
-                    pesee.setPoids_apres(poidsApres);
-                    peseBovinRepository.save(pesee);
-                    logger.debug("Pesée ajoutée pour bovin ref {} le {}", bovinRef, datePese);
-                }
-            } else {
-                logger.info("Feuille 'Pesee' vide ou absente, aucune pesée importée.");
-            }
-        } catch (IOException e) {
-            throw new Exception("Erreur de lecture du fichier", e);
+        } else {
+            logger.info("Feuille 'Bovin' vide ou absente, aucun bovin créé.");
         }
+
+        // --- Import des pesées avec validation de date ---
+        if (peseeSheet != null && peseeSheet.getPhysicalNumberOfRows() > 1) {
+            logger.info("Import des pesées à partir de la feuille 'Pesee'");
+            for (Row row : peseeSheet) {
+                if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
+
+                Double bovinRefDouble = getDoubleCell(row, 0);
+                String bovinRef = (bovinRefDouble == null) ? "" : String.valueOf(bovinRefDouble.longValue());
+                Date datePese = parseDate(getStringCell(row, 1), "Pesee", row);
+                Double poidsApres = getDoubleCell(row, 2);
+
+                // Récupérer le bovin (soit depuis le cache de l'import, soit depuis la base)
+                Bovin bovin = bovins.get(bovinRef);
+                if (bovin == null) {
+                    Long id = Long.parseLong(bovinRef);
+                    bovin = bovinRepository.findById(id)
+                            .orElseThrow(() -> new RuntimeException("Bovin introuvable avec l'ID : " + bovinRef));
+                }
+
+                // --- Validation de la date par rapport à la dernière pesée ---
+                // 1. Vérifier la dernière pesée en base (si non encore importée)
+                Date derniereDateExistante = null;
+                PeseBovin dernierePeseExistante = peseBovinRepository.getLatestPeseByBovin(bovin.getId());
+                if (dernierePeseExistante != null) {
+                    derniereDateExistante = dernierePeseExistante.getDate_pese();
+                }
+
+                // 2. Vérifier la dernière date importée dans ce fichier pour ce bovin
+                Date derniereDateImportee = derniereDatePeseParBovin.get(bovin.getId());
+
+                // Déterminer la date maximale parmi les deux
+                Date dateMax = derniereDateExistante;
+                if (derniereDateImportee != null && (dateMax == null || derniereDateImportee.after(dateMax))) {
+                    dateMax = derniereDateImportee;
+                }
+
+                // Si dateMax existe et que la nouvelle date est avant ou égale, on lève une exception
+                if (dateMax != null && !datePese.after(dateMax)) {
+                    throw new Exception(
+                        String.format("La date de pesée %s pour le bovin %d doit être postérieure à la dernière pesée (%s)",
+                            datePese, bovin.getId(), dateMax)
+                    );
+                }
+
+                // --- Création et sauvegarde de la pesée ---
+                PeseBovin pesee = new PeseBovin();
+                pesee.setBovin(bovin);
+                pesee.setDate_pese(datePese);
+                pesee.setPoids_apres(poidsApres);
+                peseBovinRepository.save(pesee);
+
+                // Mettre à jour la dernière date importée pour ce bovin
+                derniereDatePeseParBovin.put(bovin.getId(), datePese);
+
+                logger.debug("Pesée ajoutée pour bovin ref {} le {}", bovinRef, datePese);
+            }
+        } else {
+            logger.info("Feuille 'Pesee' vide ou absente, aucune pesée importée.");
+        }
+    } catch (IOException e) {
+        throw new Exception("Erreur de lecture du fichier", e);
     }
+}
+
 
     private Race getOrCreateRace(String nom, Row row) {
         List<Race> races = raceRepository.findAllByNom(nom);
