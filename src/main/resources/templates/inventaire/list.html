@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-        .row-action{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#5c5c56;text-decoration:none;transition:all .15s ease;font-size:.95rem}
-        .row-action:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,0.04)}
-        .row-action-excel{color:#2e7d32;border-color:#c8e6c9;background:#f1f8e9}
-        .row-action-excel:hover{background:#c8e6c9;color:#1b5e20}
-        .row-action-pdf{color:#c62828;border-color:#ffcdd2;background:#ffebee}
-        .row-action-pdf:hover{background:#ffcdd2;color:#7f0000}
-        .qte-badge{display:inline-block;min-width:60px;text-align:center;padding:.25rem .55rem;border-radius:999px;background:#e8f3ea;color:#1b5e20;font-weight:600;font-size:.82rem;line-height:1.2}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventaire Liste</title>
+
+<th:block th:replace="~{fragments/common :: assets}"></th:block>
 </head>
+
 <body>
 
   <th:block th:replace="~{fragments/common :: navbar('inventaire')}"></th:block>
 
   <div class="container py-5">
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h1 class="h4 fw-semibold mb-1" style="color:#4a4a44;">
@@ -48,9 +46,9 @@
             <thead class="table-light">
               <tr>
                 <th class="ps-4" style="width: 100px;">ID</th>
-                 <th style="width: 150px;">Date d'inventaire</th>
-                 <th>Libellé / Référence</th>
-                 <th style="width: 120px;">Qté Actuelle</th>
+                <th style="width: 150px;">Date d'inventaire</th>
+                <th>Libellé / Référence</th>
+                <th style="width: 120px;">Qté Actuelle</th>
                 <th class="text-end pe-4" style="width: 150px;">Actions</th>
               </tr>
             </thead>
@@ -59,21 +57,25 @@
                 <td class="ps-4 fw-medium text-secondary" th:text="'#' + ${inventaire.getId()}"></td>
                 <td th:text="${inventaire.getDateInventaire()}"></td>
                 <td class="fw-medium text-dark" th:text="${inventaire.getLibelle()}"></td>
-                <td><span class="qte-badge" th:text="${currentQuantityByInventaire.get(inventaire.getId())}">0</span></td>
+                <td><span class="qte-badge" th:text="${currentQuantityByInventaire.get(inventaire.getId())}">0</span>
+                </td>
                 <td class="text-end pe-4">
-                  <a th:href="@{/inventaire/{id}/details(id=${inventaire.getId()})}" class="btn btn-soft-secondary btn-sm me-1" title="Voir détails">
+                  <a th:href="@{/inventaire/{id}/details(id=${inventaire.getId()})}"
+                    class="btn btn-soft-secondary btn-sm me-1" title="Voir détails">
                     <i class="bi bi-eye"></i>
                   </a>
-                  <a th:href="@{'/inventaire/export/excel/' + ${inventaire.getId()}}" class="row-action row-action-excel me-1" title="Exporter en Excel">
+                  <a th:href="@{'/inventaire/export/excel/' + ${inventaire.getId()}}"
+                    class="row-action row-action-excel me-1" title="Exporter en Excel">
                     <i class="bi bi-file-earmark-excel"></i>
                   </a>
-                  <a th:href="@{'/inventaire/export/pdf/' + ${inventaire.getId()}}" class="row-action row-action-pdf" title="Exporter en PDF">
+                  <a th:href="@{'/inventaire/export/pdf/' + ${inventaire.getId()}}" class="row-action row-action-pdf"
+                    title="Exporter en PDF">
                     <i class="bi bi-file-earmark-pdf"></i>
                   </a>
                 </td>
               </tr>
               <tr th:if="${inventaires.isEmpty()}">
-                  <td colspan="5" class="text-center py-5 text-muted">
+                <td colspan="5" class="text-center py-5 text-muted">
                   <i class="bi bi-inbox h3 d-block mb-2 text-secondary"></i>
                   Aucun historique d'inventaire disponible.
                 </td>
@@ -86,4 +88,5 @@
   </div>
 
 </body>
+
 </html>
