@@ -129,17 +129,19 @@
                         <span th:if="${bovin.dateVente == null}" class="badge badge-actif">Actif</span>
                         <span th:if="${bovin.dateVente != null}" class="badge badge-vendu">Vendu</span>
                     </td>
-                    <td class="text-end">
-                        <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <form th:action="@{/bovins/delete/{id}(id=${bovin.id})}" method="post" class="d-inline"
-                                                      onsubmit="return confirm('Déclarer ce bovin comme décédé ? Il sera supprimé du registre et ajouté à la mortalité.');">
-                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                    <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer (mortalité)">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
+                    <td>
+                        <div class="actions">
+                            <a href="#" class="btn btn-soft-warning btn-sm me-1" title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form th:action="@{/bovins/delete/{id}(id=${bovin.id})}" method="post" class="d-inline"
+                                                          onsubmit="return confirm('Déclarer ce bovin comme décédé ? Il sera supprimé du registre et ajouté à la mortalité.');">
+                                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                        <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer (mortalité)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 <tr th:if="${bovinPage.content.isEmpty()}">
