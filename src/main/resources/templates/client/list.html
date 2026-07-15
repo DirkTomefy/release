@@ -31,20 +31,20 @@
             <form th:action="@{/clients}" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="page" value="0" />
 
-                <div class="col-md-4">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Recherche globale</label>
                     <input type="text" name="search" class="form-control"
                            placeholder="Nom, prénom ou contact..." th:value="${criteria.search}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Nom</label>
                     <input type="text" name="nom" class="form-control" th:value="${criteria.nom}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Contact</label>
                     <input type="text" name="contact" class="form-control" th:value="${criteria.contact}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-auto">
                     <label class="form-label small text-muted">Lignes / page</label>
                     <select name="size" class="form-select">
                         <option value="5" th:selected="${criteria.size == 5}">5</option>
@@ -53,10 +53,15 @@
                         <option value="50" th:selected="${criteria.size == 50}">50</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-soft-primary w-100">
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-soft-primary">
                         <i class="bi bi-funnel"></i> Filtrer
                     </button>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/clients}" class="btn btn-outline-secondary">
+                        Reset
+                    </a>
                 </div>
             </form>
         </div>
