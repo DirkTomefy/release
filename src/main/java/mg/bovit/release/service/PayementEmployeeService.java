@@ -73,6 +73,12 @@ public class PayementEmployeeService {
             throw new RuntimeException("Aucune caisse sélectionnée pour ce paiement.");
         }
 
+        // --- NOUVELLE VALIDATION : Vérifier que l'employé a un contrat actif pour ce mois ---
+        if (!existeContratActif(emp, moisCible)) {
+            throw new RuntimeException("L'employé " + emp.getNom() + " " + emp.getPrenom() 
+                    + " n'a pas de contrat actif pour le mois " + dto.getMois() + ".");
+        }
+
         // 1. Récupération du salaire du mois et des paiements existants
         BigDecimal salaireMois = getSalaireActif(emp, mois);
         List<PayementEmployee> paiementsDuMois = payementEmployeeRepository.findByEmployeeAndMois(emp, mois);
@@ -110,10 +116,19 @@ public class PayementEmployeeService {
                 montantTotal = sommeLignes;
             }
 
-            // --- Vérification du plafond : UNIQUEMENT pour les mois passés ou en cours ---
-            // Si le mois est futur, on n'applique pas de limite (l'entreprise peut avancer)
+            // --- NOUVELLE VALIDATION : pour les mois passés ou en cours, on interdit si le reste est ≤ 0 ---
             if (!moisCible.isAfter(moisCourant)) {
-                // Mois passé ou en cours : le reste ne doit pas devenir négatif après ce paiement
+                if (resteAvant.compareTo(BigDecimal.ZERO) <= 0 && montantTotal.compareTo(BigDecimal.ZERO) > 0) {
+                    String typeLabel = estSalaire ? "salaire" : "avance";
+                    throw new RuntimeException(
+                        "Impossible d'enregistrer un " + typeLabel + " car le reste dû du mois est " + resteAvant + " Ar. " +
+                        "Le mois est déjà soldé ou en dette."
+                    );
+                }
+            }
+
+            // --- Vérification du plafond : UNIQUEMENT pour les mois passés ou en cours ---
+            if (!moisCible.isAfter(moisCourant)) {
                 if (montantTotal.compareTo(resteAvant) > 0) {
                     String typeLabel = estSalaire ? "salaire" : "avance";
                     throw new RuntimeException(
@@ -122,7 +137,7 @@ public class PayementEmployeeService {
                     );
                 }
             }
-            // Si le mois est futur, on autorise le paiement sans restriction
+            // Si le mois est futur, on autorise le paiement sans restriction (pas de plafond, pas de vérification de reste)
         }
 
         // 5. Mise à jour des caisses (sauf pour les sanctions)
@@ -322,5 +337,25 @@ public class PayementEmployeeService {
         } catch (Exception e) {
             throw new RuntimeException("Format de mois invalide, attendu YYYY-MM : " + moisStr);
         }
+    }
+
+    // ========== NOUVELLE MÉTHODE : Vérifier l'existence d'un contrat actif pour un mois ==========
+    private boolean existeContratActif(Employee employee, YearMonth mois) {
+        List<Contrat> contrats = contratRepository.findByEmployeeOrderByDateDebutDesc(employee);
+        if (contrats.isEmpty()) {
+            return false;
+        }
+        LocalDate debutMois = mois.atDay(1);
+        LocalDate finMois = mois.atEndOfMonth();
+        for (Contrat c : contrats) {
+            LocalDate debut = c.getDateDebut().toLocalDate();
+            LocalDate fin = c.getDateFin() != null ? c.getDateFin().toLocalDate() : null;
+            // Le contrat est actif si sa date de début est avant la fin du mois
+            // et sa date de fin (si présente) est après le début du mois
+            if (debut.isBefore(finMois) && (fin == null || fin.isAfter(debutMois))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

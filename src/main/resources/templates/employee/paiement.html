@@ -101,7 +101,7 @@
 
           <div class="alert alert-info align-items-center mt-3 info-box" id="sanctionBox" role="alert">
             <i class="bi bi-info-circle-fill me-2"></i>
-            <span>Sanction(s) enregistrée(s) ce mois pour information.</span>
+            <span>Sanction(s) enregistrée(s) ce mois.</span>
           </div>
         </div>
       </div>
@@ -159,7 +159,7 @@
             </div>
             <div class="col-md-4">
               <label class="form-label">Montant (Ar)</label>
-              <input type="number" id="avanceMontant" class="form-select" name="avanceMontant" placeholder="0.00" step="0.01" min="0" value="0" required>
+              <input type="number" id="avanceMontant" class="form-control" name="avanceMontant" placeholder="0.00" step="0.01" min="0" value="0" required>
             </div>
             <div class="col-md-4">
               <label class="form-label">Motif (optionnel)</label>
@@ -210,7 +210,6 @@
   <script th:inline="javascript">
     (function () {
       // Récupération du token CSRF injecté dans le <head> de la page
-      // (voir <meta name="_csrf" .../> et <meta name="_csrf_header" .../> dans fragments/common :: assets)
       const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
       const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
@@ -304,9 +303,12 @@
               avanceBox.classList.add("show");
             }
 
+            // Affichage du montant total des sanctions
             if (data.totalSanction > 0) {
+              sanctionBox.querySelector("span").textContent = `Sanction(s) enregistrée(s) ce mois : ${formatAr(data.totalSanction)}`;
               sanctionBox.classList.add("show");
             }
+
             updateGlobalDisplay();
           })
           .catch(() => {
