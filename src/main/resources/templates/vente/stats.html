@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statistiques des ventes</title>
-        <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    </style>
+    <!-- Suppression de la balise </style> -->
 </head>
 <body>
 
 <!-- Navbar -->
-    <th:block th:replace="~{fragments/common :: navbar('vente')}"></th:block>
+<th:block th:replace="~{fragments/common :: navbar('vente')}"></th:block>
 
 <div class="container py-4">
 
@@ -40,8 +40,16 @@
                     <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
                 </select>
             </div>
-          
-            <div class="col-12 col-md-2 d-grid">
+            <!-- Ajout du sélecteur de mode -->
+            <div class="col-12 col-md-2">
+                <label class="form-label">Mode</label>
+                <select id="mode" class="form-select">
+                    <option value="mois">Mois</option>
+                    <option value="semaine">Semaine</option>
+                    <option value="annee">Année</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-1 d-grid">
                 <button id="btnFiltrer" type="button" class="btn btn-soft-primary">
                     <i class="bi bi-funnel-fill me-1"></i>Filtrer
                 </button>
@@ -51,25 +59,25 @@
 
     <!-- Cartes de synthèse -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="summary-card summary-ventes">
                 <div class="label"><i class="bi bi-receipt me-1"></i>Nombre de ventes</div>
                 <div class="value" id="totalVentes">–</div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="summary-card summary-bovins">
                 <div class="label"><i class="bi bi-tree me-1"></i>Bovins vendus</div>
                 <div class="value" id="totalBovins">–</div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="summary-card summary-montant">
                 <div class="label"><i class="bi bi-wallet2 me-1"></i>Montant total</div>
                 <div class="value" id="montantTotal">–</div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="summary-card summary-benefice">
                 <div class="label"><i class="bi bi-currency-dollar me-1"></i>Bénéfice total</div>
                 <div class="value" id="totalBenefice">–</div>
@@ -114,12 +122,13 @@
         const dateDebut = dateDebutInput.value;
         const dateFin = dateFinInput.value;
         const raceId = raceSelect.value;
+        const mode = modeSelect.value;
 
         const params = new URLSearchParams();
         if (dateDebut) params.set('dateDebut', dateDebut);
         if (dateFin) params.set('dateFin', dateFin);
         if (raceId) params.set('raceId', raceId);
-        params.set('mode', modeSelect.value);
+        params.set('mode', mode);
 
         fetch('/vente/stats/data?' + params.toString())
             .then(res => res.json())
