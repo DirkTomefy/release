@@ -10,11 +10,8 @@
 
     <th:block th:replace="~{fragments/common :: navbar('clients')}"></th:block>
 
-<div class="container py-4" style="max-width: 640px;">
+<div class="container py-4">
     <div class="d-flex align-items-center mb-4">
-        <a href="/clients" class="btn btn-soft-primary me-3">
-            <i class="bi bi-arrow-left"></i> Retour
-        </a>
         <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
             <i class="bi bi-person-lines-fill me-2" style="color:#7a9e5a;"></i>
             <span th:text="${client.id != null} ? 'Modifier le client' : 'Nouveau client'">Fiche client</span>
@@ -80,16 +77,16 @@
         // function to add message on input for contact
         function addMessageOnContact() {
 
-            if (contact.value.trim() === "") {
+            if (contact.value.trim() == "") {
                 contact.classList.remove("is-valid");
                 contact.classList.remove("is-invalid");
             }
 
-            if (isValidContact()) {
+            else if (isValidContact()) {
                 contact.classList.remove("is-invalid");
                 contact.classList.add("is-valid");
             }
-            else {
+            else if (!isValidContact()) {
                 contact.classList.remove("is-valid");
                 contact.classList.add("is-invalid");
             }
