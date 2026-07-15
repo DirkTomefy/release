@@ -11,11 +11,16 @@ import mg.bovit.release.repository.MouvementStockRepository;
 
 @Service
 public class MaterielService {
+
     @Autowired
     private MaterielRepository materielRepository;
+
     @Autowired
     private MouvementStockRepository mouvementStockRepository;
-    
+
+    @Autowired   // Injection du service pour utiliser les nouvelles méthodes de gestion de stock
+    private MouvementStockService mouvementStockService;
+
     public List<Materiel> findAll() {
         return materielRepository.findAll();
     }
@@ -26,19 +31,23 @@ public class MaterielService {
                 .toList();
     }
 
+    // Délègue au service pour une liste de tous les matériels avec leur stock
     public List<MaterielStockDto> findAllMaterielStockRestant() {
-        return mouvementStockRepository.findAllMaterielStockRestant();
+        return mouvementStockService.findAllMaterielStockRestant();
     }
 
+    // Délègue au service pour un matériel spécifique
     public MaterielStockDto findMaterielStockRestantById(Long materielId) {
-        return mouvementStockRepository.findMaterielStockRestantById(materielId);
+        return mouvementStockService.findMaterielStockRestantById(materielId);
     }
 
+    // Délègue au service pour les matériels d'un type donné
+    public List<MaterielStockDto> findByTypeIdWithStock(Long typeId) {
+        return mouvementStockService.findMaterielStockRestantByTypeId(typeId);
+    }
+
+    // Détails des mouvements (entrées restantes) pour un matériel
     public List<MouvementStock> findDetailsMaterielById(Long id) {
         return mouvementStockRepository.findAllEntreesDisponiblesByIdMateriel(id);
-    }
-
-    public List<MaterielStockDto> findByTypeIdWithStock(Long typeId) {
-        return mouvementStockRepository.findMaterielStockRestantByTypeId(typeId);
     }
 }

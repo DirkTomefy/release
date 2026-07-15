@@ -8,7 +8,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import mg.bovit.release.dto.PeseBovinRequest;   // import ajouté
 import mg.bovit.release.dto.MulticriteriaListPeseBovin;
 import mg.bovit.release.model.Bovin;
 import mg.bovit.release.model.PeseBovin;
@@ -20,8 +22,9 @@ import mg.bovit.release.specification.PeseSpecification;
 
 @Service
 public class PeseBovinService {
-    @Autowired 
-    PeseBovinRepository peseBovinRepository;
+
+    @Autowired
+    private PeseBovinRepository peseBovinRepository;
 
     @Autowired
     private BovinRepository bovinRepository;
@@ -29,12 +32,15 @@ public class PeseBovinService {
     @Autowired
     private PeseBovinWIthDateVenteRepository peseBovinWIthDateVenteRepository;
 
-    // function to find peseBovin by id
+    @Autowired
+    private BovinService bovinService;   // injecté pour récupérer un bovin
+
+    // ----- Méthodes existantes -----
+
     public PeseBovin findById(Long id_peseBovin) {
         return peseBovinRepository.findById(id_peseBovin).orElse(null);
     }
 
-    // function to get latest pese by bovin
     public PeseBovin getLatestPeseByBovin(Long id_bovin) {
         return peseBovinRepository.getLatestPeseByBovin(id_bovin);
     }
@@ -44,12 +50,10 @@ public class PeseBovinService {
         if (latest != null) {
             return latest;
         }
-
         Bovin bovin = bovinRepository.findById(id_bovin).orElse(null);
         if (bovin == null) {
             return null;
         }
-
         PeseBovin newPeseBovin = new PeseBovin();
         newPeseBovin.setBovin(bovin);
         newPeseBovin.setDate_pese(bovin.getDate_achat());
@@ -57,18 +61,16 @@ public class PeseBovinService {
         return peseBovinRepository.save(newPeseBovin);
     }
 
-    // function to save pese_bovin
+    // Méthode de sauvegarde simple (conservée pour usage interne)
     public PeseBovin save(PeseBovin peseBovin) {
         return peseBovinRepository.save(peseBovin);
     }
-    
-    // function to findAll pese_bovin
+
     public List<PeseBovin> findAll() {
         return peseBovinRepository.findAll();
     }
 
     public Page<PeseBovinWithDateVente> searchPeseBovins(MulticriteriaListPeseBovin form) {
-        // Construction du tri
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
         if (form.getSort() != null && !form.getSort().isEmpty()) {
@@ -85,24 +87,17 @@ public class PeseBovinService {
                 form.getSize(),
                 Sort.by(direction, sortField)
         );
-
         return peseBovinWIthDateVenteRepository.findAll(PeseSpecification.fromForm(form), pageable);
     }
 
-    //  Récupération toutes les pesées d'un bovin triées par date
     public List<PeseBovin> findByBovinIdOrderByDatePeseAsc(Long bovinId) {
         return peseBovinRepository.findByBovinIdOrderByDatePeseAsc(bovinId);
     }
 
-    // ===================== Export Excel / PDF =====================
-
-    // Récupération d'une pesée (vue) par id, pour l'export unitaire
     public PeseBovinWithDateVente findViewById(Long id) {
         return peseBovinWIthDateVenteRepository.findById(id).orElse(null);
     }
 
-    // Récupération de TOUTES les pesées correspondant aux critères de la liste,
-    // sans pagination, pour l'export "tout exporter"
     public List<PeseBovinWithDateVente> searchAllForExport(MulticriteriaListPeseBovin form) {
         String sortField = "id";
         Sort.Direction direction = Sort.Direction.ASC;
@@ -115,10 +110,61 @@ public class PeseBovinService {
                 direction = Sort.Direction.fromString(parts[1]);
             }
         }
-
         return peseBovinWIthDateVenteRepository.findAll(
                 PeseSpecification.fromForm(form),
                 Sort.by(direction, sortField)
         );
+    }
+
+    // ----- Nouvelle méthode avec toute la logique métier -----
+    @Transactional
+    public PeseBovin createOrUpdatePeseBovin(PeseBovinRequest request) throws Exception {
+        // 1. Vérifier que le bovin existe
+        Bovin bovin = bovinService.findById(request.getBovinId());
+
+      
+        if (bovin == null) {
+            throw new Exception("Bovin introuvable avec l'ID : " + request.getBovinId());
+        }
+
+        if(bovin.getPoids_vente()!=null)
+            throw new Exception("Ce bovin est déja vendu");
+        
+
+        // 2. Récupérer la dernière pesée du bovin
+        PeseBovin latestPese = getLatestPeseByBovin(bovin.getId());
+
+        // 3. Vérifier que la date de la nouvelle pesée est postérieure à la dernière pesée
+        if (latestPese != null && latestPese.getDate_pese().after(request.getDatePese())) {
+            throw new Exception("La date de pesée doit être après la date de la dernière pesée");
+        }
+
+        // 4. Vérifier que le poids est strictement positif
+        if (request.getPoids() <= 0) {
+            throw new Exception("Le nouveau poids du bovin doit être strictement positif");
+        }
+
+        // 5. Construire l'entité à sauvegarder (création ou mise à jour)
+        PeseBovin peseBovin;
+        if (request.getIdPeseBovin() != null) {
+            // Mise à jour : on charge l'existant
+            peseBovin = findById(request.getIdPeseBovin());
+            if (peseBovin == null) {
+                throw new Exception("Pesée introuvable avec l'ID : " + request.getIdPeseBovin());
+            }
+            // On met à jour les champs
+            peseBovin.setBovin(bovin);
+            peseBovin.setDate_pese(request.getDatePese());
+            peseBovin.setPoids_apres(request.getPoids());
+        } else {
+            // Création : nouvelle instance
+            peseBovin = new PeseBovin();
+            peseBovin.setBovin(bovin);
+            peseBovin.setDate_pese(request.getDatePese());
+            peseBovin.setPoids_apres(request.getPoids());
+        }
+
+        // 6. Sauvegarder et retourner l'entité
+        return peseBovinRepository.save(peseBovin);
     }
 }

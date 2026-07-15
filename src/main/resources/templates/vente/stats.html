@@ -40,13 +40,7 @@
                     <option th:each="race : ${races}" th:value="${race.id}" th:text="${race.nom}"></option>
                 </select>
             </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label">Vue</label>
-                <select id="mode" class="form-select">
-                    <option value="mois">Par mois</option>
-                    <option value="vente">Par vente</option>
-                </select>
-            </div>
+          
             <div class="col-12 col-md-2 d-grid">
                 <button id="btnFiltrer" type="button" class="btn btn-soft-primary">
                     <i class="bi bi-funnel-fill me-1"></i>Filtrer

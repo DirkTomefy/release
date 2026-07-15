@@ -208,17 +208,37 @@ public class PayementEmployeeService {
         YearMonth moisCourant = YearMonth.now();
 
         for (Employee emp : allEmployees) {
-            YearMonth moisEmbauche = YearMonth.from(emp.getDateEntree().toLocalDate());
-            YearMonth examine = moisEmbauche;
+            // Récupérer les contrats triés par date de début descendante puis inverser
+            List<Contrat> contrats = contratRepository.findByEmployeeOrderByDateDebutDesc(emp);
+            if (contrats.isEmpty()) {
+                continue;
+            }
+            // Trier par date de début ascendante (du plus ancien au plus récent)
+            contrats.sort((c1, c2) -> c1.getDateDebut().compareTo(c2.getDateDebut()));
 
-            while (examine.isBefore(moisCourant)) {
-                if (!moisSalairePaye(emp, examine)) {
-                    Map<String, Object> alerte = new HashMap<>();
-                    alerte.put("employee", emp);
-                    alerte.put("moisManquant", examine.toString());
-                    alertes.add(alerte);
+            for (Contrat contrat : contrats) {
+                LocalDate debut = contrat.getDateDebut().toLocalDate();
+                LocalDate fin = contrat.getDateFin() != null ? contrat.getDateFin().toLocalDate() : null;
+
+                YearMonth debutMois = YearMonth.from(debut);
+                // Si le contrat n'a pas de date de fin, on s'arrête au mois précédent le mois courant
+                YearMonth finMois = (fin != null) ? YearMonth.from(fin) : moisCourant.minusMonths(1);
+
+                // Ne pas dépasser le mois précédent le mois courant
+                if (finMois.isAfter(moisCourant.minusMonths(1))) {
+                    finMois = moisCourant.minusMonths(1);
                 }
-                examine = examine.plusMonths(1);
+
+                YearMonth examine = debutMois;
+                while (examine.isBefore(finMois) || examine.equals(finMois)) {
+                    if (!moisSalairePaye(emp, examine)) {
+                        Map<String, Object> alerte = new HashMap<>();
+                        alerte.put("employee", emp);
+                        alerte.put("moisManquant", examine.toString());
+                        alertes.add(alerte);
+                    }
+                    examine = examine.plusMonths(1);
+                }
             }
         }
         return alertes;
