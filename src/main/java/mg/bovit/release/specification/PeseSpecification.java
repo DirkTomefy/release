@@ -6,7 +6,25 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.*;
 
 public class PeseSpecification {
-    public static Specification<PeseBovinWithDateVente> fromForm(MulticriteriaListPeseBovin form) {
+    public static Specification<PeseBovinWithDateVente> fromForm(MulticriteriaListPeseBovin form) throws Exception {
+        // verify poids
+        if (form.getPoidsApresMax() != null && form.getPoidsApresMax() < 0) {
+            throw new Exception("Le poids ne devrais pas ê négatif");
+        }
+
+        if (form.getPoidsApresMin() != null && form.getPoidsApresMin() < 0) {
+            throw new Exception("Le poids ne devrais pas ê négatif");
+        }
+
+        if (form.getPoidsApresMax() != null && form.getPoidsApresMin() != null && form.getPoidsApresMax() < form.getPoidsApresMin()) {
+            throw new Exception("Le poids max doit être supérieur ou égal au poids min");
+        }
+
+        // verif date
+        if (form.getDatePeseMax().isBefore(form.getDatePeseMin())) {
+            throw new Exception("La date max doit être après la date min");
+        }
+
         return (root, query, cb) -> {
             Predicate predicate = cb.conjunction();
 

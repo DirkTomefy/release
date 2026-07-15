@@ -1,5 +1,6 @@
 package mg.bovit.release.controller;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,12 +51,19 @@ public class PeseBovinController {
             criteria.setSize(10);
         }
 
-        Page<PeseBovinWithDateVente> pesePage = peseBovinService.searchPeseBovins(criteria);
-        List<Race> races = raceService.findAll();
+        try {
+            Page<PeseBovinWithDateVente> pesePage = peseBovinService.searchPeseBovins(criteria);
+            List<Race> races = raceService.findAll();
+    
+            model.addAttribute("pesePage", pesePage);
+            model.addAttribute("races", races);
+            
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());            
+            model.addAttribute("pesePage", Page.empty());
+            model.addAttribute("races", Collections.emptyList());
+        }
 
-        model.addAttribute("pesePage", pesePage);
-        model.addAttribute("pesesBovin", pesePage.getContent());
-        model.addAttribute("races", races);
         model.addAttribute("criteria", criteria);
 
         return "peseBovin/list";
