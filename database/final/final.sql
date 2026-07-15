@@ -15,8 +15,6 @@ DROP TABLE IF EXISTS facture_detail CASCADE;
 DROP TABLE IF EXISTS facture CASCADE;
 DROP TABLE IF EXISTS inventaire_detail CASCADE;
 DROP TABLE IF EXISTS inventaire CASCADE;
-DROP TABLE IF EXISTS inventaire_bovin_detail CASCADE;
-DROP TABLE IF EXISTS inventaire_bovin CASCADE;
 DROP TABLE IF EXISTS mvt_stock_paiement CASCADE;
 DROP TABLE IF EXISTS mouvement_stock CASCADE;
 DROP TABLE IF EXISTS materiel CASCADE;
@@ -234,22 +232,6 @@ CREATE TABLE facture_detail (
     CONSTRAINT fk_facture_detail_vente_detail FOREIGN KEY (id_vente_detail) REFERENCES vente_detail(id)
 );
 
--- Inventaire des BOVINS (Renommé pour éviter le conflit avec l'inventaire matériel)
-CREATE TABLE inventaire_bovin (
-    id SERIAL PRIMARY KEY,
-    date_inventaire DATE NOT NULL DEFAULT CURRENT_DATE,
-    libelle VARCHAR(100)
-);
-
-CREATE TABLE inventaire_bovin_detail (
-    id SERIAL PRIMARY KEY,
-    id_inventaire_bovin INTEGER NOT NULL,
-    id_bovin INTEGER NOT NULL,
-    quantite INTEGER NOT NULL DEFAULT 1,
-    observations TEXT,
-    CONSTRAINT fk_inv_bovin_detail_parent FOREIGN KEY (id_inventaire_bovin) REFERENCES inventaire_bovin(id) ON DELETE CASCADE,
-    CONSTRAINT fk_inv_bovin_detail_bovin FOREIGN KEY (id_bovin) REFERENCES bovin(id) ON DELETE RESTRICT
-);
 
 CREATE INDEX IF NOT EXISTS idx_mortalite_date ON mortalite(date);
 CREATE INDEX IF NOT EXISTS idx_mortalite_id_race ON mortalite(id_race);
