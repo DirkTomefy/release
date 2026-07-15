@@ -3,9 +3,11 @@ package mg.bovit.release.controller;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -114,11 +116,25 @@ public class MortaliteController {
 
     @GetMapping("/stats/data")
     @ResponseBody
-    public MortaliteStatsDTO getStatsData(@RequestParam(required = false) String dateDebut,
+    public ResponseEntity<?> getStatsData(@RequestParam(required = false) String dateDebut,
                                           @RequestParam(required = false) String dateFin,
                                           @RequestParam(required = false) Long raceId) {
-        LocalDate debut = dateDebut != null && !dateDebut.isEmpty() ? LocalDate.parse(dateDebut) : null;
-        LocalDate fin = dateFin != null && !dateFin.isEmpty() ? LocalDate.parse(dateFin) : null;
-        return mortaliteService.getStats(debut, fin, raceId);
+
+        try {
+            LocalDate debut = dateDebut != null && !dateDebut.isBlank() ? LocalDate.parse(dateDebut) : null;
+            LocalDate fin = dateFin != null && !dateFin.isBlank() ? LocalDate.parse(dateFin) : null;
+
+            // Validation de cohérence
+            if (debut != null && fin != null && fin.isBefore(debut)) {
+                // Renvoie un statut 400 Bad Request avec le message d'erreur
+                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "La date de fin doit être après la date de début."));
+            }
+
+            MortaliteStatsDTO stats = mortaliteService.getStats(debut, fin, raceId);
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erreur lors du traitement des données : " + e.getMessage()));
+        }
     }
 }
