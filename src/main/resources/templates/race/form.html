@@ -11,11 +11,8 @@
 
     <th:block th:replace="~{fragments/common :: navbar('races')}"></th:block>
 
-<div class="container py-4" style="max-width: 640px;">
+<div class="container py-4">
     <div class="d-flex align-items-center mb-4">
-        <a href="/races" class="btn btn-soft-primary me-3">
-            <i class="bi bi-arrow-left"></i> Retour
-        </a>
         <h1 class="h4 fw-semibold mb-0" style="color:#4a4a44;">
             <i class="bi bi-tag-fill me-2" style="color:#c4a35a;"></i>
             <span th:text="${race.id != null} ? 'Modifier la race' : 'Nouvelle race'">Fiche race</span>
