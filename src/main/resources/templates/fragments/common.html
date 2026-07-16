@@ -1,7 +1,7 @@
 <!-- Fragment réutilisable : liens CDN + styles de base communs à toutes les pages.
      Inclus via th:replace="~{fragments/common :: assets}" dans le <head> de chaque page.
      Les styles spécifiques à une page restent dans un <style> séparé, propre à cette page. -->
-<div th:fragment="assets">
+<div xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="assets">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,7 +11,7 @@
     <link th:href="@{/css/theme.css}" rel="stylesheet">
 </div>
 
-<div th:fragment="sidebar(activeSection='')">
+<div xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="sidebar(activeSection='')">
     <aside class="app-sidebar">
         <a class="app-sidebar__brand" th:href="@{/}">
             <span class="fs-4" style="line-height: 1;">🐂</span>
@@ -22,29 +22,33 @@
         </a>
 
         <nav class="app-sidebar__nav">
-            <div class="app-sidebar__group">
+            <div class="app-sidebar__group" sec:authorize="isAuthenticated()">
+                <div class="app-sidebar__group-title">Accueil</div>
+                <a class="app-sidebar__link" th:href="@{/}"><i class="bi bi-house-fill"></i><span>Accueil</span></a>
+            </div>
+
+            <div class="app-sidebar__group" sec:authorize="hasAnyRole('ADMIN','LOT')">
                 <div class="app-sidebar__group-title">Bovin</div>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'bovins'} ? ' is-active' : ''"
                     th:href="@{/bovins}"><span class="fs-4" style="line-height: 1;">🐂</span><span>Bovins</span></a>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'clients'} ? ' is-active' : ''"
-                    th:href="@{/clients}"><i class="bi bi-people-fill"></i><span>Clients</span></a>
+                    th:href="@{/clients}" sec:authorize="hasAnyRole('ADMIN','VENTE')"><i class="bi bi-people-fill"></i><span>Clients</span></a>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'races'} ? ' is-active' : ''"
                     th:href="@{/races}"><i class="bi bi-tags-fill"></i><span>Races</span></a>
                 <a class="app-sidebar__link" th:href="@{/bovins/achat/form}"><i
                         class="bi bi-bag-plus-fill"></i><span>Achat bovin</span></a>
             </div>
 
-            <div class="app-sidebar__group">
+            <div class="app-sidebar__group" sec:authorize="hasAnyRole('ADMIN','LOT')">
                 <div class="app-sidebar__group-title">Mortalité</div>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'mortalite'} ? ' is-active' : ''"
                     th:href="@{/mortalite}"><i class="bi bi-exclamation-triangle-fill"></i><span>Liste</span></a>
-                <a class="app-sidebar__link" th:href="@{/mortalite/new}"><i class="bi bi-plus-circle"></i><span>Nouvelle
-                        déclaration</span></a>
+                <a class="app-sidebar__link" th:href="@{/mortalite/new}"><i class="bi bi-plus-circle"></i><span>Nouvelle déclaration</span></a>
                 <a class="app-sidebar__link" th:href="@{/mortalite/stats}"><i
                         class="bi bi-bar-chart-fill"></i><span>Statistiques</span></a>
             </div>
 
-            <div class="app-sidebar__group">
+            <div class="app-sidebar__group" sec:authorize="hasAnyRole('ADMIN','STOCK')">
                 <div class="app-sidebar__group-title">Stock</div>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'inventaire'} ? ' is-active' : ''"
                     th:href="@{/inventaire/liste}"><i
@@ -57,15 +61,14 @@
                     th:href="@{/materiel/etatstock}"><i class="bi bi-graph-up-arrow"></i><span>État du stock</span></a>
                 <a class="app-sidebar__link" th:href="@{/mouvement/list}"><i
                         class="bi bi-arrow-left-right"></i><span>Mouvements</span></a>
-                <a class="app-sidebar__link" th:href="@{/mouvement/form}"><i class="bi bi-plus-circle"></i><span>Nouveau
-                        mouvement</span></a>
+                <a class="app-sidebar__link" th:href="@{/mouvement/form}"><i class="bi bi-plus-circle"></i><span>Nouveau mouvement</span></a>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'peseBovin'} ? ' is-active' : ''"
                     th:href="@{/peseBovin/list}"><i class="bi bi-speedometer2"></i><span>Pesées</span></a>
                 <a class="app-sidebar__link" th:href="@{/peseBovin/form}"><i
                         class="bi bi-plus-circle"></i><span>Nouvelle pesée</span></a>
             </div>
 
-            <div class="app-sidebar__group">
+            <div class="app-sidebar__group" sec:authorize="hasAnyRole('ADMIN','CAISSE','EMPLOYE')">
                 <div class="app-sidebar__group-title">RH</div>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'employee'} ? ' is-active' : ''"
                     th:href="@{/employee/list}"><i class="bi bi-person-lines-fill"></i><span>Employés</span></a>
@@ -79,25 +82,31 @@
                     th:href="@{/contrat/list}"><i class="bi bi-file-earmark-text-fill"></i><span>Contrats</span></a>
                 <a class="app-sidebar__link" th:href="@{/contrat/new}"><i
                         class="bi bi-file-earmark-plus-fill"></i><span>Nouveau contrat</span></a>
-                <a class="app-sidebar__link" th:href="@{/admin/users/new}"><i
+                <a class="app-sidebar__link" th:href="@{/admin/users/new}" sec:authorize="hasRole('ADMIN')"><i
                         class="bi bi-shield-lock-fill"></i><span>Utilisateurs</span></a>
             </div>
 
-            <div class="app-sidebar__group">
+            <div class="app-sidebar__group" sec:authorize="hasAnyRole('ADMIN','VENTE')">
                 <div class="app-sidebar__group-title">Finance</div>
-                <!-- NOUVEAU LIEN : Tableau de bord financier -->
-                <a class="app-sidebar__link" th:classappend="${activeSection == 'finance'} ? ' is-active' : ''"
-                    th:href="@{/finance}"><i class="bi bi-graph-up-arrow"></i><span>Tableau de bord</span></a>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'vente'} ? ' is-active' : ''"
                     th:href="@{/vente/list}"><i class="bi bi-cash-coin"></i><span>Ventes</span></a>
-                <a class="app-sidebar__link" th:href="@{/vente/new}"><i class="bi bi-receipt-cutoff"></i><span>Nouvelle
-                        vente</span></a>
+                <a class="app-sidebar__link" th:href="@{/vente/new}"><i class="bi bi-receipt-cutoff"></i><span>Nouvelle vente</span></a>
                 <a class="app-sidebar__link" th:href="@{/vente/stats}"><i
                         class="bi bi-bar-chart-line-fill"></i><span>Stats ventes</span></a>
+            </div>
+
+            <div class="app-sidebar__group" sec:authorize="hasAnyRole('ADMIN','CAISSE','EMPLOYE')">
+                <div class="app-sidebar__group-title">Caisse</div>
                 <a class="app-sidebar__link" th:href="@{/caisse/stats}"><i
                         class="bi bi-piggy-bank-fill"></i><span>Statistiques caisse</span></a>
                 <a class="app-sidebar__link" th:href="@{/caisse/historique}"><i
                         class="bi bi-clock-history"></i><span>Historique caisse</span></a>
+            </div>
+
+            <div class="app-sidebar__group" sec:authorize="hasRole('ADMIN')">
+                <div class="app-sidebar__group-title">Administration</div>
+                <a class="app-sidebar__link" th:classappend="${activeSection == 'finance'} ? ' is-active' : ''"
+                    th:href="@{/finance}"><i class="bi bi-graph-up-arrow"></i><span>Tableau de bord</span></a>
                 <a class="app-sidebar__link" th:classappend="${activeSection == 'import'} ? ' is-active' : ''"
                     th:href="@{/import}"><i class="bi bi-upload"></i><span>Import général</span></a>
             </div>
@@ -105,6 +114,6 @@
     </aside>
 </div>
 
-<div th:fragment="navbar(activeSection='')">
+<div xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="navbar(activeSection='')">
     <th:block th:replace="~{fragments/common :: sidebar(${activeSection})}"></th:block>
 </div>

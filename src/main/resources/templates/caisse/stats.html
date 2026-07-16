@@ -1,255 +1,725 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Caisse · Statistiques entrées / sorties</title>
-        <th:block th:replace="~{fragments/common :: assets}"></th:block>
+    <th:block th:replace="~{fragments/common :: assets}"></th:block>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(43, 110, 74, 0.09), transparent 24%),
+                linear-gradient(135deg, #f7fcf8 0%, #f0f5f2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1a2e24;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-top: 0.4rem;
+        }
+
+        /* ===== LAYOUT PRINCIPAL ===== */
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 1.4rem 1.1rem 2.2rem;
+        }
+
+        /* ===== EN-TÊTE ===== */
+        .page-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.8rem;
+            gap: 1rem;
+        }
+
+        .page-header h4 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1a4a30;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .page-header h4 i {
+            color: #2b6e4a;
+            font-size: 1.6rem;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        /* ===== BOUTONS ===== */
+        .btn-export {
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            background: #e8f0ec;
+            color: #1a4a30;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-export-excel {
+            background: #e2f0e6;
+            color: #1a6338;
+        }
+
+        .btn-export-excel:hover {
+            background: #c8e2d2;
+        }
+
+        .btn-export-pdf {
+            background: #f0e8e4;
+            color: #8a4a3a;
+        }
+
+        .btn-export-pdf:hover {
+            background: #e4d5ce;
+        }
+
+        .btn-outline-secondary {
+            border: 1.5px solid #c5d8ce;
+            background: transparent;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #1a4a30;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #e3eee6;
+            border-color: #8fb0a0;
+            color: #0d3321;
+        }
+
+        /* ===== CARTE FILTRES ===== */
+        .filters-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 1.8rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e8f0ec;
+            backdrop-filter: blur(8px);
+        }
+
+        .filters-card .row {
+            align-items: flex-end;
+        }
+
+        .filters-card .form-label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #3d5e4e;
+            margin-bottom: 0.3rem;
+        }
+
+        .filters-card .form-control,
+        .filters-card .form-select {
+            border-radius: 10px;
+            border: 1.5px solid #dfe9e3;
+            background: #f8fbf9;
+            padding: 0.6rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            color: #1a2e24;
+        }
+
+        .filters-card .form-control:focus,
+        .filters-card .form-select:focus {
+            border-color: #2b6e4a;
+            box-shadow: 0 0 0 4px rgba(43, 110, 74, 0.1);
+            background: #ffffff;
+            outline: none;
+        }
+
+        .btn-filter {
+            background: #2b6e4a;
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            width: 100%;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .btn-filter:hover {
+            background: #1f4f35;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(43, 110, 74, 0.25);
+        }
+
+        .btn-filter i {
+            font-size: 1rem;
+        }
+
+        /* ===== CARTES STATISTIQUES ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem 1.8rem;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e8f0ec;
+            border-left: 5px solid #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #3d5e4e;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .stat-card .label i {
+            font-size: 1.1rem;
+        }
+
+        .stat-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #0f2a1d;
+            line-height: 1.2;
+        }
+
+        .stat-card.entrees {
+            border-left-color: #7a9e5a;
+        }
+        .stat-card.entrees .label i {
+            color: #7a9e5a;
+        }
+
+        .stat-card.sorties {
+            border-left-color: #d97a7a;
+        }
+        .stat-card.sorties .label i {
+            color: #d97a7a;
+        }
+
+        .stat-card.solde {
+            border-left-color: #2b6e4a;
+        }
+        .stat-card.solde .label i {
+            color: #2b6e4a;
+        }
+
+        /* ===== CARTE GRAPHIQUE ===== */
+        .chart-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 1.8rem 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e8f0ec;
+            overflow: hidden;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        .chart-empty {
+            display: none;
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #7f998b;
+        }
+
+        .chart-empty i {
+            font-size: 3.5rem;
+            display: block;
+            margin-bottom: 1rem;
+            opacity: 0.4;
+        }
+
+        .chart-empty p {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1rem;
+            }
+            .stat-card .value {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem 0.8rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.8rem;
+            }
+            .page-header h4 {
+                font-size: 1.2rem;
+            }
+            .header-actions {
+                justify-content: stretch;
+            }
+            .header-actions .btn-export,
+            .header-actions .btn-outline-secondary {
+                flex: 1;
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .filters-card {
+                padding: 1.2rem 1rem;
+            }
+            .chart-card {
+                padding: 1rem 0.8rem;
+            }
+            .filters-card .row > div {
+                margin-bottom: 0.5rem;
+            }
+            .btn-filter {
+                width: 100%;
+                margin-top: 0.2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+            .stat-card {
+                padding: 1rem 1.2rem;
+            }
+            .stat-card .value {
+                font-size: 1.6rem;
+            }
+
+            .chart-card {
+                padding: 1rem 0.8rem;
+            }
+            .chart-wrapper {
+                height: 280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-card .value {
+                font-size: 1.3rem;
+            }
+            .chart-wrapper {
+                height: 220px;
+            }
+            .header-actions {
+                flex-wrap: wrap;
+            }
+            .header-actions .btn-export,
+            .header-actions .btn-outline-secondary {
+                font-size: 0.75rem;
+                padding: 0.35rem 0.6rem;
+            }
+        }
+
+        /* ===== MISC ===== */
+        .text-muted {
+            color: #6b8a7a !important;
+        }
+
+        /* Assurer que le graphique ne déborde pas */
+        canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navbar -->
+    <!-- Navbar -->
     <th:block th:replace="~{fragments/common :: navbar('caisse')}"></th:block>
 
-<div class="container py-4">
+    <div class="container">
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-        <h4 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Statistiques de caisse</h4>
-        <div class="d-flex flex-wrap gap-2">
-            <div class="export-group">
-                <button type="button" id="exportExcelBtn" class="export-btn export-btn-excel" title="Exporter en Excel">
+        <!-- En-tête -->
+        <div class="page-header">
+            <h4>
+                <i class="bi bi-bar-chart-fill"></i>
+                Statistiques de caisse
+            </h4>
+            <div class="header-actions">
+                <button type="button" id="exportExcelBtn" class="btn-export btn-export-excel">
                     <i class="bi bi-file-earmark-excel"></i> Excel
                 </button>
-                <button type="button" id="exportPdfBtn" class="export-btn export-btn-pdf" title="Exporter en PDF">
+                <button type="button" id="exportPdfBtn" class="btn-export btn-export-pdf">
                     <i class="bi bi-file-earmark-pdf"></i> PDF
                 </button>
-            </div>
-            <a href="/caisse/historique" class="btn btn-outline-secondary">
-                <i class="bi bi-clock-history me-1"></i>Historique des mouvements
-            </a>
-        </div>
-    </div>
-
-    <!-- Filtres -->
-    <div class="card p-3 p-md-4 mb-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-3">
-                <label class="form-label">Date début</label>
-                <input type="date" id="dateDebut" class="form-control" th:value="${dateDebutDefaut}">
-            </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label">Date fin</label>
-                <input type="date" id="dateFin" class="form-control" th:value="${dateFinDefaut}">
-            </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label">Caisse</label>
-                <select id="caisseId" class="form-select">
-                    <option value="">Toutes les caisses</option>
-                    <option th:each="caisse : ${caisses}"
-                            th:value="${caisse.id}"
-                            th:text="${caisse.libelle}"></option>
-                </select>
-            </div>
-            <div class="col-12 col-md-2">
-                <label class="form-label">Cause</label>
-                <select id="causeId" class="form-select">
-                    <option value="">Toutes les causes</option>
-                    <option th:each="cause : ${causes}"
-                            th:value="${cause.id}"
-                            th:text="${cause.libelle}"></option>
-                </select>
-            </div>
-            <div class="col-12 col-md-1 d-grid">
-                <button id="btnFiltrer" type="button" class="btn btn-soft-primary">
-                    <i class="bi bi-funnel-fill me-1"></i>Filtrer
-                </button>
+                <a href="/caisse/historique" class="btn-outline-secondary">
+                    <i class="bi bi-clock-history"></i> Historique
+                </a>
             </div>
         </div>
-    </div>
 
-    <!-- Cartes de synthèse -->
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
-            <div class="summary-card summary-entree">
-                <div class="label"><i class="bi bi-arrow-down-circle-fill me-1"></i>Total entrées</div>
+        <!-- Filtres -->
+        <div class="filters-card">
+            <div class="row g-3">
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Date début</label>
+                    <input type="date" id="dateDebut" class="form-control" th:value="${dateDebutDefaut}" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Date fin</label>
+                    <input type="date" id="dateFin" class="form-control" th:value="${dateFinDefaut}" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Caisse</label>
+                    <select id="caisseId" class="form-select">
+                        <option value="">Toutes les caisses</option>
+                        <option th:each="caisse : ${caisses}"
+                                th:value="${caisse.id}"
+                                th:text="${caisse.libelle}"></option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label">Cause</label>
+                    <select id="causeId" class="form-select">
+                        <option value="">Toutes les causes</option>
+                        <option th:each="cause : ${causes}"
+                                th:value="${cause.id}"
+                                th:text="${cause.libelle}"></option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-1">
+                    <button id="btnFiltrer" type="button" class="btn-filter">
+                        <i class="bi bi-funnel-fill"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="stats-grid">
+            <div class="stat-card entrees">
+                <div class="label"><i class="bi bi-arrow-down-circle-fill"></i>Total entrées</div>
                 <div class="value" id="totalEntree">–</div>
             </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="summary-card summary-sortie">
-                <div class="label"><i class="bi bi-arrow-up-circle-fill me-1"></i>Total sorties</div>
+            <div class="stat-card sorties">
+                <div class="label"><i class="bi bi-arrow-up-circle-fill"></i>Total sorties</div>
                 <div class="value" id="totalSortie">–</div>
             </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="summary-card summary-solde">
-                <div class="label"><i class="bi bi-wallet-fill me-1"></i>Solde au <span id="soldeDateLabel">–</span></div>
+            <div class="stat-card solde">
+                <div class="label"><i class="bi bi-wallet-fill"></i>Solde au <span id="soldeDateLabel">–</span></div>
                 <div class="value" id="totalSolde">–</div>
             </div>
         </div>
+
+        <!-- Graphique -->
+        <div class="chart-card">
+            <div class="chart-empty" id="chartEmptyState">
+                <i class="bi bi-inbox"></i>
+                <p>Aucun mouvement de caisse sur cette période</p>
+            </div>
+            <div class="chart-wrapper" id="chartWrapper">
+                <canvas id="caisseChart"></canvas>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Histogramme -->
-    <div class="card p-3 p-md-4">
-        <div id="chartEmptyState" class="text-center text-muted py-5">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            Aucun mouvement de caisse sur cette période.
-        </div>
-        <div id="chartWrapper" style="position: relative; height: 380px;">
-            <canvas id="caisseChart"></canvas>
-        </div>
-    </div>
+    <script th:inline="javascript">
+        (function() {
+            'use strict';
 
-</div>
+            // ===== RÉFÉRENCES DOM =====
+            const dateDebutInput = document.getElementById('dateDebut');
+            const dateFinInput = document.getElementById('dateFin');
+            const caisseSelect = document.getElementById('caisseId');
+            const causeSelect = document.getElementById('causeId');
+            const btnFiltrer = document.getElementById('btnFiltrer');
 
-<script th:inline="javascript">
-    const dateDebutInput = document.getElementById('dateDebut');
-    const dateFinInput = document.getElementById('dateFin');
-    const caisseSelect = document.getElementById('caisseId');
-    const causeSelect = document.getElementById('causeId');
-    const btnFiltrer = document.getElementById('btnFiltrer');
+            const totalEntreeEl = document.getElementById('totalEntree');
+            const totalSortieEl = document.getElementById('totalSortie');
+            const totalSoldeEl = document.getElementById('totalSolde');
+            const soldeDateLabelEl = document.getElementById('soldeDateLabel');
+            const chartWrapper = document.getElementById('chartWrapper');
+            const chartEmptyState = document.getElementById('chartEmptyState');
 
-    const totalEntreeEl = document.getElementById('totalEntree');
-    const totalSortieEl = document.getElementById('totalSortie');
-    const totalSoldeEl = document.getElementById('totalSolde');
-    const soldeDateLabelEl = document.getElementById('soldeDateLabel');
-    const chartWrapper = document.getElementById('chartWrapper');
-    const chartEmptyState = document.getElementById('chartEmptyState');
+            let caisseChart = null;
 
-    let caisseChart = null;
+            // ===== FORMATTEURS =====
+            function formaterMontant(valeur) {
+                const val = Number(valeur) || 0;
+                return new Intl.NumberFormat('fr-FR', {
+                    maximumFractionDigits: 0,
+                    minimumFractionDigits: 0
+                }).format(val) + ' Ar';
+            }
 
-    function formaterMontant(valeur) {
-        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(valeur || 0) + ' Ar';
-    }
+            function formaterDateFr(isoDate) {
+                if (!isoDate) return '–';
+                const parts = isoDate.split('-');
+                if (parts.length !== 3) return '–';
+                return parts[2] + '/' + parts[1] + '/' + parts[0];
+            }
 
-    function formaterDateFr(isoDate) {
-        if (!isoDate) return '–';
-        const [annee, mois, jour] = isoDate.split('-');
-        return jour + '/' + mois + '/' + annee;
-    }
+            // ===== CHARGEMENT DES DONNÉES =====
+            function chargerStatistiques() {
+                const dateDebut = dateDebutInput.value;
+                const dateFin = dateFinInput.value;
 
-    function chargerStatistiques() {
-        const dateDebut = dateDebutInput.value;
-        const dateFin = dateFinInput.value;
-        const caisseId = caisseSelect.value;
-        const causeId = causeSelect.value;
-
-        if (!dateDebut || !dateFin) {
-            return;
-        }
-
-        soldeDateLabelEl.textContent = formaterDateFr(dateFin);
-
-        const params = new URLSearchParams();
-        params.set("dateDebut", dateDebut);
-        params.set("dateFin", dateFin);
-
-        if (caisseId) {
-            params.set('caisseId', caisseId);
-        }
-        if (causeId) {
-            params.set('causeId', causeId);
-        }
-
-        fetch('/caisse/stats/data?' + params.toString())
-            .then(res => res.json())
-            .then(data => {
-                if (data.erreur) {
-                    alert(data.erreur);
+                if (!dateDebut || !dateFin) {
                     return;
                 }
-                afficherResultats(data);
-            })
-            .catch(() => alert("Impossible de charger les statistiques de caisse."));
-    }
 
-    function afficherResultats(data) {
-        totalEntreeEl.textContent = formaterMontant(data.totalEntree);
-        totalSortieEl.textContent = formaterMontant(data.totalSortie);
-        totalSoldeEl.textContent = formaterMontant(data.solde);
+                soldeDateLabelEl.textContent = formaterDateFr(dateFin);
 
-        const labels = data.labels || [];
+                const params = new URLSearchParams();
+                params.set('dateDebut', dateDebut);
+                params.set('dateFin', dateFin);
 
-        if (labels.length === 0) {
-            chartWrapper.style.display = 'none';
-            chartEmptyState.style.display = 'block';
-            return;
-        }
-        chartWrapper.style.display = 'block';
-        chartEmptyState.style.display = 'none';
+                const caisseId = caisseSelect.value;
+                const causeId = causeSelect.value;
+                if (caisseId) params.set('caisseId', caisseId);
+                if (causeId) params.set('causeId', causeId);
 
-        const ctx = document.getElementById('caisseChart').getContext('2d');
+                fetch('/caisse/stats/data?' + params.toString())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erreur réseau : ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.erreur) {
+                            alert(data.erreur);
+                            return;
+                        }
+                        afficherResultats(data);
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Impossible de charger les statistiques de caisse.');
+                    });
+            }
 
-        if (caisseChart) {
-            caisseChart.destroy();
-        }
+            // ===== AFFICHAGE DES RÉSULTATS =====
+            function afficherResultats(data) {
+                // Mise à jour des cartes
+                totalEntreeEl.textContent = formaterMontant(data.totalEntree);
+                totalSortieEl.textContent = formaterMontant(data.totalSortie);
+                totalSoldeEl.textContent = formaterMontant(data.solde);
 
-        caisseChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Entrées',
-                        data: data.entrees,
-                        backgroundColor: '#7a9e5a',
-                        borderRadius: 4,
-                    },
-                    {
-                        label: 'Sorties',
-                        data: data.sorties,
-                        backgroundColor: '#d97a7a',
-                        borderRadius: 4,
+                const labels = data.labels || [];
+
+                // Gestion de l'état vide
+                if (labels.length === 0) {
+                    chartWrapper.style.display = 'none';
+                    chartEmptyState.style.display = 'block';
+                    if (caisseChart) {
+                        caisseChart.destroy();
+                        caisseChart = null;
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => context.dataset.label + ' : ' + formaterMontant(context.raw)
+                    return;
+                }
+
+                chartWrapper.style.display = 'block';
+                chartEmptyState.style.display = 'none';
+
+                // Création du graphique
+                const ctx = document.getElementById('caisseChart').getContext('2d');
+
+                if (caisseChart) {
+                    caisseChart.destroy();
+                }
+
+                caisseChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Entrées',
+                            data: data.entrees || [],
+                            backgroundColor: '#7a9e5a',
+                            hoverBackgroundColor: '#5f7f45',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            barPercentage: 0.7
+                        }, {
+                            label: 'Sorties',
+                            data: data.sorties || [],
+                            backgroundColor: '#d97a7a',
+                            hoverBackgroundColor: '#bf5f5f',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            barPercentage: 0.7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    padding: 20,
+                                    font: {
+                                        weight: '600',
+                                        size: 13,
+                                        family: 'Inter, sans-serif'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(26,46,36,0.92)',
+                                titleFont: { weight: '600', size: 13 },
+                                bodyFont: { size: 13 },
+                                padding: 12,
+                                cornerRadius: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ' : ' + formaterMontant(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11,
+                                        family: 'Inter, sans-serif'
+                                    },
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return formaterMontant(value);
+                                    },
+                                    font: {
+                                        size: 11,
+                                        family: 'Inter, sans-serif'
+                                    },
+                                    maxTicksLimit: 8
+                                }
+                            }
                         }
                     }
-                },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { callback: (value) => formaterMontant(value) }
-                    }
-                }
+                });
             }
-        });
-    }
 
-    btnFiltrer.addEventListener('click', chargerStatistiques);
+            // ===== EXPORT =====
+            function exporterStats(format) {
+                const dateDebut = dateDebutInput.value;
+                const dateFin = dateFinInput.value;
 
-    // Export Excel / PDF des statistiques selon les filtres courants
-    function exporterStats(format) {
-        const dateDebut = dateDebutInput.value;
-        const dateFin = dateFinInput.value;
-        if (!dateDebut || !dateFin) {
-            alert("Veuillez renseigner les dates de début et de fin avant d'exporter.");
-            return;
-        }
-        const params = new URLSearchParams();
-        params.set("dateDebut", dateDebut);
-        params.set("dateFin", dateFin);
-        if (caisseSelect.value) params.set("caisseId", caisseSelect.value);
-        if (causeSelect.value) params.set("causeId", causeSelect.value);
-        window.location.href = '/caisse/stats/export/' + format + '?' + params.toString();
-    }
+                if (!dateDebut || !dateFin) {
+                    alert('Veuillez renseigner les dates de début et de fin avant d\'exporter.');
+                    return;
+                }
 
-    document.getElementById('exportExcelBtn').addEventListener('click', () => exporterStats('excel'));
-    document.getElementById('exportPdfBtn').addEventListener('click', () => exporterStats('pdf'));
+                const params = new URLSearchParams();
+                params.set('dateDebut', dateDebut);
+                params.set('dateFin', dateFin);
 
-    // Chargement initial avec les dates par défaut (30 derniers jours)
-    chargerStatistiques();
-</script>
+                if (caisseSelect.value) params.set('caisseId', caisseSelect.value);
+                if (causeSelect.value) params.set('causeId', causeSelect.value);
+
+                window.location.href = '/caisse/stats/export/' + format + '?' + params.toString();
+            }
+
+            // ===== ÉVÉNEMENTS =====
+            btnFiltrer.addEventListener('click', chargerStatistiques);
+
+            document.getElementById('exportExcelBtn').addEventListener('click', function() {
+                exporterStats('excel');
+            });
+
+            document.getElementById('exportPdfBtn').addEventListener('click', function() {
+                exporterStats('pdf');
+            });
+
+            // ===== CHARGEMENT INITIAL =====
+            chargerStatistiques();
+
+        })();
+    </script>
 
 </body>
 </html>
